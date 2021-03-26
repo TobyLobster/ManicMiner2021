@@ -5954,15 +5954,6 @@ miner3EntryPoint
     cpx #creditsMessageEnd - creditsMessage ;
     bne -                           ;
 
-    ; Show 'BY MATTHEW SMITH' line
-    ldx #0                          ;
--
-    lda bylineMessage,x             ;
-    jsr OSWRCH                      ;
-    inx                             ;
-    cpx #bylineMessageEnd - bylineMessage   ;
-    bne -                           ;
-
     ; swap in the flowery logo
     jsr swapPages700andC00          ;
 
@@ -6072,7 +6063,7 @@ gcol
 
 getNextByte
     inx                             ;
-    lda $0790,x                     ;
+    lda penroseTriangle,x           ;
     rts                             ;
 
 swapPages700andC00
@@ -6494,9 +6485,9 @@ readRoomNameCharacter
     rts                             ;
 
 drawRoomName
-    lda #<numbers                   ;
+    lda #<levelTitles               ;
     sta readRoomNameCharacter + 1   ;
-    lda #>numbers                   ;
+    lda #>levelTitles               ;
     sta readRoomNameCharacter + 2   ;
     lda #0                          ;
     sta roomNumberReached           ;
@@ -13133,7 +13124,7 @@ fixedText
 
 
 ; ***************************************************************************************
-numbers
+levelTitles
     !text 9, "Central Cavern"
     !text 9, "The Cold Room"
     !text 9, "The Menagerie"
@@ -13229,38 +13220,38 @@ music
     !byte $1f, $1d, $1a, $17, $1d, $17, $11, $13, $17, $1d, $17, $13, $13, $13, $00, $00
 
     ; A Penrose triangle as encoded PLOT statements
-trianglesLogo
+penroseTriangle
     !byte $FE, 1                        ; GCOL 0,1
-    !byte $04, $12, $AC                 ; MOVE
-    !byte $04, $12, $B8                 ; MOVE
-    !byte $55, $78, $79                 ; TRI
-    !byte $55, $6C, $8B                 ; TRI
-    !byte $55, $78, $D3                 ; TRI
-    !byte $55, $6C, $CD                 ; TRI
+    !byte $04, $12, $AC-6               ; MOVE
+    !byte $04, $12, $B8-6               ; MOVE
+    !byte $55, $78, $79-6               ; TRI
+    !byte $55, $6C, $8B-6               ; TRI
+    !byte $55, $78, $D3-6               ; TRI
+    !byte $55, $6C, $CD-6               ; TRI
     !byte $FE, 2                        ; GCOL 0,2
-    !byte $04, $78, $79
-    !byte $04, $83, $7F
-    !byte $55, $78, $D3
-    !byte $55, $83, $E4
-    !byte $55, $37, $B3
-    !byte $55, $2D, $B8
-    !byte $FE, 3
-    !byte $04, $6C, $CC
-    !byte $05, $6C, $98
-    !byte $05, $2C, $B8
-    !byte $05, $83, $E4
-    !byte $05, $77, $EA
-    !byte $05, $12, $B8
-    !byte $05, $12, $AC
-    !byte $05, $78, $79
-    !byte $05, $83, $7F
-    !byte $05, $83, $E4
-    !byte $04, $78, $79
-    !byte $05, $78, $D3
-    !byte $05, $37, $B3
-    !byte $04, $6C, $99
-    !byte $05, $6C, $8B
-    !byte $05, $12, $B8
+    !byte $04, $78, $79-6               ; MOVE
+    !byte $04, $83, $7F-6               ; MOVE
+    !byte $55, $78, $D3-6               ; TRI
+    !byte $55, $83, $E4-6               ; TRI
+    !byte $55, $37, $B3-6               ; TRI
+    !byte $55, $2D, $B8-6               ; TRI
+    !byte $FE, 3                        ; GCOL 0,3
+    !byte $04, $6C, $CC-6               ; MOVE
+    !byte $05, $6C, $98-6               ; DRAW
+    !byte $05, $2C, $B8-6               ; DRAW
+    !byte $05, $83, $E4-6               ; DRAW
+    !byte $05, $77, $EA-6               ; DRAW
+    !byte $05, $12, $B8-6               ; DRAW
+    !byte $05, $12, $AC-6               ; DRAW
+    !byte $05, $78, $79-6               ; DRAW
+    !byte $05, $83, $7F-6               ; DRAW
+    !byte $05, $83, $E4-6               ; DRAW
+    !byte $04, $78, $79-6               ; MOVE
+    !byte $05, $78, $D3-6               ; DRAW
+    !byte $05, $37, $B3-6               ; DRAW
+    !byte $04, $6C, $99-6               ; MOVE
+    !byte $05, $6C, $8B-6               ; DRAW
+    !byte $05, $12, $B8-6               ; DRAW
     !byte $FF                           ; TERMINATOR
 
 creditsMessage
@@ -13274,14 +13265,10 @@ creditsMessage
     !text "D.J.COATHUPE"
     !byte 31, 19, 15                ; TAB(19,15)
     !text "ORIGINAL PROGRAM"
-    !byte 31                        ; TAB...
-creditsMessageEnd
-
-bylineMessage
-    !byte 19, 17                    ; ...(19,17)
+    !byte 31, 19, 17                ; TAB(19,17)
     !text "BY MATTHEW SMITH"
     !byte 31, 19, 7                 ; TAB(19,7)
-bylineMessageEnd
+creditsMessageEnd
 
 ; ***************************************************************************************
 plotMessageStart

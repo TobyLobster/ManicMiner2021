@@ -1,0 +1,466 @@
+;
+; miner3.a ($3c00)
+;
+; Execution starts at 'miner3EntryPoint'
+
+!src "constants.a"
+
+; constants
+
+; OS memory locations
+currentLevel                            = $80               ;
+
+; memory locations
+
+* = $3000
+
+; ***************************************************************************************
+;
+; called on vsync to update the audio
+;
+; ***************************************************************************************
+mainEventRoutine
+    pha                             ;
+    php                             ;
+    txa                             ;
+    pha                             ; save registers
+    tya                             ;
+    pha                             ;
+
+    jsr checkForChannel3Update      ;
+    lda channel2Frequency           ;
+    cmp #$ff                        ;
+    beq silenceChannel2             ;
+    lda vsyncCounter                ;
+    cmp #$ff                        ;
+    beq silenceChannel2             ;
+    lda #$b0                        ;
+    jsr soundDirect                 ; Set channel 2 maximum volume
+    lda #$a0                        ;
+    jsr soundDirect                 ; Set channel 2 frequency first byte
+    lda channel2Frequency           ;
+    jsr soundDirect                 ; Set channel 2 frequency second byte
+    lda #$ff                        ;
+    sta channel2Frequency           ;
+
+exitEvent
+    pla                             ;
+    tay                             ;
+    pla                             ;
+    tax                             ; restore registers
+    plp                             ;
+    pla                             ;
+    rts                             ;
+
+silenceChannel2
+    lda #$bf                        ;
+    jsr soundDirect                 ; set zero volume on channel 2
+    jmp exitEvent                   ;
+
+checkForChannel3Update
+    inc vsyncCounter                ;
+    lda vsyncCounter                ;
+    cmp #1                          ; 1 = duration of note
+    beq quietChannel3               ;
+    cmp #6                          ; 6 = time between notes
+    beq updateChannel3              ; update channel 3
+    rts                             ;
+
+updateChannel3
+    lda #0                          ;
+    sta vsyncCounter                ;
+    inc channel3Frequency           ;
+    lda #$92                        ;
+    jsr soundDirect                 ; Channel 3 volume
+    lda #$80                        ;
+    jsr soundDirect                 ; Channel 3 frequency
+    lda channel3Frequency           ;
+    lsr                             ;
+    tax                             ;
+    lda $00,x                       ;
+    cmp #0                          ; [redundant]
+    beq finishChannel3Notes         ;
+    jmp soundDirect                 ;
+
+finishChannel3Notes
+    lda #$ff                        ;
+    sta channel3Frequency           ; end channel 3 notes
+    rts                             ;
+
+quietChannel3
+    lda #$9f                        ;
+    jmp soundDirect                 ; set zero volume on channel 3
+
+; ***************************************************************************************
+; send a byte to the sound chip (as seen in the advanced user guide)
+soundDirect
+    sei                             ;
+    pha                             ; remember A
+
+    lda #151                        ;
+    ldx #$43                        ; Data direction register A
+    ldy #$ff                        ; Set all 8 bits as output
+    jsr OSBYTE                      ; Write to SHEILA OSBYTE CALL
+
+    ldx #$41                        ; Output register A
+    pla                             ;
+    tay                             ; Y holds byte to sound chip
+    lda #151                        ; Write to SHEILA OSBYTE CALL
+    jsr OSBYTE                      ; Output to slow data bus
+
+    ldx #$40                        ; Output register B
+    ldy #0                          ; Set sound chip write pin low
+    jsr OSBYTE                      ;
+
+    ldy #8                          ; Set sound chip write pin high
+    jsr OSBYTE                      ;
+
+    cli                             ; Enable interrupts
+    rts                             ;
+
+; ***************************************************************************************
+vsyncCounter
+    !byte $ea                       ;
+channel3Frequency
+    !byte $00                       ;
+channel2Frequency
+    !byte $ff                       ;
+
+; ***************************************************************************************
+playAttractLoop
+    lda #1                          ;
+    sta currentLevel                ; start attract loop on level 1
+
+    lda #2                          ;
+    sta lives                       ; start with 2 remaining lives (3 lives total)
+
+    ; clear the score (6 digits in 3 BCD bytes)
+    lda #0                          ;
+    ldx #0                          ;
+-
+    sta score,x                     ;
+    inx                             ;
+    cpx #3                          ;
+    bne -                           ;
+
+attractLoop
+    lda currentLevel                ;
+    jsr showLevel                   ;
+    lda #0                          ;
+    sta attractModeTimer            ;
+showALevelLoop
+    jsr drawConveyors                   ;
+    jsr animateKeysUpdateHorizontalGuardiansAndLevel19EnergyFields   ;
+    jsr updateVerticalGuardians         ;
+
+    ; pointless delay loop
+    ldx #0                          ; 0
+    ldy #208                        ; 208
+-
+    inx                             ;
+    bne -                           ;
+    iny                             ;
+    bne -                           ;
+
+    inc attractModeTimer            ;
+    lda attractModeTimer            ;
+    cmp #$40                        ;
+    beq showNextLevel               ;
+
+    ldy #$ff                        ;
+    ldx #$b6                        ;
+    lda #$81                        ; check for RETURN
+    jsr OSBYTE                      ;
+    cpy #$ff                        ;
+    beq +                           ;
+
+    jmp showALevelLoop              ;
+
++
+    jmp startGame                   ;
+
+attractModeTimer
+    !byte $ea                       ;
+
+showNextLevel
+    inc currentLevel                ;
+    lda currentLevel                ;
+    cmp #19                         ;
+    beq endOfAttractLoop            ;
+    jmp attractLoop                 ;
+
+endOfAttractLoop
+    nop                             ;
+    nop                             ;
+    nop                             ;
+    nop                             ;
+    jmp miner3EntryPoint            ;
+
+; ***************************************************************************************
+checkCheatCode
+    lda $ed                         ;
+    cmp #0                          ;
+    bne resetCheatProgress          ; if (two keys pressed) then branch (reset progress)
+    lda $ec                         ; read key pressed
+    and #$7f                        ; remove top bit set
+    cmp #0                          ;
+    beq return2                     ; if (nothing pressed) then branch (return)
+    ldx cheatCodeCounter            ;
+    cmp cheatCode,x                 ;
+    beq incrementCheatCode          ; if (next key in code pressed) then branch
+    dex                             ;
+    cmp cheatCode,x                 ;
+    beq return2                     ; if (current key in code still pressed) then branch (return)
+
+resetCheatProgress
+    lda #0                          ;
+    sta cheatCodeCounter            ;
+    rts                             ;
+
+incrementCheatCode
+    inc cheatCodeCounter            ;
+    lda cheatCodeCounter            ;
+    cmp #cheatCodeEnd - cheatCode   ;
+    beq toggleCheatMode             ;
+    rts                             ;
+
+toggleCheatMode
+    lda cheatModeEnabled            ;
+    eor #1                          ;
+    sta cheatModeEnabled            ;
+
+    lda #$03                        ; }
+    ldx #$64                        ; }
+    ldy #$03                        ; } SOUND
+    jmp playSoundAXY                ; }
+
+return2
+    rts                             ;
+
+; ***************************************************************************************
+cheatCodeCounter
+    !byte $00
+cheatCode
+    ; code: A <space> S,   E,   C,   R,   E,   T
+    ;
+    ; key codes as stored in memory address $ec (by the OS) when pressed, all with top bit set:
+    ;     $C1, $E2, $D1, $A2, $D2, $B3, $A2, $A3
+    ; stored here without top bit set:
+    !byte $41, $62, $51, $22, $52, $33, $22, $23
+cheatCodeEnd
+
+; ***************************************************************************************
+    !byte $60, $60                  ; [UNUSED]
+
+; ***************************************************************************************
+updateVerticalGuardiansAndJumpAndFallSounds
+    jsr updateVerticalGuardians     ;
+    lda isJumping                   ;
+    cmp #1                          ;
+    bne notInAir                    ; if (not in air) then branch
+    lda jumpPhase                   ;
+    cmp #1                          ;
+    bne notInAir                    ;
+
+    lda #$04                        ; }
+    ldx #$64                        ; }
+    ldy #$02                        ; } play jump sound
+    jmp playSoundAXY                ; }
+
+notInAir
+    lda isJumping                   ;
+    cmp #1                          ;
+    beq return5                     ;
+    lda willyIsOnGround             ;
+    cmp #0                          ;
+    bne return5                     ;
+
+    lda #$ff                        ;
+    sta oswordSoundBlock + 3        ;
+
+    lda newPlayerPixelY             ; }
+    sec                             ; }
+    sbc playerHeightOnTakeOff       ; }
+    asl                             ; }
+    eor #$7f                        ; } play descending falling sound
+    tax                             ; }
+    lda #$f1                        ; }
+    ldy #1                          ; }
+    jsr playSoundAXY                ; }
+
+    lda #0                          ;
+    sta oswordSoundBlock + 3        ;
+return5
+    rts                             ;
+
+    !text "8:JSR"                   ; [UNUSED]
+
+; ***************************************************************************************
+miner3EntryPoint
+    jsr clearScreen                 ;
+    lda #17                         ; VDU 17,3 (COLOUR 3)
+    jsr OSWRCH                      ;
+    lda #3                          ;
+    jsr OSWRCH                      ;
+
+    jsr pauseMusic             ;
+
+    ; Show credits
+    ldx #0                          ; loop counter
+-
+    lda creditsMessage,x            ;
+    jsr OSWRCH                      ;
+    inx                             ;
+    cpx #creditsMessageEnd - creditsMessage ;
+    bne -                           ;
+
+    ; Show 'BY MATTHEW SMITH' line
+    ldx #0                          ;
+-
+    lda bylineMessage,x             ;
+    jsr OSWRCH                      ;
+    inx                             ;
+    cpx #bylineMessageEnd - bylineMessage   ;
+    bne -                           ;
+
+    ; swap in the flowery logo
+    jsr swapPages700andC00          ;
+
+    ; draw the flowery logo
+    ldx #$80                        ; loop counter (and character to print)
+-
+    txa                             ;
+    jsr OSWRCH                      ;
+    inx                             ;
+    cpx #$91                        ;
+    bne -                           ;
+
+    ; swap out the flowery logo
+    jsr swapPages700andC00          ;
+
+    ; Colour the background on screen from $4030 in a rectangle
+    lda #$30                        ;
+    sta $70                         ;
+    lda #$40                        ;
+    sta $71                         ;
+rectLoop
+    ldy #0                          ;
+-
+    lda ($70),y                     ;
+    ora #$f0                        ;
+    sta ($70),y                     ;
+    iny                             ;
+    bne -                           ;
+    inc $71                         ;
+
+    ldy #0                          ;
+-
+    lda ($70),y                     ;
+    ora #$f0                        ;
+    sta ($70),y                     ;
+    iny                             ;
+    cpy #$18                        ;
+    bne -                           ;
+
+    lda $70                         ;
+    clc                             ;
+    adc #$80                        ;
+    sta $70                         ;
+    lda $71                         ;
+    adc #1                          ;
+    sta $71                         ;
+    cmp #$51                        ;
+    bne rectLoop                    ;
+
+    ; plot triangle logo
+    ldx #$ff                        ;
+plotLoop
+    jsr getNextByte                 ;
+    cmp #$ff                        ;
+    beq finishPlot                  ;
+    cmp #$fe                        ;
+    beq gcol                        ;
+    sta plotType                    ; PLOT type
+    jsr getNextByte                 ; Y coordinate low (top 2 bits) and X low (top two bits)
+    tay                             ;
+    lsr                             ;
+    lsr                             ;
+    lsr                             ;
+    lsr                             ;
+    lsr                             ;
+    lsr                             ;
+    sta plotXHigh                   ;
+    tya                             ;
+    asl                             ;
+    asl                             ;
+    sta plotXLow                    ;
+    jsr getNextByte                 ;
+    tay                             ;
+    lsr                             ;
+    lsr                             ;
+    lsr                             ;
+    lsr                             ;
+    lsr                             ;
+    lsr                             ;
+    sta plotYHigh                   ;
+    tya                             ;
+    asl                             ;
+    asl                             ;
+    sta plotYLow                    ;
+
+    ; PLOT
+    ldy #0                          ; loop counter
+-
+    lda plotMessageStart,y          ;
+    jsr OSWRCH                      ;
+    iny                             ;
+    cpy #plotMessageEnd - plotMessageStart  ;
+    bne -                           ;
+    jmp plotLoop                    ;
+
+finishPlot
+    jmp showTitleScreenMessageAndWaitForRETURN  ;
+
+gcol
+    lda #18                         ;
+    jsr OSWRCH                      ;
+    lda #0                          ; GCOL 0,next byte
+    jsr OSWRCH                      ;
+    jsr getNextByte                 ;
+    jsr OSWRCH                      ;
+    jmp plotLoop                    ;
+
+getNextByte
+    inx                             ;
+    lda $0790,x                     ;
+    rts                             ;
+
+swapPages700andC00
+    ldx #0                          ; loop counter
+-
+    lda $0700,x                     ;
+    tay                             ;
+    lda softCharacterDefinitions,x  ;
+    sta $0700,x                     ;
+    tya                             ; swap $700->$7ff with $0c00->$0cff
+    sta softCharacterDefinitions,x  ;
+    inx                             ;
+    bne -                           ;
+    rts                             ;
+
+plotMessageStart
+    !byte 25                        ; VDU 25
+fiveValues
+plotType
+    !byte $ea                       ;
+plotXLow
+    !byte $ea                       ;
+plotXHigh
+    !byte $ea                       ;
+plotYLow
+    !byte $ea                       ;
+plotYHigh
+    !byte $ea                       ;
+plotMessageEnd
+
+    !byte $00, $00, $00, $00, $00, $00, $00     ; [UNUSED]

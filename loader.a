@@ -1,0 +1,172 @@
+; loader.a
+;
+
+OSWRCH                          = $ffee     ;
+OSBYTE                          = $fff4     ;
+OSCLI                           = $fff7     ;
+
+main = $0d00
+
+* = $0100
+
+; ***************************************************************************************
+start
+    ; Switch to MODE 1
+    ldx #0                                  ;
+moreMessageLoop
+    ldy #1                                  ;
+    lda mode1Message,x                      ;
+    cmp $ff                                 ;
+    bne innerPrintLoop                      ;
+    ldy #8                                  ; print eight zeros
+    lda #0                                  ;
+innerPrintLoop
+    jsr OSWRCH                              ;
+    dey                                     ;
+    bne innerPrintLoop                      ;
+outputMessageLoop
+    inx                                     ;
+    cpx #mode1MessageEnd - mode1Message     ;
+    bne moreMessageLoop                     ;
+
+    ; load game at $1900
+    ldx #<loadMinerCommand                  ;
+    ldy #>loadMinerCommand                  ;
+    jsr OSCLI                               ;
+
+    ; relocate the 'lower than the screen' code down to $0500
+    ldx #<copyDownBlock                     ;
+    ldy #>copyDownBlock                     ;
+    jsr copyDown                            ;
+
+    ldx #<copyUpBlock                       ;
+    ldy #>copyUpBlock                       ;
+    jsr copyUp                              ;
+
+-
+    ldy #$ff                                ;
+    ldx #$b6                                ;
+    lda #$81                                ; wait for RETURN key
+    jsr OSBYTE                              ;
+    cpy #$ff                                ;
+    bne -                                   ;
+
+    ; run game
+    jmp main                                ;
+
+; ***************************************************************************************
+fromLow         = $70
+fromHigh        = $71
+toLow           = $72
+toHigh          = $73
+copyLengthLow   = $74
+copyLengthHigh  = $75
+tempAddrLow     = $76
+tempAddrHigh    = $77
+
+copyDownBlock
+    !word $1900                             ; from
+    !word $0500                             ; to
+    !word $2D80                             ; length
+
+copyUpBlock
+    !word $1900+$3280-$0500                 ; from
+    !word $6000                             ; to
+    !word $2000                             ; length
+
+; ***************************************************************************************
+copyAddresses
+    stx tempAddrLow                         ;
+    sty tempAddrHigh                        ;
+    ldy #0                                  ;
+    lda (tempAddrLow),Y                     ;
+    sta fromLow                             ;
+    iny                                     ;
+    lda (tempAddrLow),Y                     ;
+    sta fromHigh                            ;
+    iny                                     ;
+    lda (tempAddrLow),Y                     ;
+    sta toLow                               ;
+    iny                                     ;
+    lda (tempAddrLow),Y                     ;
+    sta toHigh                              ;
+    iny                                     ;
+    lda (tempAddrLow),Y                     ;
+    sta copyLengthLow                       ;
+    iny                                     ;
+    lda (tempAddrLow),Y                     ;
+    sta copyLengthHigh                      ;
+    rts
+
+; ***************************************************************************************
+copyDown
+    jsr copyAddresses                       ;
+
+    ldy #0                                  ;
+    ldx copyLengthHigh                      ;
+    beq +                                   ;
+-
+    lda (fromLow),Y                         ; move a page at a time
+    sta (toLow),Y                           ;
+    iny                                     ;
+    bne -                                   ;
+    inc fromHigh                            ;
+    inc toHigh                              ;
+    dex                                     ;
+    bne -                                   ;
++
+    ldx copyLengthLow                       ;
+    beq return                              ;
+-
+    lda (fromLow),Y                         ; move the remaining bytes
+    sta (toLow),Y                           ;
+    iny                                     ;
+    dex                                     ;
+    bne -                                   ;
+return
+    rts                                     ;
+
+; ***************************************************************************************
+copyUp
+    jsr copyAddresses                       ;
+    ldx copyLengthHigh                      ; the last byte must be moved first
+    clc                                     ; start at the final pages of FROM and TO
+    txa
+    adc fromHigh
+    sta fromHigh
+    clc
+    txa
+    adc toHigh
+    sta toHigh
+    inx                                     ; allows the use of BNE after the DEX below
+    ldy copyLengthLow
+    beq +
+    dey                                     ; move bytes on the last page first
+    beq secondLoop
+-
+    lda (fromLow),Y
+    sta (toLow),Y
+    dey
+    bne -
+secondLoop
+    lda (fromLow),Y                         ; handle Y = 0 separately
+    sta (toLow),Y
++
+    dey
+    dec fromHigh                            ; move the next page (if any)
+    dec toHigh
+    dex
+    bne -
+    rts
+
+
+; ***************************************************************************************
+mode1Message
+    !byte 22, 1                             ; MODE 1
+;    !byte 23, 0, 6, $ff                     ; hide display
+;    !byte 23, 0, 7, 30, $ff                 ; move display down
+;    !byte 23, 1, 0, $ff                     ; cursor off
+mode1MessageEnd
+
+loadMinerCommand
+    !text "LOAD MINER20",13                    ; OSCLI command to load game

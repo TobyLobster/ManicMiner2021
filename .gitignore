@@ -7,9 +7,15 @@ miner3.sym
 miner3.txt
 miner4.sym
 miner4.txt
+loader.sym
+loader.txt
+miner2021.sym
+miner2021.txt
 new/miner1
 new/miner2
 new/miner3
 new/miner4
+new/loader
+new/miner2021
 NEWMINER.ssd
 NEWMINER.ssd.dsk

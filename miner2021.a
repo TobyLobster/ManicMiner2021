@@ -4777,38 +4777,39 @@ setVerticalDisplayedCharacters
 ; ***************************************************************************************
 clearScreen
     lda #0                          ;
-    tax                             ; loop counter
+    ldx #3                          ; loop counter
 -
-
     jsr setPalette                  ; set every colour black (A=0)
-    inx                             ;
-    cpx #4                          ;
-    bne -                           ; if (not done four yet) then branch (loop back)
+    dex                             ;
+    bpl -                           ; if (not done four yet) then branch (loop back)
 
-    lda #>screenStartAddress        ;
-    sta injectAddressHigh           ;
+    ; clear memory from screenStartAddress to screenEndAddress
     lda #<screenStartAddress        ;
     sta injectAddressLow            ;
-    ldx #0                          ;
--
-
+    lda #>screenStartAddress        ;
+    sta injectAddressHigh           ;
     lda #0                          ;
+    ldy #>(screenEndAddress - screenStartAddress)   ;
+    ldx #<(screenEndAddress - screenStartAddress)   ; XY = length of area to clear
+    beq +                           ;
+-
+    dex                             ;
 injectAddressLow = * + 1
 injectAddressHigh = * + 2
-    sta logicalScreenStart,x        ; clear screen
-    inx                             ;
-    beq finishedPage                ;
-    jmp -                           ;
-
-finishedPage
+    sta $ffff,x                     ; clear screen
+    bne -                           ;
+    lda #<screenEndAddress          ;
+    sta injectAddressLow            ;
+    txa                             ;
     inc injectAddressHigh           ;
-    lda injectAddressHigh           ;
-    cmp #>screenEndAddress          ;
-    bcc -                           ;
++
+    dey                             ;
+    bpl -                           ;
 
     ldx #19                             ; set 19 character rows
     jmp setVerticalDisplayedCharacters  ;
 
+; ***************************************************************************************
 level10Init
     lda #$e1                        ;
     sta levelFeature3               ;
@@ -5663,7 +5664,7 @@ soundDirect
 
 ; ***************************************************************************************
 playAttractLoop
-    lda #9                          ;
+    lda #1                          ;
     sta currentLevel                ; start attract loop on level 1 - Central Cavern
 
     lda #2                          ;

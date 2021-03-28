@@ -18,7 +18,7 @@ softCharacterDefinitions        = $0c00     ;
 logicalScreenStart              = $3000     ;
 screenStartAddress              = $3280     ; start of visible screen
 blankAreaOfScreen               = $34d0     ; empty screen area to the right of the play area
-screenEndAddress                = $6000     ; end of visible screen
+screenEndAddress                = $6200     ; end of visible screen
 backgroundCache                 = $6ba0     ; six cells copied from the screen before the player is drawn
 
 OSWRCH                          = $ffee     ;
@@ -62,7 +62,7 @@ verticalGuardianMODE1Address1   = $0440     ;
 verticalGuardianMODE1Address2   = $0480     ;
 verticalGuardianMODE1Address3   = $04c0     ;
 
-* = 0x500
+* = $0500
 
 ; ***************************************************************************************
 ; 8 poses of Miner Willy, 4 walking right and four walking left
@@ -123,6 +123,11 @@ willyLeft0
 }
 minerWillyEnd
 
+
+
+
+
+; ***************************************************************************************
 manicMinerGraphic
     ; Small caps flowery "MANIC MINER (C)" graphic
     !byte %........    ;              ####   ###
@@ -294,6 +299,49 @@ footSprite
     !byte $44, $cc, $44, $cc, $cc, $00, $00, $88, $00, $00, $00, $00, $00, $00, $00, $00
     !byte $11, $11, $22, $22, $55, $44, $44, $ff, $00, $11, $22, $00, $99, $44, $44, $ff
     !byte $88, $88, $44, $bb, $22, $44, $00, $ff, $00, $00, $00, $88, $44, $22, $22, $ff
+
+; ***************************************************************************************
+guardianPositions
+    !byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+guardianPositionsCopy
+    !byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+
+; ***************************************************************************************
+airRemainingOffsetWithinCell
+    !byte $ea                                       ;
+airRemainingDelayCounter
+    !byte $ea                                       ;
+
+score
+    !byte $00, $00, $00                             ;
+
+lives
+    !byte $ea                                       ;
+
+level20EnergyFieldsTimer
+    !byte $ea                                       ;
+
+willyHighestPointReachedOnCurrentJump
+    !byte $ea                                       ;
+willyIsOnGround
+    !byte $ea                                       ;
+willyOffsetWithinCellY
+    !byte $ea                                       ;
+
+airRemaining
+    !byte $ea                                       ;
+
+; ***************************************************************************************
+playerPixelX
+    !byte $18                                       ;
+playerPixelY
+    !byte $20                                       ;
+newPlayerPixelX
+    !byte $18                                       ;
+newPlayerPixelY
+    !byte $20                                       ;
+hasDrawnConveyors
+    !byte $ea                                       ;
 
 !if * > $0800 {
     !error "space is wrong, ", *
@@ -1489,6 +1537,13 @@ spriteEnd
 main
     jmp start
 
+
+; ***************************************************************************************
+getLowByteAddress
+    !byte <getSpriteMode1Byte, <getSpriteMode2Byte, <getSpriteMode3Byte, <getSpriteMode4Byte, <getSpriteMode5Byte, <getSpriteMode6Byte
+getHighByteAddress
+    !byte >getSpriteMode1Byte, >getSpriteMode2Byte, >getSpriteMode3Byte, >getSpriteMode4Byte, >getSpriteMode5Byte, >getSpriteMode6Byte
+
 ; ***************************************************************************************
 ;
 ; plot
@@ -1496,16 +1551,16 @@ main
 ;   e.g. used to plot the player, and the leg/foot, vertical guardians
 ;
 ; On Entry:
-;       ($77,$78) = source sprite address
+;       plotSourceSpriteAddressLow/High = source sprite address
 ;
 ;       A = mode:
 ;           Mode            Operation                                   Description
+;           1               source (AND mask) OR screen                 additive with mask
 ;           2               0                                           erase
 ;           3               source AND mask                             colour mask applied to source
 ;           4               if (screen not 255) then (source AND mask)  preserve solid colour 3
 ;           5               if (screen not 255) then 0                  zero except solid colour 3
-;           10              (source AND $F0) EOR screen                 tint source to colour 2, eor with screen
-;           anything else   source (AND mask) OR screen                 additive with mask
+;           6               (source AND $F0) EOR screen                 tint source to colour 2, eor with screen
 ;
 ;       X = x pixel coordinate
 ;       Y = y pixel coordinate
@@ -1537,60 +1592,12 @@ plot
     ror                                 ;
     sta plotY                           ; plotY = (Y pixel / 8)     [can be improved]
 
-    lda plotMode                        ;
-    cmp #10                             ;
-    beq setMode10Address                ;
-    cmp #2                              ;
-    beq setMode2Address                 ;
-    cmp #3                              ;
-    beq setMode3Address                 ;
-    cmp #4                              ;
-    beq setMode4Address                 ;
-    cmp #5                              ;
-    beq setMode5Address                 ;
-
-    lda #<getSpriteDefaultModeByte      ;
+    ldx plotMode                        ;
+    lda getLowByteAddress - 1,x         ;
     sta getSourceByte + 1               ;
-    lda #>getSpriteDefaultModeByte      ; set address getSpriteDefaultModeByte
-    sta getSourceByte + 2               ;
-    jmp calculateScreenAddrAndPlot      ;
-
-setMode10Address
-    lda #<getSpriteMode10Byte           ;
-    sta getSourceByte + 1               ;
-    lda #>getSpriteMode10Byte           ; set address getSpriteMode10Byte
-    sta getSourceByte + 2               ;
-    jmp calculateScreenAddrAndPlot      ;
-
-setMode3Address
-    lda #<getSpriteMode3Byte            ;
-    sta getSourceByte + 1               ;
-    lda #>getSpriteMode3Byte            ; address getSpriteMode3Byte
-    sta getSourceByte + 2               ;
-    jmp calculateScreenAddrAndPlot      ;
-
-setMode4Address
-    lda #<getSpriteMode4Byte            ;
-    sta getSourceByte + 1               ;
-    lda #>getSpriteMode4Byte            ; address getSpriteMode4Byte
-    sta getSourceByte + 2               ;
-    jmp calculateScreenAddrAndPlot      ;
-
-setMode5Address
-    lda #<getSpriteMode5Byte            ;
-    sta getSourceByte + 1               ;
-    lda #>getSpriteMode5Byte            ; address getSpriteMode5Byte
-    sta getSourceByte + 2               ;
-    jmp calculateScreenAddrAndPlot      ;
-
-setMode2Address
-    lda #<getSpriteMode2Byte            ;
-    sta getSourceByte + 1               ;
-    lda #>getSpriteMode2Byte            ; address getSpriteMode2Byte
+    lda getHighByteAddress - 1,x        ;
     sta getSourceByte + 2               ;
 
-; ***************************************************************************************
-calculateScreenAddrAndPlot
     lda #<logicalScreenStart            ; }
     sta plotScreenAddressLow            ; }
     lda #>logicalScreenStart            ; } start at logical screen address
@@ -1701,7 +1708,7 @@ plotContinues
     jmp spriteDrawRow                   ;
 
 ; ***************************************************************************************
-getSpriteDefaultModeByte
+getSpriteMode1Byte
     lda (plotSourceSpriteAddressLow),y  ; read source sprite
     and spriteColourMask                ; AND with mask
     ora (plotScreenAddressLow),y        ; OR with screen
@@ -1710,13 +1717,6 @@ getSpriteDefaultModeByte
 ; ***************************************************************************************
 getSpriteMode2Byte
     lda #0                              ;
-    rts                                 ;
-
-; ***************************************************************************************
-getSpriteMode10Byte
-    lda (plotSourceSpriteAddressLow),y  ; read source sprite
-    and #$f0                            ; AND with bit pattern for colour 2
-    eor (plotScreenAddressLow),y        ; EOR with screen
     rts                                 ;
 
 ; ***************************************************************************************
@@ -1737,6 +1737,13 @@ getSpriteMode5Byte
     lda (plotScreenAddressLow),y        ; read screen
     cmp #$ff                            ;
     bne getSpriteMode2Byte              ; if (not four pixels of colour 3) then use mode 2
+    rts                                 ;
+
+; ***************************************************************************************
+getSpriteMode6Byte
+    lda (plotSourceSpriteAddressLow),y  ; read source sprite
+    and #$f0                            ; AND with bit pattern for colour 2
+    eor (plotScreenAddressLow),y        ; EOR with screen
     rts                                 ;
 
 ; ***************************************************************************************
@@ -2344,7 +2351,7 @@ updatePlayerWithAnimation
 drawPlayerAndCheckForSingleItems
     ldx newPlayerPixelX                 ;
     ldy newPlayerPixelY                 ;
-    lda #0                              ;
+    lda #1                              ;
 opcodeForJsrPlot
     jsr plot                            ; draw player (mode 0)
     jsr checkForLandingOnSpike          ;
@@ -3587,13 +3594,13 @@ setSkylabSprite6
 copyEugeneIntoMODE1Format
     ldy #0                              ; loop counter
     lda #<verticalGuardianMODE1Address  ; }
-    sta storeByte + 1                   ; }
+    sta storeByteY + 1                  ; }
 !if (<verticalGuardianMODE1Address) != 0 {
     !error "vertical guardian address should be on a page boundary"
 }
-    sta copyEugeneByteCounter           ; }
+    sty copyEugeneByteCounter           ; }
     lda #>verticalGuardianMODE1Address  ; }
-    sta storeByte + 2                   ; }
+    sta storeByteY + 2                  ; }
 
 -
     ldx copyEugeneByteCounter       ;
@@ -3601,8 +3608,8 @@ specialSpriteSourceAddress = * + 1
     lda eugeneSprite,x              ;
     sta copyEugeneSourceByte        ; store source byte
     stx copyEugeneByteCounter       ; [redundant]
-    and #$f0                        ; top nybble
-    sta copyEugeneTempByte          ;
+    and #$f0                        ; extract top nybble
+    sta copyEugeneTempByte          ; save it
     lsr                             ;
     lsr                             ;
     lsr                             ;
@@ -3610,24 +3617,26 @@ specialSpriteSourceAddress = * + 1
     clc                             ;
     adc copyEugeneTempByte          ; add original to get a Eugene in colour 3
 
-    jsr storeByte                   ;
+    jsr storeByteY                  ; store left hand byte
 
     lda copyEugeneSourceByte        ; recall source byte
     and #$0f                        ; lower nybble
-    sta copyEugeneTempByte          ;
+    sta copyEugeneTempByte          ; save it
     asl                             ;
     asl                             ;
     asl                             ;
     asl                             ;
     clc                             ;
-    adc copyEugeneTempByte          ; add lower byte to get white Eugene in colour 3
+    adc copyEugeneTempByte          ; add lower nybble to get white Eugene in colour 3
     sta copyEugeneTempByte          ; store
+
     tya                             ; }
     clc                             ; } Y += 8
     adc #8                          ; }
     tay                             ; }
+
     lda copyEugeneTempByte          ;
-    jsr storeByte                   ; store right hand side byte of Eugene
+    jsr storeByteY                  ; store right hand side byte of Eugene
     ldx copyEugeneByteCounter       ;
     inx                             ; increment source counter
     stx copyEugeneByteCounter       ;
@@ -3638,10 +3647,10 @@ specialSpriteSourceAddress = * + 1
     cmp #8                          ;
     bne -                           ; loop 8 times
     ldy #$00                        ; reset loop counter
-    lda storeByte + 1               ;
+    lda storeByteY + 1              ;
     clc                             ;
     adc #$10                        ; add 16 to destination byte
-    sta storeByte + 1               ;
+    sta storeByteY + 1              ;
     ldx copyEugeneByteCounter       ;
     cpx #$80                        ; check if we are done
     bne -                           ; if (not done) then branch (loop back)
@@ -3796,7 +3805,7 @@ writeByteToVerticalGuardians
 
 ; ***************************************************************************************
 swapBackPages
-    jmp swapPagesC00andE00          ;
+    jmp swapPagesC00AndGuardiansPage    ;
 
 ; ***************************************************************************************
 readGuardianByte
@@ -3825,7 +3834,7 @@ animateKeysUpdateHorizontalGuardiansAndLevel19EnergyFields
 
 ; ***************************************************************************************
 updateHorizontalGuardians
-    jsr swapPagesC00andE00          ; swap in guardian definitions
+    jsr swapPagesC00AndGuardiansPage    ; swap in guardian definitions
     lda #0                          ;
     sta drawGuardianLoopCounter     ;
     tay                             ;
@@ -4177,7 +4186,7 @@ copyGuardianPositionDataLoop
     cmp #$ff                            ;
     bne copyGuardianPositionDataLoop    ;
     jsr storeByteToD80                  ;
-    jmp swapPagesC00andE00              ;
+    jmp swapPagesC00AndGuardiansPage    ;
 
 ; ***************************************************************************************
 storeByteToD80
@@ -4189,15 +4198,15 @@ storeByteToD80
 ; Note: this only copies 255 bytes, rather than 256 bytes
 ;
 ; ***************************************************************************************
-swapPagesC00andE00
+swapPagesC00AndGuardiansPage
     ldx #0                              ;
 swapPagesLoop
     lda softCharacterDefinitions,x      ;
     tay                                 ;
-    lda $0e00,x                         ;
-    sta softCharacterDefinitions,x      ; swap page at $0c00 with page at $0e00
+    lda guardianSpriteCache,x           ;
+    sta softCharacterDefinitions,x      ; swap page at $0c00 with page at guardianSpriteCache
     tya                                 ;
-    sta $0e00,x                         ;
+    sta guardianSpriteCache,x           ;
     inx                                 ;
     cpx #$ff                            ;
     bne swapPagesLoop                   ; copy 255 bytes in this loop
@@ -4530,22 +4539,6 @@ showTitleScreenMessageAndWaitForRETURN
     lda #2                          ;
     sta lives                       ;
 
-    lda #31                         ; }
-    jsr OSWRCH                      ; }
-    lda #$12                        ; }
-    jsr OSWRCH                      ; } TAB(18,19)
-    lda #$13                        ; }
-    jsr OSWRCH                      ; }
-
-    ; print 18 spaces
-    lda #charSPACE                  ;
-    ldx #0                          ; loop counter
--
-    jsr OSWRCH                      ;
-    inx                             ;
-    cpx #18                         ;
-    bne -                           ;
-
     ; set palette to regular numbers
     ldx #0                          ;
 -
@@ -4565,7 +4558,6 @@ showTitleScreenMessageAndWaitForRETURN
     sta $70                         ;
     tax                             ;
     tay                             ;
-    sta $70                         ;   [redundant]
 
 -
     inx                             ;
@@ -5348,7 +5340,7 @@ setRoomColours
     ldx #3                          ;
     lda #3                          ;
     jsr setPalette                  ; set palette(3) = 3
-    jmp swapPagesC00andE00          ; use different character set
+    jmp swapPagesC00AndGuardiansPage    ; use different character set
 
 ; ***************************************************************************************
 command255IncrementFeatureIndex
@@ -5560,131 +5552,6 @@ drawSideWallsAndFloor
 
 ; ***************************************************************************************
 start
-    jsr swapManicMinerGraphicWithC00    ;
-
-    ; print message
-    ldx #0                              ;
-moreMessageLoop
-    lda mode1Message,x                  ;
-    cmp #$ff                            ;
-    beq output8Zeroes                   ;
-    jsr OSWRCH                          ;
-outputMessageLoop
-    inx                                 ;
-    cpx #mode1MessageEnd - mode1Message ;
-    bne moreMessageLoop                 ;
-
-    lda #31                             ;
-    jsr OSWRCH                          ;
-    lda #12                             ; TAB(12,3)
-    jsr OSWRCH                          ;
-    lda #3                              ;
-    jsr OSWRCH                          ;
-
-    ; VDU 128,129,130,...,143 (TAB and show user defined characters for 'MANIC MINER' lettering)
-    ldx #$80                            ; loop counter
-vduLoop
-    txa                                 ;
-    jsr OSWRCH                          ;
-    inx                                 ;
-    cpx #$90                            ;
-    bne vduLoop                         ;
-
-    ; copy 256 bytes of screen memory 8 bytes back (centring the text)
-    ldx #0                              ;
--
-    lda $3840,x                         ;
-    sta $3838,x                         ;
-    inx                                 ;
-    bne -                               ;
-
-    stx $393e                           ; store zero byte on screen
-    jsr swapManicMinerGraphicWithC00    ; swap back character definitions
-
-    ; fill in the background with RED
-    lda #$b8                            ;
-    sta $70                             ; screen address $35b8
-    lda #$35                            ;
-    sta $71                             ;
-
-    ldx #0                              ;
-loop1
-    ldy #0                              ;
--
-    lda ($70),y                         ;
-    ora #$0f                            ; colour the background red
-    sta ($70),y                         ; while leaving the foreground logo white
-    iny                                 ;
-    bne -                               ;
-    inx                                 ;
-
-    lda $70                             ; }
-    clc                                 ; }
-    adc #$80                            ; }
-    sta $70                             ; } add $280 to screen address
-    lda $71                             ; }
-    adc #2                              ; }
-    sta $71                             ; }
-    cpx #7                              ;
-    bne loop1                           ; if (fill not finished) then branch (loop back)
-    jmp postFill
-
-output8Zeroes
-    ldy #8                              ;
-    lda #0                              ;
-out8loop
-    jsr OSWRCH                          ;
-    dey                                 ;
-    bne out8loop                        ;
-    jmp outputMessageLoop               ;
-
-    ; swap $2f00-$2fff with $0c00-$0cff ('manic miner' graphics as character definitions)
-swapManicMinerGraphicWithC00
-    ldx #0                              ;
--
-    lda manicMinerGraphic,x             ;
-    tay                                 ;
-    lda softCharacterDefinitions,x      ;
-    sta manicMinerGraphic,x             ;
-    tya                                 ;
-    sta softCharacterDefinitions,x      ;
-    inx                                 ;
-    bne -                               ;
-    rts                                 ;
-
-postFill
-    ; show 14 rows of screen
-    ldx #0                              ;
--
-    lda show14Rows,x                    ;
-    jsr OSWRCH                          ;
-    inx                                 ;
-    cpx #show14RowsEnd - show14Rows     ;
-    bne -                               ;
-
-    ; output 8 zeros
-    lda #0                              ;
-    ldy #8                              ;
--
-    jsr OSWRCH                          ;
-    dey                                 ;
-    bne -                               ;
-
-    ; set text window
-    ldx #0                              ;
--
-    lda setTextWindow,x                 ;
-    jsr OSWRCH                          ;
-    inx                                 ;
-    cpx #setTextWindowEnd - setTextWindow   ;
-    bne -                               ;
-    jmp afterLoads                      ;
-
-; ***************************************************************************************
-afterLoads
-    lda #$8c                            ;
-    jsr OSWRCH                          ; VDU 140 [why?]
-
     jmp miner4EntryPoint                ;
 
 ; ***************************************************************************************
@@ -5815,9 +5682,9 @@ attractLoop
 showALevelLoop
     jsr updatePlayerAirAndDrawConveyor                               ;
     jsr animateKeysUpdateHorizontalGuardiansAndLevel19EnergyFields   ;
-    jsr updateVerticalGuardians         ;
+    jsr updateVerticalGuardians     ;
 
-    ; pointless delay loop
+    ; delay loop
     ldx #0                          ; 0
     ldy #208                        ; 208
 -
@@ -6100,27 +5967,6 @@ startUp
     ldy #$00                                    ;
     jsr OSBYTE                                  ;
     jmp continue                                ;
-
-
-
-; ***************************************************************************************
-moveAndPrintSpaces
-    ; VDU 31,10,19 - move cursor position
-    lda #31                                     ; }
-    jsr OSWRCH                                  ; }
-    lda #10                                     ; } TAB(10, 19)
-    jsr OSWRCH                                  ; }
-    lda #19                                     ; }
-    jsr OSWRCH                                  ; }
-
-    ; print thirty spaces
-    lda #charSPACE                              ;
-    ldx #30                                     ;
--
-    jsr OSWRCH                                  ;
-    dex                                         ;
-    bne -                                       ;
-    jmp miner3EntryPoint                        ;
 
 triggerSwitch
     lda #1                          ;
@@ -6650,6 +6496,7 @@ readOrWriteAddrHigh = readOrWriteByte + 2
     lda $ffff,x                     ;
     rts                             ;
 
+; ***************************************************************************************
 initialize
     ; install event vector code at $3000
     lda #<mainEventRoutine          ;
@@ -6657,32 +6504,16 @@ initialize
     lda #>mainEventRoutine          ;
     sta vectorEVNTV + 1             ;
 
-    ; copy ($5900-$59ff) to ($0500-$05ff) (start of miner willy graphics)
-    ldx #0                          ; loop counter
--
-    lda minerWilly,x                ;
-    sta willyRight0,x               ;
-    inx                             ;
-    bne -                           ;
-
-    ; copy ($5a00-$5aff) to ($0600-$06ff) (end of miner willy graphics)
-    ldx #0                          ; loop counter
--
-    lda minerWilly + $0100,x        ;
-    sta willyLeft0,x                ;
-    inx                             ;
-    bne -                           ;
-
     ; print VDU stream
     ldx #0                          ;
 -
-    lda vduStream,x                 ;
+    lda crtcSetup,x                 ;
     cmp #$ff                        ;
     beq output8Zeros                ;
     jsr OSWRCH                      ;
 backFrom8Zeros
     inx                             ;
-    cpx #vduStreamEnd - vduStream   ;
+    cpx #crtcSetupEnd - crtcSetup   ;
     bne -                           ;
 
     ; *FX 14,4 enable vsync event
@@ -6700,7 +6531,8 @@ backFrom8Zeros
     ; VDU 26 - reset text and graphics windows
     lda #26                         ;
     jsr OSWRCH                      ;
-    jmp moveAndPrintSpaces          ;
+
+    jmp miner3EntryPoint            ;
 
 ; ***************************************************************************************
 output8Zeros
@@ -6758,15 +6590,6 @@ playCurrentLevel
     jsr animateKeysUpdateHorizontalGuardiansAndLevel19EnergyFields  ;
     jsr drawPlayerAndCheckForCollisions                             ;
     jsr updateVerticalGuardiansAndJumpAndFallSounds                 ;
-
-    ; pointless delay loop
-    ldx #0                                  ; 0
-    ldy #$ff                                ; 255
--
-    inx                                     ;
-    bne -                                   ;
-    iny                                     ;
-    bne -                                   ;
 
     ; read special keys (for sound on/off, pause, quit)
     ldy #$ff                                ;
@@ -6904,8 +6727,6 @@ afterShiftHandled
     clc                                     ;
     adc #1                                  ;
     jsr showLevel                           ; change level
-    jmp playCurrentLevel                    ; [redundant]
-
 +
     jmp playCurrentLevel                    ;
 
@@ -7227,16 +7048,16 @@ drawInitialAirMeter
 
     ; draw AIR meter on screen
     lda #$32                        ; }
-    sta storeByte + 2               ; }
+    sta storeByteX + 2              ; }
     lda #$a0                        ; } screen address = $32a0
-    sta storeByte + 1               ; }
+    sta storeByteX + 1              ; }
 
     ldy #$0a                        ; loop counter
 drawAirRow
     ldx #0                          ; loop counter
     lda #$f3                        ; value to store
 -
-    jsr storeByte                   ;
+    jsr storeByteX                  ;
     inx                             ;
     cpx #8                          ;
     beq switchValueToStore          ;
@@ -7253,7 +7074,7 @@ drawAirRow2
     ldx #0                          ;
     lda #$3f                        ;
 -
-    jsr storeByte                   ;
+    jsr storeByteX                  ;
     inx                             ;
     cpx #8                          ;
     beq changeValueToStore2         ;
@@ -7269,15 +7090,15 @@ drawAirRow3
     ldx #0                          ;
 drawAir
     lda #$bd                        ; }
-    sta storeByte                   ; } change op code to LDA abs,x
-    jsr storeByte                   ; load byte
+    sta storeByteX                  ; } change op code to LDA abs,x
+    jsr storeByteX                  ; load byte
     sta tempScreenByte              ; remember original byte
     lda #$9d                        ; }
-    sta storeByte                   ; } change op code to STA abs,x
+    sta storeByteX                  ; } change op code to STA abs,x
 
     lda tempScreenByte              ; recall original byte
     ora #$0f                        ; add colour
-    jsr storeByte                   ; store byte
+    jsr storeByteX                  ; store byte
     inx                             ;
     cpx #16                         ; 16 bytes
     bne drawAir                     ;
@@ -7293,9 +7114,9 @@ drawAir
     sta $32a8                       ; screen address
 
     lda #$32                        ;
-    sta storeByte + 2               ;
+    sta storeByteX + 2              ;
     lda #$a0                        ; set screen address back to $32a0
-    sta storeByte + 1               ;
+    sta storeByteX + 1              ;
     rts                             ;
 
 ; ***************************************************************************************
@@ -7309,19 +7130,24 @@ changeValueToStore2
     jmp backToAirLoop2              ;
 
 ; ***************************************************************************************
-storeByte
+storeByteX
     sta $ffff,x                     ;
     rts                             ;
 
 ; ***************************************************************************************
+storeByteY
+    sta $ffff,y                     ;
+    rts                             ;
+
+; ***************************************************************************************
 gotoNextRow
-    lda storeByte + 1               ;
+    lda storeByteX + 1              ;
     clc                             ;
     adc #$80                        ;
-    sta storeByte + 1               ;
-    lda storeByte + 2               ;
+    sta storeByteX + 1              ;
+    lda storeByteX + 2              ;
     adc #2                          ;
-    sta storeByte + 2               ;
+    sta storeByteX + 2              ;
     rts                             ;
 
 ; ***************************************************************************************
@@ -7353,25 +7179,25 @@ loseAir
 
 readAirByte
     lda #$bd                            ; opcode for 'LDA abs, x'
-    sta storeByte                       ;
+    sta storeByteX                      ;
     ldx airRemainingOffsetWithinCell    ;
-    jsr storeByte                       ;
+    jsr storeByteX                      ;
     cmp #$f3                            ;
     bne setByteToWrite                  ;
     lda #$f0                            ;
 
 writeTwoBytesToScreenForAir
     ldy #$9d                            ; opcode for 'STA abs, x'
-    sty storeByte                       ;
+    sty storeByteX                      ;
     ldx airRemainingOffsetWithinCell    ;
-    jsr storeByte                       ; store left byte of air
+    jsr storeByteX                      ; store left byte of air
     tay                                 ; store A
     txa                                 ; }
     clc                                 ; }
     adc #8                              ; } X += 8
     tax                                 ; }
     tya                                 ; recall A
-    jsr storeByte                       ; store right byte of air
+    jsr storeByteX                      ; store right byte of air
     rts                                 ;
 
 ; ***************************************************************************************
@@ -7456,7 +7282,7 @@ kongIsNotLow
     jsr addToScore                  ; add 40 to score
     ldx #78                         ;
     ldy kongYCoordinate             ;
-    lda #10                         ;
+    lda #1                          ;
     jmp plot                        ; draw Kong falling (mode 10)
 
 kongIsLow
@@ -7652,8 +7478,12 @@ death
     jsr updateMusicState            ;
     jmp playCurrentLevel            ;
 
+guardianSpriteCache
+    * = * + 256
+
     * = $3280                       ; start of visible screen
-!pseudopc $6000 {
+!pseudopc $6200 {
+
 ; ***************************************************************************************
 gameOver
     ; clear screen
@@ -7753,7 +7583,7 @@ drawPlayerAndCheckForCollisions
 
     ldx newPlayerPixelX                 ;
     ldy newPlayerPixelY                 ;
-    lda #6                              ;
+    lda #1                              ;
     jsr plot                            ; draw player (mode 6)
     jsr checkForDeath                   ;
     jsr checkForSwitchFlipped           ;
@@ -8963,6 +8793,11 @@ levelDefinitions
     }
 
     ; ***********************************************************************************
+* = $6ba0
+backgroundCache
+* = * + 16 * 6
+
+    ; ***********************************************************************************
 levelSingleItemDefinitions
 
     ; ***********************************************************************************
@@ -9312,6 +9147,42 @@ levelSingleItemDefinitions
     +singleOffsetX15        ;
     +singleSpider 11, 8, 3  ; spider, length 3
     !byte $ff               ; terminator
+
+    ; A Penrose triangle as encoded PLOT statements
+penroseTriangle
+    !byte $FE, 1                        ; GCOL 0,1
+    !byte $04, $12, $AC-6               ; MOVE
+    !byte $04, $12, $B8-6               ; MOVE
+    !byte $55, $78, $79-6               ; TRI
+    !byte $55, $6C, $8B-6               ; TRI
+    !byte $55, $78, $D3-6               ; TRI
+    !byte $55, $6C, $CD-6               ; TRI
+    !byte $FE, 2                        ; GCOL 0,2
+    !byte $04, $78, $79-6               ; MOVE
+    !byte $04, $83, $7F-6               ; MOVE
+    !byte $55, $78, $D3-6               ; TRI
+    !byte $55, $83, $E4-6               ; TRI
+    !byte $55, $37, $B3-6               ; TRI
+    !byte $55, $2D, $B8-6               ; TRI
+    !byte $FE, 3                        ; GCOL 0,3
+    !byte $04, $6C, $CC-6               ; MOVE
+    !byte $05, $6C, $98-6               ; DRAW
+    !byte $05, $2C, $B8-6               ; DRAW
+    !byte $05, $83, $E4-6               ; DRAW
+    !byte $05, $77, $EA-6               ; DRAW
+    !byte $05, $12, $B8-6               ; DRAW
+    !byte $05, $12, $AC-6               ; DRAW
+    !byte $05, $78, $79-6               ; DRAW
+    !byte $05, $83, $7F-6               ; DRAW
+    !byte $05, $83, $E4-6               ; DRAW
+    !byte $04, $78, $79-6               ; MOVE
+    !byte $05, $78, $D3-6               ; DRAW
+    !byte $05, $37, $B3-6               ; DRAW
+    !byte $04, $6C, $99-6               ; MOVE
+    !byte $05, $6C, $8B-6               ; DRAW
+    !byte $05, $12, $B8-6               ; DRAW
+    !byte $FF                           ; TERMINATOR
+
 
     ; ***********************************************************************************
 guardianGraphics
@@ -13113,6 +12984,7 @@ guardianLevelData
     !byte $ff, $1a, $83, $2e, $4a, $21, $30, $29, $29, $05
     !byte $ff
 
+; ***************************************************************************************
 ; The fixed text under the play area: "Score         Lives     Level"
 ; but with the top bit being the conveyor direction for each level (for the first 20 bytes)
 fixedText
@@ -13121,7 +12993,6 @@ fixedText
     !text $00 + $09, $80 + $09, $80 + ' ', $00 + ' ', $00 + 'L'
     !text $00 + 'i', $80 + 'v', $00 + 'e', $80 + 's', $00 + ' '
     !text $09, $09, $20, $20, "Level"
-
 
 ; ***************************************************************************************
 levelTitles
@@ -13147,14 +13018,10 @@ levelTitles
     !text 7, "The Final Barrier"
     !byte $0d                               ; terminator
 
-
+; ***************************************************************************************
 exitMessage
     !byte $f1, $f2, $0a, $08, $08   ; $f1, $f2
     !byte $f3, $f4, $00             ; $f3, $f4
-
-; ***************************************************************************************
-levelColourArray
-    !byte $01, $01, $03, $02, $03
 
 ; ***************************************************************************************
 show14Rows
@@ -13164,19 +13031,6 @@ show14RowsEnd
 setTextWindow
     !byte 28, 12, 13, 26, 10            ; VDU 28,left,bottom,right,top
 setTextWindowEnd
-
-; ***************************************************************************************
-mode1Message
-    !byte 31, 17, 5                     ; TAB(17,5)
-    !byte $90                           ; VDU 144 (user defined character - copyright)
-    !text "1984"                        ;
-
-    !byte 31, 12, 7                     ; TAB(12,7)
-    !text "By D.J.Coathupe"             ;
-    !byte 23,0,13,$50, $ff              ; set display address (low)
-    !byte 19, 0, 4, $ff                 ; set palette: blue for background
-    !byte 19, 2, 2, $ff                 ; set palette: set logical colour 2 to display as green
-mode1MessageEnd
 
 ; ***************************************************************************************
 ;
@@ -13203,6 +13057,7 @@ verticalGuardians
     !byte $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff    ; level 19
     !byte $82, $06, $da, $4d, $ff, $ff, $ff, $ff    ; level 20
 
+; ***************************************************************************************
 cheatCode
     ; code: A <space> S,   E,   C,   R,   E,   T
     ;
@@ -13212,6 +13067,7 @@ cheatCode
     !byte $41, $62, $51, $22, $52, $33, $22, $23
 cheatCodeEnd
 
+; ***************************************************************************************
 music
     ; tune frequencies
     !byte $23, $1f, $1d, $1a, $17, $1d, $17, $17, $16, $1a, $16, $16, $17, $1d, $17, $17
@@ -13219,41 +13075,7 @@ music
     !byte $1f, $1d, $1a, $17, $1d, $17, $17, $16, $1a, $16, $16, $17, $1d, $17, $17, $23
     !byte $1f, $1d, $1a, $17, $1d, $17, $11, $13, $17, $1d, $17, $13, $13, $13, $00, $00
 
-    ; A Penrose triangle as encoded PLOT statements
-penroseTriangle
-    !byte $FE, 1                        ; GCOL 0,1
-    !byte $04, $12, $AC-6               ; MOVE
-    !byte $04, $12, $B8-6               ; MOVE
-    !byte $55, $78, $79-6               ; TRI
-    !byte $55, $6C, $8B-6               ; TRI
-    !byte $55, $78, $D3-6               ; TRI
-    !byte $55, $6C, $CD-6               ; TRI
-    !byte $FE, 2                        ; GCOL 0,2
-    !byte $04, $78, $79-6               ; MOVE
-    !byte $04, $83, $7F-6               ; MOVE
-    !byte $55, $78, $D3-6               ; TRI
-    !byte $55, $83, $E4-6               ; TRI
-    !byte $55, $37, $B3-6               ; TRI
-    !byte $55, $2D, $B8-6               ; TRI
-    !byte $FE, 3                        ; GCOL 0,3
-    !byte $04, $6C, $CC-6               ; MOVE
-    !byte $05, $6C, $98-6               ; DRAW
-    !byte $05, $2C, $B8-6               ; DRAW
-    !byte $05, $83, $E4-6               ; DRAW
-    !byte $05, $77, $EA-6               ; DRAW
-    !byte $05, $12, $B8-6               ; DRAW
-    !byte $05, $12, $AC-6               ; DRAW
-    !byte $05, $78, $79-6               ; DRAW
-    !byte $05, $83, $7F-6               ; DRAW
-    !byte $05, $83, $E4-6               ; DRAW
-    !byte $04, $78, $79-6               ; MOVE
-    !byte $05, $78, $D3-6               ; DRAW
-    !byte $05, $37, $B3-6               ; DRAW
-    !byte $04, $6C, $99-6               ; MOVE
-    !byte $05, $6C, $8B-6               ; DRAW
-    !byte $05, $12, $B8-6               ; DRAW
-    !byte $FF                           ; TERMINATOR
-
+; ***************************************************************************************
 creditsMessage
     !byte 31, 19, 2                 ; TAB(19,2)
     !text "SOFTWARE PROJECTS"
@@ -13273,7 +13095,6 @@ creditsMessageEnd
 ; ***************************************************************************************
 plotMessageStart
     !byte 25                        ; VDU 25
-fiveValues
 plotType
     !byte $ea                       ;
 plotXLow
@@ -13300,38 +13121,11 @@ switchMessage
     !byte 10, 8, charSPACE          ; another space below. This removes a section of wall.
 switchMessageEnd
 
-vduStream
-    !byte $17, $00, $07, $1e, $ff   ; VDU 23,0,7,30,0;0;0;0;   vertical sync position = 30
-    !byte $17, $01, $00, $00, $ff   ; VDU 23,0,1, 0,0;0;0;0;   horizontal displayed = 0
-vduStreamEnd
-
-keyArray
-    !byte $cf, $ce, $ee, $ed    ; number keys 1, 2, 3, 4
-
-positionShift
-    !byte 4, 31, 24, 12         ; VDU 4:TAB(24,12)
-positionShiftEnd
-    !byte $5e, 5                ; PRINT UP ARROW:VDU 5
-positionShiftExtendedEnd
-
-setPaletteMessage
-    !byte $13, $03, $03, $00    ;
-setPaletteMessageEnd
-
-turnOffDisplayMessage
-    !byte 19, 0, 0, 0, 0, 0                 ; palette logical colour zero is black
-    !byte 23, 0, 6, 0, 0, 0, 0, 0, 0        ; show zero rows
-turnOffDisplayMessageEnd
-
-keysToRead
-    ;      f0,  f1,  f2,  f3,  f4,  f5,  f6,  f7,  f8,  f9
-    !byte $df, $8e, $8d, $8c, $eb, $8b, $8a, $e9, $89, $88
-keysToReadEnd
-
-; ***************************************************************************************
-flashingExit
-    !byte $91, $92, $0a, $08, $08, $93, $94
-flashingExitEnd
+crtcSetup
+    !byte 23, 0,  7,  30, $ff       ; VDU 23,0,7,30,0;0;0;0;   vertical sync position = 30
+    !byte 23, 1,  0,   0, $ff       ; VDU 23,0,1, 0,0;0;0;0;   horizontal displayed = 0
+    !byte 23, 0, 13, $50, $ff       ; set display address (low)
+crtcSetupEnd
 
 ; ***************************************************************************************
 airMessage
@@ -13357,64 +13151,96 @@ level20EnergyFieldsString
     !byte $1f, $1c, $02                             ; TAB(28, 2)
 
 ; ***************************************************************************************
+flashingExit
+    !byte $91, $92, $0a, $08, $08, $93, $94
+flashingExitEnd
+
+; ***************************************************************************************
+keysToRead
+    ;      f0,  f1,  f2,  f3,  f4,  f5,  f6,  f7,  f8,  f9
+    !byte $df, $8e, $8d, $8c, $eb, $8b, $8a, $e9, $89, $88
+keysToReadEnd
+
+; ***************************************************************************************
 oswordSoundBlock
     !byte $01, $00, $00, $00, $00, $00, $00, $00    ;
 
 ; ***************************************************************************************
 ; uninitialized variables
-
 ; ***************************************************************************************
-energyFieldTimer
-    !byte $ea                                       ;
-
-; ***************************************************************************************
-numberOfCodeEntryAttempts
-    !byte $ea                                       ;
-
-; ***************************************************************************************
-tempScreenByte
-    !byte $ea                                       ;
-
-; ***************************************************************************************
-airRemainingOffsetWithinCell
-    !byte $ea                                       ;
-airRemainingDelayCounter
-    !byte $ea                                       ;
-
-kongYCoordinate
-    !byte $ea                                       ;
-
-; ***************************************************************************************
-score
-    !byte $00, $00, $00                             ;
-
-lives
-    !byte $ea                                       ;
 
 footPositionY
-    !byte $ea                                       ;
-
-level20EnergyFieldsTimer
-    !byte $ea
-
-willyHighestPointReachedOnCurrentJump
-    !byte $ea                                       ;
-willyIsOnGround
-    !byte $ea                                       ;
-willyOffsetWithinCellY
-    !byte $ea                                       ;
-
-airRemaining
     !byte $ea                                       ;
 
 cheatModeEnabled
     !byte $00                                       ;
 
 ; ***************************************************************************************
-guardianPositions
-    !byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-guardianPositionsCopy
-    !byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+exitPositionX
+    !byte $13                       ;
+exitPositionY
+    !byte $07                       ;
+
+; ***************************************************************************************
+levelNumberCounter
+tempCounter
+    !byte $ea                       ;
+
+zeroBasedLevel
+    !byte $ea                       ;
+
+; ***************************************************************************************
+; sprite numbers to draw (level specific)
+levelFeatureArray
+levelFeature0
+    !byte $e0                           ;
+levelFeature1
+    !byte $e2                           ;
+levelFeature2
+    !byte $ef                           ;
+levelFeature3
+    !byte $eb                           ;
+levelFeature4
+    !byte $ea                           ;
+
+; ***************************************************************************************
+levelColourArray
+    !byte $01, $01, $03, $02, $03       ;
+    !byte $00, $00, $00                 ;
+
+; ***************************************************************************************
+roomNumberReached
+    !byte $00                           ;
+
+; ***************************************************************************************
+; ***************************************************************************************
+; ***************************************************************************************
+; ***************************************************************************************
+; ***************************************************************************************
+; ***************************************************************************************
+; ***************************************************************************************
+; ***************************************************************************************
+; ***************************************************************************************
+; ***************************************************************************************
+; rapidly changing variables - keep them off screen?
+; ***************************************************************************************
+; ***************************************************************************************
+; ***************************************************************************************
+; ***************************************************************************************
+; ***************************************************************************************
+; ***************************************************************************************
+; ***************************************************************************************
+; ***************************************************************************************
+; ***************************************************************************************
+energyFieldTimer
+    !byte $ea                                       ;
+
+; ***************************************************************************************
+tempScreenByte
+    !byte $ea                                       ;
+
+kongYCoordinate
+    !byte $ea                                       ;
 
 ; ***************************************************************************************
 eugenePositionY
@@ -13450,16 +13276,6 @@ currentGuardianSpeed
 screenCharacterAPrime
     !byte $ea
 
-; ***************************************************************************************
-playerPixelX
-    !byte $18
-playerPixelY
-    !byte $20
-newPlayerPixelX
-    !byte $18
-newPlayerPixelY
-    !byte $20
-
 willyDeltaX
     !byte $ea
 willyAnimationEOR
@@ -13477,8 +13293,6 @@ willySpriteAddressHigh
     !byte $00                       ; [UNUSED, but copied in and out of cache]
     !byte $00                       ; [UNUSED, but copied in and out of cache]
 
-hasDrawnConveyors
-    !byte $ea                       ;
 willyFalling
     !byte $ea                       ;
 willyJustLandedOnConveyor
@@ -13520,11 +13334,11 @@ textCursorY
 
 ; ***************************************************************************************
 kongBeastSwitchTriggered
-    !byte $00                           ;
+    !byte $00                       ;
 
 ; ***************************************************************************************
 spriteColourMask
-    !byte $ff                           ;
+    !byte $ff                       ;
 
 ; ***************************************************************************************
 copyEugeneSourceByte
@@ -13537,7 +13351,7 @@ copyEugeneByteCounter
 
 ; ***************************************************************************************
 currentGuardianColour
-    !byte $ea                           ;
+    !byte $ea                        ;
 
 ; ***************************************************************************************
 currentGuardianXPosition
@@ -13547,9 +13361,9 @@ drawGuardianLoopCounter
 
 ; ***************************************************************************************
 tempReversingByte
-    !byte $ea                           ;
+    !byte $ea                       ;
 tempY
-    !byte $ea                           ;
+    !byte $ea                       ;
 
 ; ***************************************************************************************
 rememberCharacterToDraw
@@ -13576,41 +13390,14 @@ conveyorLength
 conveyorSpriteOffset
     !byte $ea                       ;
 
-; ***************************************************************************************
-exitPositionX
-    !byte $13                       ;
-exitPositionY
-    !byte $07                       ;
-; ***************************************************************************************
-levelNumberCounter
-tempCounter
-    !byte $ea                       ;
-
 tempX
     !byte $ea                       ;
 
 byteToReverse
     !byte $ea                       ;
-; ***************************************************************************************
-; sprite numbers to draw (level specific)
-levelFeatureArray
-levelFeature0
-    !byte $e0                           ;
-levelFeature1
-    !byte $e2                           ;
-levelFeature2
-    !byte $ef                           ;
-levelFeature3
-    !byte $eb                           ;
-levelFeature4
-    !byte $ea                           ;
-
-; ***************************************************************************************
-roomNumberReached
-    !byte $00                           ;
 
 keysLeft
-    !byte $00                           ;
+    !byte $00                       ;
 
 ; ***************************************************************************************
 vsyncCounter
@@ -13663,18 +13450,10 @@ tempKeyIndex
 keyColourCounter
     !byte $ea                       ;
 
-addition
-    !byte $ea                       ;
-
-counter
-    !byte $ea                       ;
-
 musicEnabled
     !byte $ea                       ;
 
 keyCounter
-    !byte $ea                       ;
-zeroBasedLevel
     !byte $ea                       ;
 
 flashingExitCounter

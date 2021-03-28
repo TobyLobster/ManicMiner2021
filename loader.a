@@ -11,6 +11,9 @@ main = $0d00
 
 ; ***************************************************************************************
 start
+    ldx #0                                  ;
+    txs                                     ; Reset stack
+
     ; Switch to MODE 1
     ldx #0                                  ;
 moreMessageLoop
@@ -43,14 +46,6 @@ outputMessageLoop
     ldy #>copyUpBlock                       ;
     jsr copyUp                              ;
 
--
-    ldy #$ff                                ;
-    ldx #$b6                                ;
-    lda #$81                                ; wait for RETURN key
-    jsr OSBYTE                              ;
-    cpy #$ff                                ;
-    bne -                                   ;
-
     ; run game
     jmp main                                ;
 
@@ -71,7 +66,7 @@ copyDownBlock
 
 copyUpBlock
     !word $1900+$3280-$0500                 ; from
-    !word $6000                             ; to
+    !word $6200                             ; to
     !word $2000                             ; length
 
 ; ***************************************************************************************
@@ -131,33 +126,33 @@ copyUp
     jsr copyAddresses                       ;
     ldx copyLengthHigh                      ; the last byte must be moved first
     clc                                     ; start at the final pages of FROM and TO
-    txa
-    adc fromHigh
-    sta fromHigh
-    clc
-    txa
-    adc toHigh
-    sta toHigh
+    txa                                     ;
+    adc fromHigh                            ;
+    sta fromHigh                            ;
+    clc                                     ;
+    txa                                     ;
+    adc toHigh                              ;
+    sta toHigh                              ;
     inx                                     ; allows the use of BNE after the DEX below
-    ldy copyLengthLow
-    beq +
+    ldy copyLengthLow                       ;
+    beq +                                   ;
     dey                                     ; move bytes on the last page first
-    beq secondLoop
+    beq secondLoop                          ;
 -
-    lda (fromLow),Y
-    sta (toLow),Y
-    dey
-    bne -
+    lda (fromLow),Y                         ;
+    sta (toLow),Y                           ;
+    dey                                     ;
+    bne -                                   ;
 secondLoop
     lda (fromLow),Y                         ; handle Y = 0 separately
     sta (toLow),Y
 +
-    dey
+    dey                                     ;
     dec fromHigh                            ; move the next page (if any)
-    dec toHigh
-    dex
-    bne -
-    rts
+    dec toHigh                              ;
+    dex                                     ;
+    bne -                                   ;
+    rts                                     ;
 
 
 ; ***************************************************************************************

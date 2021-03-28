@@ -5723,7 +5723,7 @@ showNextLevel
     jmp attractLoop                 ;
 
 endOfAttractLoop
-    jmp miner3EntryPoint            ;
+    jmp showTitleScreen            ;
 
 ; ***************************************************************************************
 checkCheatCode
@@ -5808,8 +5808,10 @@ return5
     rts                             ;
 
 ; ***************************************************************************************
-miner3EntryPoint
+showTitleScreen
     jsr clearScreen                 ;
+    jsr zeroScore                   ;
+
     lda #17                         ; VDU 17,3 (COLOUR 3)
     jsr OSWRCH                      ;
     lda #3                          ;
@@ -5827,7 +5829,7 @@ miner3EntryPoint
     bne -                           ;
 
     ; swap in the flowery logo
-    jsr swapPages700andC00          ;
+    jsr swapLogoWithC00             ;
 
     ; draw the flowery logo
     ldx #$80                        ; loop counter (and character to print)
@@ -5839,41 +5841,7 @@ miner3EntryPoint
     bne -                           ;
 
     ; swap out the flowery logo
-    jsr swapPages700andC00          ;
-
-    ; Colour the background on screen from $4030 in a rectangle
-    lda #$30                        ;
-    sta $70                         ;
-    lda #$40                        ;
-    sta $71                         ;
-rectLoop
-    ldy #0                          ;
--
-    lda ($70),y                     ;
-    ora #$f0                        ;
-    sta ($70),y                     ;
-    iny                             ;
-    bne -                           ;
-    inc $71                         ;
-
-    ldy #0                          ;
--
-    lda ($70),y                     ;
-    ora #$f0                        ;
-    sta ($70),y                     ;
-    iny                             ;
-    cpy #$18                        ;
-    bne -                           ;
-
-    lda $70                         ;
-    clc                             ;
-    adc #$80                        ;
-    sta $70                         ;
-    lda $71                         ;
-    adc #1                          ;
-    sta $71                         ;
-    cmp #$51                        ;
-    bne rectLoop                    ;
+    jsr swapLogoWithC00             ;
 
     ; plot triangle logo
     ldx #$ff                        ;
@@ -5922,6 +5890,12 @@ plotLoop
     jmp plotLoop                    ;
 
 finishPlot
+
+    lda #17                         ;
+    jsr OSWRCH                      ;
+    lda #128                        ;
+    jsr OSWRCH                      ;
+
     jmp showTitleScreenMessageAndWaitForRETURN  ;
 
 gcol
@@ -5938,13 +5912,14 @@ getNextByte
     lda penroseTriangle,x           ;
     rts                             ;
 
-swapPages700andC00
+; ***************************************************************************************
+swapLogoWithC00
     ldx #0                          ; loop counter
 -
-    lda $0700,x                     ;
+    lda manicMinerGraphic,x         ;
     tay                             ;
     lda softCharacterDefinitions,x  ;
-    sta $0700,x                     ;
+    sta manicMinerGraphic,x         ;
     tya                             ; swap $700->$7ff with $0c00->$0cff
     sta softCharacterDefinitions,x  ;
     inx                             ;
@@ -5979,17 +5954,16 @@ triggerSwitch
     lda vduTextCursorXPosition      ;
     rts                             ;
 
-
+; ***************************************************************************************
 zeroScore
     ; clear the score (6 digits in 3 BCD bytes)
     lda #0                          ;
-    tax                             ;
+    ldx #2                          ;
 -
-    sta score, x                    ;
-    inx                             ;
-    cpx #3                          ;
-    bne -                           ;
-    jmp miner3EntryPoint            ;
+    sta score,x                     ;
+    dex                             ;
+    bpl -                           ;
+    rts                             ;
 
 ; ***************************************************************************************
 getLevelDataByte
@@ -6537,7 +6511,7 @@ backFrom8Zeros
     lda #26                         ;
     jsr OSWRCH                      ;
 
-    jmp miner3EntryPoint            ;
+    jmp showTitleScreen             ;
 
 ; ***************************************************************************************
 output8Zeros
@@ -6667,7 +6641,7 @@ waitForCOPYKey
     jmp playCurrentLevel                    ;
 
 endGame
-    jmp zeroScore                           ;
+    jmp showTitleScreen                     ;
 
 musicOff
     lda #0                                  ;
@@ -7574,7 +7548,8 @@ footDescendingLoop
 
     lda #$10                        ; delay amount
     jsr delayAndClearPedestalSprite ;
-    jmp zeroScore                   ;
+    jmp showTitleScreen             ;
+
 
 ; ***************************************************************************************
 drawPlayerAndCheckForCollisions
@@ -13085,14 +13060,24 @@ creditsMessage
     !text "SOFTWARE PROJECTS"
     !byte 31, 23, 4                 ; TAB(23,4)
     !text "Presents"
-    !byte 31, 26, 9                 ; TAB(26,9)
-    !text "BY"
-    !byte 31, 21, 11                ; TAB(21,11)
-    !text "D.J.COATHUPE"
     !byte 31, 19, 15                ; TAB(19,15)
     !text "ORIGINAL PROGRAM"
     !byte 31, 19, 17                ; TAB(19,17)
     !text "BY MATTHEW SMITH"
+    !byte 18, 0, 130                ; GCOL 0,130
+    !byte 24                        ; define graphics window
+    !word 19 * 32                   ; left
+    !word 19 * 32                   ; bottom
+    !word 36 * 32 + 12              ; right
+    !word (32-6)*32                 ; top
+    !byte 16                        ; clear graphics area
+    !byte 18, 0, 128                ; GCOL 0,128
+    !byte 26                        ; reset text window
+    !byte 17, 130                   ; COLOUR 130
+    !byte 31, 26, 9                 ; TAB(26,9)
+    !text "BY"
+    !byte 31, 21, 11                ; TAB(21,11)
+    !text "D.J.COATHUPE"
     !byte 31, 19, 7                 ; TAB(19,7)
 creditsMessageEnd
 

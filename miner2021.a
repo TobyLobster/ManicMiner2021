@@ -1548,6 +1548,73 @@ getLowByteAddress
 getHighByteAddress
     !byte >getSpriteMode1Byte, >getSpriteMode2Byte, >getSpriteMode3Byte, >getSpriteMode4Byte, >getSpriteMode5Byte, >getSpriteMode6Byte
 
+screenRowAddressLow
+    !byte <(logicalScreenStart + 0 * $280)
+    !byte <(logicalScreenStart + 1 * $280)
+    !byte <(logicalScreenStart + 2 * $280)
+    !byte <(logicalScreenStart + 3 * $280)
+    !byte <(logicalScreenStart + 4 * $280)
+    !byte <(logicalScreenStart + 5 * $280)
+    !byte <(logicalScreenStart + 6 * $280)
+    !byte <(logicalScreenStart + 7 * $280)
+    !byte <(logicalScreenStart + 8 * $280)
+    !byte <(logicalScreenStart + 9 * $280)
+    !byte <(logicalScreenStart + 10 * $280)
+    !byte <(logicalScreenStart + 11 * $280)
+    !byte <(logicalScreenStart + 12 * $280)
+    !byte <(logicalScreenStart + 13 * $280)
+    !byte <(logicalScreenStart + 14 * $280)
+    !byte <(logicalScreenStart + 15 * $280)
+    !byte <(logicalScreenStart + 16 * $280)
+    !byte <(logicalScreenStart + 17 * $280)
+    !byte <(logicalScreenStart + 18 * $280)
+    !byte <(logicalScreenStart + 19 * $280)
+    !byte <(logicalScreenStart + 20 * $280)
+    !byte <(logicalScreenStart + 21 * $280)
+    !byte <(logicalScreenStart + 22 * $280)
+    !byte <(logicalScreenStart + 23 * $280)
+    !byte <(logicalScreenStart + 24 * $280)
+    !byte <(logicalScreenStart + 25 * $280)
+    !byte <(logicalScreenStart + 26 * $280)
+    !byte <(logicalScreenStart + 27 * $280)
+    !byte <(logicalScreenStart + 28 * $280)
+    !byte <(logicalScreenStart + 29 * $280)
+    !byte <(logicalScreenStart + 30 * $280)
+screenRowAddressHigh
+    !byte >(logicalScreenStart + 0 * $280)
+    !byte >(logicalScreenStart + 1 * $280)
+    !byte >(logicalScreenStart + 2 * $280)
+    !byte >(logicalScreenStart + 3 * $280)
+    !byte >(logicalScreenStart + 4 * $280)
+    !byte >(logicalScreenStart + 5 * $280)
+    !byte >(logicalScreenStart + 6 * $280)
+    !byte >(logicalScreenStart + 7 * $280)
+    !byte >(logicalScreenStart + 8 * $280)
+    !byte >(logicalScreenStart + 9 * $280)
+    !byte >(logicalScreenStart + 10 * $280)
+    !byte >(logicalScreenStart + 11 * $280)
+    !byte >(logicalScreenStart + 12 * $280)
+    !byte >(logicalScreenStart + 13 * $280)
+    !byte >(logicalScreenStart + 14 * $280)
+    !byte >(logicalScreenStart + 15 * $280)
+    !byte >(logicalScreenStart + 16 * $280)
+    !byte >(logicalScreenStart + 17 * $280)
+    !byte >(logicalScreenStart + 18 * $280)
+    !byte >(logicalScreenStart + 19 * $280)
+    !byte >(logicalScreenStart + 20 * $280)
+    !byte >(logicalScreenStart + 21 * $280)
+    !byte >(logicalScreenStart + 22 * $280)
+    !byte >(logicalScreenStart + 23 * $280)
+    !byte >(logicalScreenStart + 24 * $280)
+    !byte >(logicalScreenStart + 25 * $280)
+    !byte >(logicalScreenStart + 26 * $280)
+    !byte >(logicalScreenStart + 27 * $280)
+    !byte >(logicalScreenStart + 28 * $280)
+    !byte >(logicalScreenStart + 29 * $280)
+    !byte >(logicalScreenStart + 30 * $280)
+tempHigh
+    !byte 0
+
 ; ***************************************************************************************
 ;
 ; plot
@@ -1585,91 +1652,67 @@ plot
 
     txa                                 ;
     and #$fc                            ;
-    clc                                 ;
-    ror                                 ;
+    lsr                                 ;
     sta plotX                           ; plotX = (X pixel / 4) * 2
     tya                                 ;
-    and #$f8                            ;
-    clc                                 ;
-    ror                                 ;
-    ror                                 ;
-    ror                                 ;
-    sta plotY                           ; plotY = (Y pixel / 8)     [can be improved]
+    lsr                                 ;
+    lsr                                 ;
+    lsr                                 ;
+    sta plotY                           ; plotY = (Y pixel / 8)
 
+    ; based on the current mode, store the address of routine to get the next byte to write
     ldx plotMode                        ;
     lda getLowByteAddress - 1,x         ;
     sta getSourceByte + 1               ;
     lda getHighByteAddress - 1,x        ;
     sta getSourceByte + 2               ;
 
-    lda #<logicalScreenStart            ; }
-    sta plotScreenAddressLow            ; }
-    lda #>logicalScreenStart            ; } start at logical screen address
-    sta plotScreenAddressHigh           ; }
-
     lda #0                              ;
     sta spriteRowCounter                ;
 
-    ; calculate logicalScreenStart + 8*(X cell coordinate)
-    ; multiplication by repeated addition
-    ldx #0                              ;
--
-    cpx plotX                           ;
-    beq +                               ;
+    ; get the row address
+    ldx plotY                           ;
+    lda screenRowAddressLow,x           ;
+    sta plotScreenAddressLow            ;
+    lda screenRowAddressHigh,x          ;
+    sta plotScreenAddressHigh           ;
 
-    lda plotScreenAddressLow            ; }
-    clc                                 ; }
-    adc #8                              ; }
-    sta plotScreenAddressLow            ; } add eight to screen address (plotScreenAddress)
-    lda plotScreenAddressHigh           ; }
-    adc #0                              ; }
-    sta plotScreenAddressHigh           ; }
+    ; add 8 * cell X
+    lda #0                              ;
+    sta tempHigh                        ;
+    lda plotX                           ;
+    asl                                 ; no need for a rol here, as plotX is too small
+    asl                                 ;
+    rol tempHigh                        ;
+    asl                                 ;
+    rol tempHigh                        ;
+    clc
+    adc plotScreenAddressLow            ;
+    sta plotScreenAddressLow            ;
+    lda plotScreenAddressHigh           ;
+    adc tempHigh                        ;
+    sta plotScreenAddressHigh           ;
 
-    inx                                 ;
-    jmp -                               ;
-
-; ***************************************************************************************
-; add the Y cells component
-; add $280*(plotY) to plotScreenAddress
-+
-    ldx #0                              ; loop counter
--
-    cpx plotY                           ; multiplication by repeated addition
-    beq +                               ;
-
-    lda plotScreenAddressLow            ; }
-    clc                                 ; }
-    adc #$80                            ; }
-    sta plotScreenAddressLow            ; } add $0280 to screen address (plotScreenAddress)
-    lda plotScreenAddressHigh           ; }
-    adc #$02                            ; }
-    sta plotScreenAddressHigh           ; }
-
-    inx                                 ;
-    jmp -                               ;
-
-; ***************************************************************************************
-; add the Y offset within a cell
-+
+    ; add the Y offset within a cell
     lda plotScreenAddressLow            ; }
     clc                                 ; }
     adc plotYOffset                     ; }
     sta plotScreenAddressLow            ; } add ($74) to screen address
-    lda plotScreenAddressHigh           ; }
-    adc #0                              ; }
-    sta plotScreenAddressHigh           ; }
-
+    bcc +
+    inc plotScreenAddressHigh           ; }
++
 spriteDrawRow
     ldy #0                              ;
 getSourceByte
-    jsr $ffff                           ; call routine to get source byte
+    jmp $ffff                           ; call routine to get source byte
+afterGetSourceByte
     sta (plotScreenAddressLow),y        ; store on screen
     tya                                 ; }
     clc                                 ; }
     adc #8                              ; } Y += 8
     tay                                 ; }
     cpy #32                             ;
-    bne getSourceByte                   ; copy 32 bytes
+    bne getSourceByte                   ; copy four bytes
 
     inc spriteRowCounter                ;
     lda spriteRowCounter                ;
@@ -1677,101 +1720,74 @@ getSourceByte
     beq return3                         ;
     and #7                              ;
     cmp #0                              ;
-    beq add24ToSourceAddress            ;
-
-plotContinues
-    inc plotYOffset                     ;
-
-    lda plotScreenAddressLow            ; }
-    clc                                 ; }
-    adc #1                              ; }
-    sta plotScreenAddressLow            ; } add 1 to (plotScreenAddress), the screen address
-    lda plotScreenAddressHigh           ; }
-    adc #0                              ; }
-    sta plotScreenAddressHigh           ; }
+    bne +                               ;
 
     lda plotSourceSpriteAddressLow      ; }
     clc                                 ; }
-    adc #1                              ; }
-    sta plotSourceSpriteAddressLow      ; } add 1 to ($77,$78), the source sprite
-    lda plotSourceSpriteAddressHigh     ; }
-    adc #0                              ; }
-    sta plotSourceSpriteAddressHigh     ; }
+    adc #$18                            ; }
+    sta plotSourceSpriteAddressLow      ; } add 24 to source sprite address
+    bcc +
+    inc plotSourceSpriteAddressHigh     ; }
 
-    lda $79                             ; }
-    clc                                 ; }
-    adc #1                              ; }
-    sta $79                             ; } add 1 to ($79, $7a)
-    lda $7a                             ; }
-    adc #0                              ; }
-    sta $7a                             ; }
++
+    inc plotYOffset                     ;
 
+    inc plotScreenAddressLow            ; increment screen address
+    bne +                               ;
+    inc plotScreenAddressHigh           ;
++
+
+    inc plotSourceSpriteAddressLow      ; }
+    bne +                               ; } add 1 to the source sprite address
+    inc plotSourceSpriteAddressHigh     ; }
++
     lda plotYOffset                     ;
     cmp #8                              ;
+    bne spriteDrawRow                   ;
     beq spriteMoveToNextRow             ;
-    jmp spriteDrawRow                   ;
+
+; ***************************************************************************************
+return3
+    rts                                 ;
 
 ; ***************************************************************************************
 getSpriteMode1Byte
     lda (plotSourceSpriteAddressLow),y  ; read source sprite
     and spriteColourMask                ; AND with mask
     ora (plotScreenAddressLow),y        ; OR with screen
-    rts                                 ;x
+    jmp afterGetSourceByte              ;
 
 ; ***************************************************************************************
 getSpriteMode2Byte
     lda #0                              ;
-    rts                                 ;
+    jmp afterGetSourceByte              ;
 
 ; ***************************************************************************************
 getSpriteMode3Byte
     lda (plotSourceSpriteAddressLow),y  ; read source sprite
     and spriteColourMask                ; AND with mask
-    rts                                 ;
+    jmp afterGetSourceByte              ;
 
 ; ***************************************************************************************
 getSpriteMode4Byte
     lda (plotScreenAddressLow),y        ; read screen
     cmp #$ff                            ;
     bne getSpriteMode3Byte              ; if (not four pixels of colour 3) then use mode 3
-    rts                                 ;
+    jmp afterGetSourceByte              ;
 
 ; ***************************************************************************************
 getSpriteMode5Byte
     lda (plotScreenAddressLow),y        ; read screen
     cmp #$ff                            ;
     bne getSpriteMode2Byte              ; if (not four pixels of colour 3) then use mode 2
-    rts                                 ;
+    jmp afterGetSourceByte              ;
 
 ; ***************************************************************************************
 getSpriteMode6Byte
     lda (plotSourceSpriteAddressLow),y  ; read source sprite
     and #$f0                            ; AND with bit pattern for colour 2
     eor (plotScreenAddressLow),y        ; EOR with screen
-    rts                                 ;
-
-; ***************************************************************************************
-add24ToSourceAddress
-    lda plotSourceSpriteAddressLow      ; }
-    clc                                 ; }
-    adc #$18                            ; }
-    sta plotSourceSpriteAddressLow      ; } add 24 to source sprite address
-    lda plotSourceSpriteAddressHigh     ; }
-    adc #0                              ; }
-    sta plotSourceSpriteAddressHigh     ; }
-
-    lda $79                             ; }
-    clc                                 ; }
-    adc #$19                            ; }
-    sta $79                             ; } add 25 to ($79,$7A)
-    lda $7a                             ; }
-    adc #0                              ; }
-    sta $7a                             ; }
-    jmp plotContinues                   ;
-
-; ***************************************************************************************
-return3
-    rts                                 ;
+    jmp afterGetSourceByte              ;
 
 ; ***************************************************************************************
 spriteMoveToNextRow

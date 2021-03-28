@@ -374,25 +374,24 @@ hasDrawnConveyors
     !byte $05, $10, $00, $00, $07, $00, $00, $20, $f6, $fe, $fe, $7e, $64, $00, $00, $00
     !byte $01, $02, $00, $00, $64, $00, $00, $7e, $00, $00, $fe, $7e, $7e, $00, $00, $00
 
-spriteStart
+exitSprites2x2
     ; skull and crossbones
-    !byte %.....###            ;      ######
-    !byte %....####            ;     ########
-    !byte %....#..#            ;     #  ##  #
-    !byte %....#..#            ;     #  ##  #
-    !byte %....####            ;     ########
-    !byte %.....#.#            ;      # ## #
-    !byte %.....##.            ;      ##  ##
-    !byte %......##            ;       ####
-                               ;  ###   ## #####
-    !byte %###.....            ; #####    #######
-    !byte %####....            ; ####### ########
-    !byte %#..#....            ;     ## ###  ###
-    !byte %#..#....            ;  ###  ### ##
-    !byte %####....            ; ######## #######
-    !byte %#.#.....            ; #######    #####
-    !byte %.##.....            ;  #####      ###
-    !byte %##......
+    !byte %.....###            ;     ######
+    !byte %....####            ;    ########
+    !byte %....#..#            ;    #  ##  #
+    !byte %....#..#            ;    #  ##  #
+    !byte %....####            ;    ########
+    !byte %.....#.#            ;     # ## #
+    !byte %.....##.            ;     ##  ##
+    !byte %......##            ;      ####
+    !byte %###.....            ; ###   ## #####
+    !byte %####....            ;#####    #######
+    !byte %#..#....            ;####### ########
+    !byte %#..#....            ;    ## ###  ###
+    !byte %####....            ; ###  ### ##
+    !byte %#.#.....            ;######## #######
+    !byte %.##.....            ;#######    #####
+    !byte %##......            ; #####      ###
 
     !byte %.###...#
     !byte %#####...
@@ -402,7 +401,6 @@ spriteStart
     !byte %########
     !byte %#######.
     !byte %.#####..
-
     !byte %#.#####.
     !byte %.#######
     !byte %########
@@ -412,26 +410,25 @@ spriteStart
     !byte %...#####
     !byte %....###.
 
-    ; star box (top)
-    !byte %########
-    !byte %#.......
-    !byte %#.######
-    !byte %#.######
-    !byte %#.##.###
-    !byte %#..#.#.#
+    ; star box
+    !byte %########            ;################
+    !byte %#.......            ;#              #
+    !byte %#.######            ;# ############ #
+    !byte %#.######            ;# ############ #
+    !byte %#.##.###            ;# ## ######### #
+    !byte %#..#.#.#            ;#  # # ####### #
+    !byte %#.#...##            ;# #   ######## #
+    !byte %#.......            ;#       ##   # #
+    !byte %########            ;# #   ### ###  #
+    !byte %.......#            ;#  # # ####### #
+    !byte %######.#            ;# ## ######### #
+    !byte %######.#            ;# ############ #
+    !byte %######.#            ;# ############ #
+    !byte %######.#            ;# ############ #
+    !byte %######.#            ;#              #
+    !byte %##...#.#            ;################
+
     !byte %#.#...##
-    !byte %#.......
-
-    !byte %########
-    !byte %.......#
-    !byte %######.#
-    !byte %######.#
-    !byte %######.#
-    !byte %######.#
-    !byte %######.#
-    !byte %##...#.#
-
-    !byte %#.#...##
     !byte %#..#.#.#
     !byte %#.##.###
     !byte %#.######
@@ -439,7 +436,6 @@ spriteStart
     !byte %#.######
     !byte %#.......
     !byte %########
-
     !byte %#.###..#
     !byte %######.#
     !byte %######.#
@@ -449,32 +445,22 @@ spriteStart
     !byte %.......#
     !byte %########
 
-    !byte %########
-    !byte %.#...#..
-    !byte %#..##..#
-    !byte %..#...#.
-    !byte %..#...#.
-    !byte %#..##..#
-    !byte %.#...#..
-    !byte %.#...#..
-
-    !byte %########
-    !byte %.#...#..
-    !byte %#..##..#
-    !byte %..#...#.
-    !byte %..#...#.
-    !byte %#..##..#
-    !byte %.#...#..
-    !byte %.#...#..
-
-    !byte %#..##..#
-    !byte %..#...#.
-    !byte %..#...#.
-    !byte %#..##..#
-    !byte %.#...#..
-    !byte %.#...#..
-    !byte %#..##..#
-    !byte %########
+    !byte %########            ;################
+    !byte %.#...#..            ; #   #   #   #
+    !byte %#..##..#            ;#  ##  ##  ##  #
+    !byte %..#...#.            ;  #   #   #   #
+    !byte %..#...#.            ;  #   #   #   #
+    !byte %#..##..#            ;#  ##  ##  ##  #
+    !byte %.#...#..            ; #   #   #   #
+    !byte %.#...#..            ; #   #   #   #
+    !byte %########            ;#  ##  ##  ##  #
+    !byte %.#...#..            ;  #   #   #   #
+    !byte %#..##..#            ;  #   #   #   #
+    !byte %..#...#.            ;#  ##  ##  ##  #
+    !byte %..#...#.            ; #   #   #   #
+    !byte %#..##..#            ; #   #   #   #
+    !byte %.#...#..            ;#  ##  ##  ##  #
+    !byte %.#...#..            ;################
 
     !byte %#..##..#
     !byte %..#...#.
@@ -484,24 +470,31 @@ spriteStart
     !byte %.#...#..
     !byte %#..##..#
     !byte %########
-
+    !byte %#..##..#
+    !byte %..#...#.
+    !byte %..#...#.
+    !byte %#..##..#
+    !byte %.#...#..
+    !byte %.#...#..
+    !byte %#..##..#
     !byte %########
-    !byte %#...#...
-    !byte %#.#.#.#.
-    !byte %#.#.#.#.
-    !byte %#...#...
-    !byte %##.###.#
-    !byte %##.#...#
-    !byte %##.#.#.#
 
-    !byte %########
-    !byte %#..#####
-    !byte %#.##...#
-    !byte %#.##.#.#
-    !byte %#....#.#
-    !byte %..###..#
-    !byte %.#####.#
-    !byte %.#.#.#.#
+    !byte %########            ;################
+    !byte %#...#...            ;#   #   #  #####
+    !byte %#.#.#.#.            ;# # # # # ##   #
+    !byte %#.#.#.#.            ;# # # # # ## # #
+    !byte %#...#...            ;#   #   #    # #
+    !byte %##.###.#            ;## ### #  ###  #
+    !byte %##.#...#            ;## #   # ##### #
+    !byte %##.#.#.#            ;## # # # # # # #
+    !byte %########            ;## # # # #   # #
+    !byte %#..#####            ;## #   # ##### #
+    !byte %#.##...#            ;## ### ## ### ##
+    !byte %#.##.#.#            ;#   ## ##     ##
+    !byte %#....#.#            ;# # #   # # # ##
+    !byte %..###..#            ;# # # # # # # ##
+    !byte %.#####.#            ;#   #   #   #  #
+    !byte %.#.#.#.#            ;################
 
     !byte %##.#.#.#
     !byte %##.#...#
@@ -511,7 +504,6 @@ spriteStart
     !byte %#.#.#.#.
     !byte %#...#...
     !byte %########
-
     !byte %.#...#.#
     !byte %.#####.#
     !byte %#.###.##
@@ -521,6 +513,7 @@ spriteStart
     !byte %#...#..#
     !byte %########
 
+exitSprites1x1
     !byte %########
     !byte %#..##..#
     !byte %#.###.##
@@ -548,6 +541,7 @@ spriteStart
     !byte %#......#
     !byte %########
 
+exitSprites1x2
     !byte %########
     !byte %#..#..#.
     !byte %#..#..#.
@@ -857,6 +851,7 @@ allOtherSpikes
     !byte %.##..##.
     !byte %##....##
 
+    ; thread
     !byte %....#...
     !byte %....#...
     !byte %....#...
@@ -866,6 +861,7 @@ allOtherSpikes
     !byte %....#...
     !byte %....#...
 
+    ; key
     !byte %..##....
     !byte %.#..#...
     !byte %#...#...
@@ -875,6 +871,7 @@ allOtherSpikes
     !byte %....#.#.
     !byte %.....#..
 
+    ; ice lolly
     !byte %.#.#....
     !byte %#.#.#...
     !byte %.#.#.#..
@@ -884,6 +881,7 @@ allOtherSpikes
     !byte %......#.
     !byte %.......#
 
+    ; cube
     !byte %...#####
     !byte %..#...##
     !byte %.#...###
@@ -893,6 +891,7 @@ allOtherSpikes
     !byte %#...##..
     !byte %#####...
 
+    ; banana
     !byte %##......
     !byte %###.##..
     !byte %.###..#.
@@ -902,6 +901,7 @@ allOtherSpikes
     !byte %.....###
     !byte %........
 
+    ; apple
     !byte %....#...
     !byte %....#...
     !byte %.######.
@@ -1397,6 +1397,7 @@ allOtherSpikes
     !byte %....#.#.
     !byte %.....#..
 
+    ; exit0
     !byte %########                 ; char 145 ($91, $B1, $D1, $F1)
     !byte %#......#
     !byte %#......#
@@ -1406,6 +1407,7 @@ allOtherSpikes
     !byte %#......#
     !byte %########
 
+    ; exit1
     !byte %########                 ; char 146 ($92, $B2, $D2, $F2)
     !byte %#......#
     !byte %#......#
@@ -1415,6 +1417,7 @@ allOtherSpikes
     !byte %#......#
     !byte %########
 
+    ; exit2
     !byte %########                 ; char 147 ($93, $B3, $D3, $F3)
     !byte %#......#
     !byte %#......#
@@ -1424,6 +1427,7 @@ allOtherSpikes
     !byte %#......#
     !byte %########
 
+    ; exit3
     !byte %########                 ; char 148 ($94, $B4, $D4, $F4)
     !byte %#......#
     !byte %#......#
@@ -1712,7 +1716,7 @@ getSpriteMode1Byte
     lda (plotSourceSpriteAddressLow),y  ; read source sprite
     and spriteColourMask                ; AND with mask
     ora (plotScreenAddressLow),y        ; OR with screen
-    rts                                 ;
+    rts                                 ;x
 
 ; ***************************************************************************************
 getSpriteMode2Byte
@@ -3161,7 +3165,7 @@ updateVerticalGuardians
     cmp #9                              ;
     beq drawVerticalGuardiansJumper     ;
     cmp #16                             ;
-    beq +                               ; if (level 16) then branch (return)
+    beq +                               ; if (level 16 - The Sixteenth Cavern) then branch (return)
     cmp #11                             ;
     bcs drawVerticalGuardiansJumper     ;
 +
@@ -3301,7 +3305,7 @@ gotSpriteAddress
     cmp #14                             ;
     bne +                               ;
 
-    ; level 14 specific code
+    ; level 14 - Skylab Landing Bay specific code
     lda #0                              ;
     sta tempGuardianSpriteAddrLow       ;
 
@@ -3353,7 +3357,7 @@ fastGuardian
 updateGuardian
     lda currentLevel            ;
     cmp #19                     ;
-    bne +                       ; if (not level 19) then branch
+    bne +                       ; if (not level 19 - The Meteor Storm) then branch
     lda spriteColourMask        ;
     cmp #$ff                    ;
     bne +                       ; if (not colour 3) then branch
@@ -3731,18 +3735,18 @@ foundSprite
     bcc return4                         ; if (currentLevel < 11) then branch (return)
 
 handleVerticalGuardians
-    ldx #8                              ;
-    lda #0                              ;
--
-    clc                                 ;
-    adc #8                              ; multiplication by repeated addition
-    inx                                 ;
-    cpx currentLevel                    ;
-    bne -                               ;
+    sec                                 ;
+    sbc #8                              ;
+    asl                                 ;
+    asl                                 ;
+    asl                                 ;
 
     clc                                 ;
     adc #<verticalGuardians             ;
     sta readVerticalGuardiansByte + 1   ; addr = verticalGuardians + 8 * (currentLevel-8)
+    lda #>verticalGuardians             ;
+    adc #0                              ;
+    sta readVerticalGuardiansByte + 2   ;
 
     ldx #0                              ; loop counter
     ldy #0                              ;
@@ -3828,7 +3832,7 @@ animateKeysUpdateHorizontalGuardiansAndLevel19EnergyFields
 
     lda currentLevel                ;
     cmp #19                         ;
-    beq updateLevel19Guardians      ; if (level 19) then branch (update guardians and energy fields)
+    beq updateLevel19Guardians      ; if (level 19 - The Meteor Storm) then branch (update guardians and energy fields)
     jmp updateHorizontalGuardians   ; [redundant]
 
 
@@ -4600,7 +4604,7 @@ drawFooterTextOrReturn
 
 drawScoreLevelLives
     lda currentLevel                ;
-    cmp #10                         ; level 10
+    cmp #10                         ; level 10 - The Endorian Forest
     bne nonLevel10                  ;
     lda #$ff                        ;
     sta conveyorLength              ;
@@ -4894,7 +4898,7 @@ nonLevel10Init
     lda #$eb                        ; }
     sta levelFeature3               ; }
     lda #3                          ; }
-    sta levelColourArray + 2        ; } values for all levels except level 10
+    sta levelColourArray + 2        ; } values for all levels except level 10 - The Endorian Forest
     lda #1                          ; }
     sta levelColourArray + 1        ; }
     lda #2                          ; }
@@ -5137,10 +5141,10 @@ getExit16x16
     rol                             ;
     rol                             ; multiply by 32
     tax                             ;
-    ; copy from $0900+X to $0c88 for 32 bytes
+    ; copy from exitSprites2x2+X to $0c88 for 32 bytes
     ldy #0                          ;
 -
-    lda $0900,x                     ;
+    lda exitSprites2x2,x            ;
     sta $0c88,y                     ;
     inx                             ;
     iny                             ;
@@ -5160,7 +5164,7 @@ getExit8x8
     ; copy from $0980+X to $0c88 and $0c90 and $0c98 and $0ca0 for eight bytes
     ldy #0                          ;
 -
-    lda $0980,x                     ;
+    lda exitSprites1x1,x            ;
     sta $0c88,y                     ;
     sta $0c90,y                     ;
     sta $0c98,y                     ;
@@ -5172,7 +5176,7 @@ getExit8x8
     rts                             ;
 
 getExit8x16
-    lda #9                          ;
+    lda #>exitSprites1x2            ;
     sta getExitSourceByte + 2       ;
     lda $86                         ;
     and #$3f                        ; get lower 6 bits
@@ -5182,7 +5186,7 @@ getExit8x16
     rol                             ;
     rol                             ;
     clc                             ;
-    adc #$98                        ;
+    adc #<exitSprites1x2            ;
     sta getExitSourceByte + 1       ;
     lda getExitSourceByte + 2       ;
     adc #0                          ;
@@ -5191,7 +5195,7 @@ getExit8x16
     ; copy 16 bytes
     ldy #0                          ; loop counter
 getExitSourceByte
-    lda $0998                       ;
+    lda exitSprites1x2              ;
     sta $0c88,y                     ;
     lda getExitSourceByte + 1       ; }
     clc                             ; }
@@ -5659,8 +5663,8 @@ soundDirect
 
 ; ***************************************************************************************
 playAttractLoop
-    lda #1                          ;
-    sta currentLevel                ; start attract loop on level 1
+    lda #9                          ;
+    sta currentLevel                ; start attract loop on level 1 - Central Cavern
 
     lda #2                          ;
     sta lives                       ; start with 2 remaining lives (3 lives total)
@@ -6570,7 +6574,7 @@ miner4EntryPoint
 ; ***************************************************************************************
 
 startGame
-    lda #1                                  ; set level 1
+    lda #1                                  ; set level 1 - Central Cavern
     jsr showLevel                           ;
     jsr updateMusicState                    ; pause / resume music
 
@@ -6755,7 +6759,7 @@ storeLevelNumber
     lda currentLevel                    ;
     cmp #19                             ;
     bcc .return1                        ; if (current level < 19)
-    lda #1                              ; set level 1
+    lda #1                              ; set level 1 - Central Cavern
     sta currentLevel                    ;
     lda #0                              ; zero based level number is zero
 .return1
@@ -6902,7 +6906,7 @@ checkExit
     cmp #5                          ;
     bne +                           ;
 
-    ; level 5 specific code
+    ; level 5 - Eugene's Lair specific code
     lda eugenePositionY             ;
     ora #$80                        ; set top bit (ensure moving down)
     sta eugenePositionY             ;
@@ -6935,7 +6939,7 @@ notAtExit
     cmp #6                          ;
     bne updateFlashingExit          ;
 
-    ; special code to handle level 6 flashing exit
+    ; special code to handle level 6 - Processing Plant flashing exit
     lda playerPixelX                ;
     cmp #130                        ;
     bne updateFlashingExit          ;
@@ -7698,14 +7702,14 @@ collideWithVerticalGuardians
     cmp #5                              ;
     bne notLevel5                       ;
 
-    ; level 5 specific code
+    ; level 5 - Eugene's Lair specific code
     lda eugenePositionY                 ;
     and #$7f                            ;
     sec                                 ;
     sbc #8                              ;
     sta currentVerticalGuardians + 1    ; Y coordinate
 
-    lda #$ff                            ; } only one vertical guardian on level 5
+    lda #$ff                            ; } only one vertical guardian on level 5 - Eugene's Lair
     sta verticalGuardian2               ; }
 
     lda #$0f                            ; } column 15
@@ -7742,7 +7746,7 @@ regularLevels
     cmp #14                             ;
     bne +                               ;
 
-    ; level 14 specific code
+    ; level 14 - Skylab Landing Bay specific code
     lda #$f1                            ;
     sta largestYExtent                  ;
 
@@ -7844,7 +7848,7 @@ switchFlipped
     cmp #12                             ;
     bne +                               ;
 
-    ; level 12 switch flipped
+    ; level 12 switch flipped - Return of the Alien Kong Beast
     lda #$47                            ;
     sta guardianPositions + 3           ;
 +
@@ -8039,7 +8043,7 @@ playerStartPositions
 
 levelDefinitions
     ; ***********************************************************************************
-    ; level 1
+    ; level 1 - Central Cavern
     !byte $ff, $ff, 16, 2, 0, 1, 0, 0, 1, 33, 16                ; header
 
     ; floors
@@ -8071,7 +8075,7 @@ levelDefinitions
     +levelStrip 7, 9, 20
 
     ; ***********************************************************************************
-    ; level 2
+    ; level 2 - The Cold Room
     !byte $ff, $ff, 84, 7, 0, 1, 1, 128, 2, 33, 16              ; header
 
     ; floors
@@ -8105,7 +8109,7 @@ levelDefinitions
     +levelStrip 2, 11, 4
 
     ; ***********************************************************************************
-    ; level 3
+    ; level 3 - The Menagerie
     !byte $ff, $ff, 100, 7, 17, 2, 16, 66, 0, 33, 14            ; header
 
     ; floors
@@ -8133,7 +8137,7 @@ levelDefinitions
     +levelStrip 5, 9, 6
 
     ; ***********************************************************************************
-    ; level 4
+    ; level 4 - Abandoned Uranium Workings
     !byte $ff, $ff, 32, 5, 0, 1, 0, 1, 0, 33, 4                 ; header
 
     ; floors
@@ -8170,7 +8174,7 @@ levelDefinitions
     +levelStrip 0, 10, 3
 
     ; ***********************************************************************************
-    ; level 5
+    ; level 5 - Eugene's Lair
     !byte $ff, $ff, 36, 7, 0, 1, 2, 128, 0, 19, 16              ; header
 
     ; floors
@@ -8203,7 +8207,7 @@ levelDefinitions
     +levelStrip 17, 8, 10
 
     ; ***********************************************************************************
-    ; level 6
+    ; level 6 - Processing Plant
     !byte $ff, $ff, 32, 6, 32, 1, 0, 129, 0, 33, 3              ; header
 
     ; floors
@@ -8235,7 +8239,7 @@ levelDefinitions
     +levelStrip 2, 13, 4
 
     ; ***********************************************************************************
-    ; level 7
+    ; level 7 - The Vat
     !byte $ff, $ff, 16, 2, 3, 2, 0, 2, 0, 19, 16                ; header
 
     ; floors
@@ -8267,7 +8271,7 @@ levelDefinitions
     +levelStrip 6, 5, 5
 
     ; ***********************************************************************************
-    ; level 8
+    ; level 8 - Miner Willy meets the Kong Beast
     !byte $ff, $ff, 16, 2, 0, 2, 3, 130, 0, 19, 16              ; header
 
     ; floors
@@ -8309,7 +8313,7 @@ levelDefinitions
     +levelStrip 10, 13, 3
 
     ; ***********************************************************************************
-    ; level 9
+    ; level 9 - Wacky Amoebatrons
     !byte $ff, $ff, 16, 2, 0, 2, 0, 131, 0, 5, 3                ; header
 
     ; floors
@@ -8347,7 +8351,7 @@ levelDefinitions
     +levelSetType 3                 ; back to conveyor [needed to terminate properly?]
 
     ; ***********************************************************************************
-    ; level 10
+    ; level 10 - The Endorian Forest
     !byte $ff, $ff, 32, 1, 50, 1, 52, 67, 0, 17, 16             ; header
 
     ; floors
@@ -8388,7 +8392,7 @@ levelDefinitions
     +levelStrip 7, 12, 10
 
     ; ***********************************************************************************
-    ; level 11
+    ; level 11 - Attack of the Mutant Telephones
     !byte $ff, $ff, 100, 7, 0, 0, 118, 128, 0, 5, 4             ; header
 
     ; floors
@@ -8421,7 +8425,7 @@ levelDefinitions
     +levelStrip 4, 8, 2
 
     ; ***********************************************************************************
-    ; level 12
+    ; level 12 - Return of the Alien Kong Beast
     !byte $ff, $ff, 80, 6, 0, 2, 3, 132, 0, 19, 16              ; header
 
     ; floors
@@ -8461,7 +8465,7 @@ levelDefinitions
     +levelStrip 17, 13, 11
 
     ; ***********************************************************************************
-    ; level 13
+    ; level 13 - Ore Refinery
     !byte $ff, $ff, 32, 7, 80, 2, 5, 64, 0, 5, 16               ; header
 
     ; floors
@@ -8504,7 +8508,7 @@ levelDefinitions
     +levelSetType 4
 
     ; ***********************************************************************************
-    ; level 14
+    ; level 14 - Skylab Landing Bay
     !byte $ff, $ff, 36, 5, 96, 2, 39, 133, 0, 19, 3             ; header
 
     ; floors
@@ -8535,7 +8539,7 @@ levelDefinitions
     +levelStrip 14, 11, 6
 
     ; ***********************************************************************************
-    ; level 15
+    ; level 15 - The Bank
     !byte $ff, $ff, 32, 6, 0, 0, 120, 65, 0, 5, 6               ; header
 
     ; floors
@@ -8572,7 +8576,7 @@ levelDefinitions
     +levelStrip 7, 3, 16
 
     ; ***********************************************************************************
-    ; level 16
+    ; level 16 - The Sixteenth Cavern
     !byte $ff, $ff, 16, 6, 0, 2, 9, 134, 0, 16, 8               ; header
 
     ; floors
@@ -8608,7 +8612,7 @@ levelDefinitions
     +levelStrip 2, 9, 25
 
     ; ***********************************************************************************
-    ; level 17
+    ; level 17 - The Warehouse
     !byte $ff, $ff, 32, 6, 3, 1, 80, 135, 0, 33, 4              ; header
 
     ; floors
@@ -8644,7 +8648,7 @@ levelDefinitions
     +levelSetType 4
 
     ; ***********************************************************************************
-    ; level 18
+    ; level 18 - Amoebatrons' Revenge
     !byte $ff, $ff, 16, 6, 0, 0, 64, 136, 0, 33, 3              ; header
 
     ;  floors
@@ -8673,7 +8677,7 @@ levelDefinitions
     +levelSetType 4
 
     ; ***********************************************************************************
-    ; level 19
+    ; level 19 - The Meteor Storm
     !byte $ff, $ff, 36, 7, 0, 1, 0, 137, 0, 19, 7               ; header
 
     ; floors
@@ -8708,7 +8712,7 @@ levelDefinitions
     +levelSetType 3
 
     ; ***********************************************************************************
-    ; level 20
+    ; level 20 - The Final Barrier
     !byte $ff, $ff, 32, 6, 0, 1, 0, 138, 1, 33, 4               ; header
 
     ; floors
@@ -9106,7 +9110,7 @@ levelSingleItemDefinitions
     +singlePos 9, 7         ; X spike
 
     ; ***********************************************************************************
-    ; level 18 Amoebatrons' Revenge
+    ; level 18 - Amoebatrons' Revenge
     !byte $ff
     +singleType 2, 1        ; 2 keys [only one wanted really, but we must have at least two encoded]
     +singlePos 14, 1        ; key
@@ -9126,7 +9130,7 @@ levelSingleItemDefinitions
     +singleOffsetX15        ;
 
     ; ***********************************************************************************
-    ; level 20
+    ; level 20 - The Final Barrier
     !byte $ff
     +singleType 5, 3        ; 5 keys, sprite offset 3
     +singlePos 8, 8         ; key
@@ -9186,33 +9190,31 @@ penroseTriangle
 
     ; ***********************************************************************************
 guardianGraphics
-    !byte %...#####                 ;     #####  #
-    !byte %..###..#                 ;    ###  ####
-    !byte %...##..#                 ;     ##  ####
-    !byte %....####                 ;      ####  #
-    !byte %#..#####                 ;  #  #####
-    !byte %.#.#####                 ;   # ######
-    !byte %########                 ;  ##########
-    !byte %.#.####.                 ;   # ####
-                                    ;  #  #######
-    !byte %..#.....                 ;     ######
-    !byte %###.....                 ;      ###
-    !byte %###.....                 ;     #####
-    !byte %..#.....                 ;  # ### ###
-    !byte %........                 ;   ###   ####
-    !byte %#.......                 ;    #     ##
-    !byte %##......                 ;     #    #
+    !byte %...#####            ;   #####  #
+    !byte %..###..#            ;  ###  ####
+    !byte %...##..#            ;   ##  ####
+    !byte %....####            ;    ####  #
+    !byte %#..#####            ;#  #####
+    !byte %.#.#####            ; # ######
+    !byte %########            ;##########
+    !byte %.#.####.            ; # ####
+    !byte %..#.....
+    !byte %###.....
+    !byte %###.....
+    !byte %..#.....
+    !byte %........
+    !byte %#.......
+    !byte %##......
     !byte %........
 
-    !byte %.....###
-    !byte %....###.
-    !byte %.....##.
-    !byte %..#...##
-    !byte %...#.###
-    !byte %...#.###
-    !byte %..######
-    !byte %...#.###
-
+    !byte %.....###            ;     #####   #
+    !byte %....###.            ;    ###  #####
+    !byte %.....##.            ;     ##  #####
+    !byte %..#...##            ;  #   ####   #
+    !byte %...#.###            ;   # #####
+    !byte %...#.###            ;   # ######
+    !byte %..######            ;  ##########
+    !byte %...#.###            ;   # #######
     !byte %##...#..
     !byte %.#####..
     !byte %.#####..
@@ -9222,15 +9224,14 @@ guardianGraphics
     !byte %####....
     !byte %####....
 
-    !byte %.......#
-    !byte %......##
-    !byte %.......#
-    !byte %........
-    !byte %.......#
-    !byte %....#..#
-    !byte %.....#.#
-    !byte %....####
-
+    !byte %.......#            ;       #####  #
+    !byte %......##            ;      ###  ####
+    !byte %.......#            ;       ##  ####
+    !byte %........            ;        ####  #
+    !byte %.......#            ;       #####
+    !byte %....#..#            ;    #  ######
+    !byte %.....#.#            ;     # #######
+    !byte %....####            ;    #######
     !byte %####..#.
     !byte %#..####.
     !byte %#..####.
@@ -9240,15 +9241,14 @@ guardianGraphics
     !byte %######..
     !byte %###.....
 
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %......##
-    !byte %........
-
+    !byte %........            ;         ##### #
+    !byte %........            ;        ###  ###
+    !byte %........            ;         ##  ###
+    !byte %........            ;          #### #
+    !byte %........            ;         #####
+    !byte %........            ;         #######
+    !byte %......##            ;      ########
+    !byte %........            ;         ###
     !byte %.#####.#
     !byte %###..###
     !byte %.##..###
@@ -9258,15 +9258,14 @@ guardianGraphics
     !byte %######..
     !byte %.###....
 
-    !byte %#..#####
-    !byte %...#####
-    !byte %....###.
-    !byte %...#####
-    !byte %#.###.##
-    !byte %.###...#
-    !byte %..#.....
-    !byte %...#....
-
+    !byte %#..#####            ;#  #######
+    !byte %...#####            ;   ######
+    !byte %....###.            ;    ###
+    !byte %...#####            ;   #####
+    !byte %#.###.##            ;# ### ###
+    !byte %.###...#            ; ###   ####
+    !byte %..#.....            ;  #     ##
+    !byte %...#....            ;   #    #
     !byte %##......
     !byte %#.......
     !byte %........
@@ -9276,14 +9275,14 @@ guardianGraphics
     !byte %##......
     !byte %#.......
 
-    !byte %...#.###
-    !byte %..#..###
-    !byte %......##
-    !byte %......##
-    !byte %.....##.
-    !byte %.....##.
-    !byte %...###..
-    !byte %.....##.
+    !byte %...#.###            ;   # #######
+    !byte %..#..###            ;  #  ######
+    !byte %......##            ;      ###
+    !byte %......##            ;      ###
+    !byte %.....##.            ;     ## ##
+    !byte %.....##.            ;     ## ##
+    !byte %...###..            ;   ###    ###
+    !byte %.....##.            ;     ##  ##
     !byte %####....
     !byte %###.....
     !byte %#.......
@@ -9293,14 +9292,14 @@ guardianGraphics
     !byte %..###...
     !byte %.##.....
 
-    !byte %.....#.#
-    !byte %....#..#
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %.......#
+    !byte %.....#.#            ;     # #######
+    !byte %....#..#            ;    #  ######
+    !byte %........            ;        ###
+    !byte %........            ;        ###
+    !byte %........            ;        ###
+    !byte %........            ;        ###
+    !byte %........            ;        ###
+    !byte %.......#            ;       #####
     !byte %######..
     !byte %#####...
     !byte %###.....
@@ -9310,14 +9309,14 @@ guardianGraphics
     !byte %###.....
     !byte %####....
 
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %.......#
-    !byte %........
+    !byte %........            ;         #####
+    !byte %........            ;         #######
+    !byte %........            ;         ####
+    !byte %........            ;          ###
+    !byte %........            ;         ## ##
+    !byte %........            ;         ## ##
+    !byte %.......#            ;       ###   ###
+    !byte %........            ;         ## ##
     !byte %.#####..
     !byte %.#######
     !byte %.####...
@@ -9327,14 +9326,14 @@ guardianGraphics
     !byte %##...###
     !byte %.##.##..
 
-    !byte %....##..
-    !byte %...####.
-    !byte %...##.##
-    !byte %...####.
-    !byte %..###..#
-    !byte %..##..#.
-    !byte %..###.#.
-    !byte %..####.#
+    !byte %....##..            ;    ##
+    !byte %...####.            ;   ####
+    !byte %...##.##            ;   ## ##
+    !byte %...####.            ;   #### ##
+    !byte %..###..#            ;  ###  #
+    !byte %..##..#.            ;  ##  #
+    !byte %..###.#.            ;  ### #
+    !byte %..####.#            ;  #### #
     !byte %........
     !byte %........
     !byte %........
@@ -9344,14 +9343,14 @@ guardianGraphics
     !byte %........
     !byte %........
 
-    !byte %......##
-    !byte %.....###
-    !byte %.....##.
-    !byte %.....###
-    !byte %....###.
-    !byte %....##..
-    !byte %....####
-    !byte %....##.#
+    !byte %......##            ;      ##
+    !byte %.....###            ;     ####
+    !byte %.....##.            ;     ## ##
+    !byte %.....###            ;     #### ##
+    !byte %....###.            ;    ###  #
+    !byte %....##..            ;    ##  #
+    !byte %....####            ;    #####
+    !byte %....##.#            ;    ## ###
     !byte %........
     !byte %#.......
     !byte %##......
@@ -9361,14 +9360,14 @@ guardianGraphics
     !byte %#.......
     !byte %##......
 
-    !byte %........
-    !byte %.......#
-    !byte %.......#
-    !byte %.......#
-    !byte %......##
-    !byte %......##
-    !byte %......##
-    !byte %......##
+    !byte %........            ;        ##
+    !byte %.......#            ;       ####
+    !byte %.......#            ;       ## ##
+    !byte %.......#            ;       #### ##
+    !byte %......##            ;      ###  #
+    !byte %......##            ;      ##  #
+    !byte %......##            ;      ### #
+    !byte %......##            ;      #### #
     !byte %##......
     !byte %###.....
     !byte %#.##....
@@ -9378,14 +9377,14 @@ guardianGraphics
     !byte %#.#.....
     !byte %##.#....
 
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
+    !byte %........            ;          ##
+    !byte %........            ;         ####
+    !byte %........            ;         ## ##
+    !byte %........            ;         #### ##
+    !byte %........            ;        ###  #
+    !byte %........            ;        ##  #
+    !byte %........            ;        ### #
+    !byte %........            ;        #### #
     !byte %..##....
     !byte %.####...
     !byte %.##.##..
@@ -9395,14 +9394,14 @@ guardianGraphics
     !byte %###.#...
     !byte %####.#..
 
-    !byte %.##.##.#
-    !byte %.##.#..#
-    !byte %.##.#..#
-    !byte %.##....#
-    !byte %.###...#
-    !byte %#.#####.
-    !byte %....#...
-    !byte %...####.
+    !byte %.##.##.#            ; ## ## #
+    !byte %.##.#..#            ; ## #  #
+    !byte %.##.#..#            ; ## #  #
+    !byte %.##....#            ; ##    #
+    !byte %.###...#            ; ###   #
+    !byte %#.#####.            ;# #####
+    !byte %....#...            ;    #
+    !byte %...####.            ;   ####
     !byte %........
     !byte %........
     !byte %........
@@ -9412,14 +9411,14 @@ guardianGraphics
     !byte %........
     !byte %........
 
-    !byte %...##.##
-    !byte %...##.##
-    !byte %...#.##.
-    !byte %...##...
-    !byte %...###..
-    !byte %..#.####
-    !byte %.....#.#
-    !byte %....####
+    !byte %...##.##            ;   ## ## #
+    !byte %...##.##            ;   ## ## #
+    !byte %...#.##.            ;   # ##  #
+    !byte %...##...            ;   ##    #
+    !byte %...###..            ;   ###   #
+    !byte %..#.####            ;  # #####
+    !byte %.....#.#            ;     # # #
+    !byte %....####            ;    #####
     !byte %.#......
     !byte %.#......
     !byte %.#......
@@ -9429,14 +9428,14 @@ guardianGraphics
     !byte %.#......
     !byte %#.......
 
-    !byte %.....##.
-    !byte %.....##.
-    !byte %.....##.
-    !byte %.....##.
-    !byte %.....###
-    !byte %....#.##
-    !byte %......#.
-    !byte %.....###
+    !byte %.....##.            ;     ## ## #
+    !byte %.....##.            ;     ## #  #
+    !byte %.....##.            ;     ## #  #
+    !byte %.....##.            ;     ##    #
+    !byte %.....###            ;     ###   #
+    !byte %....#.##            ;    # ##### #
+    !byte %......#.            ;      #  # #
+    !byte %.....###            ;     ######
     !byte %##.#....
     !byte %#..#....
     !byte %#..#....
@@ -9446,14 +9445,14 @@ guardianGraphics
     !byte %.#.#....
     !byte %###.....
 
-    !byte %.......#
-    !byte %.......#
-    !byte %.......#
-    !byte %.......#
-    !byte %.......#
-    !byte %........
-    !byte %........
-    !byte %........
+    !byte %.......#            ;       ## ## #
+    !byte %.......#            ;       ##  # #
+    !byte %.......#            ;       ##  # #
+    !byte %.......#            ;       ##    #
+    !byte %.......#            ;       ##    #
+    !byte %........            ;        #####
+    !byte %........            ;         # #  #
+    !byte %........            ;        ######
     !byte %#.##.#..
     !byte %#..#.#..
     !byte %#..#.#..
@@ -9463,14 +9462,14 @@ guardianGraphics
     !byte %.#.#..#.
     !byte %######..
 
-    !byte %......##
-    !byte %.....##.
-    !byte %.....###
-    !byte %......##
-    !byte %.......#
-    !byte %........
-    !byte %#.#####.
-    !byte %###...##
+    !byte %......##            ;      ##
+    !byte %.....##.            ;     ## #
+    !byte %.....###            ;     #####
+    !byte %......##            ;      ##
+    !byte %.......#            ;       ##
+    !byte %........            ;        ##
+    !byte %#.#####.            ;# ##### ##
+    !byte %###...##            ;###   ###
     !byte %........
     !byte %#.......
     !byte %##......
@@ -9480,14 +9479,14 @@ guardianGraphics
     !byte %##......
     !byte %#.......
 
-    !byte %........
-    !byte %.......#
-    !byte %.......#
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %..#.####
-    !byte %..###...
+    !byte %........            ;        ##
+    !byte %.......#            ;       ## #
+    !byte %.......#            ;       #####
+    !byte %........            ;        ##
+    !byte %........            ;         ##
+    !byte %........            ;          ##
+    !byte %..#.####            ;  # ##### ##
+    !byte %..###...            ;  ###   ###
     !byte %##......
     !byte %#.#.....
     !byte %####....
@@ -9497,14 +9496,14 @@ guardianGraphics
     !byte %#.##....
     !byte %###.....
 
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %....#.##
-    !byte %....###.
+    !byte %........            ;          ##
+    !byte %........            ;         ## #
+    !byte %........            ;         ######
+    !byte %........            ;          ##
+    !byte %........            ;           ##
+    !byte %........            ;            ##
+    !byte %....#.##            ;    # ##### ##
+    !byte %....###.            ;    ###   ###
     !byte %..##....
     !byte %.##.#...
     !byte %.######.
@@ -9514,14 +9513,14 @@ guardianGraphics
     !byte %###.##..
     !byte %..###...
 
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %.......#
-    !byte %........
-    !byte %......##
-    !byte %......##
+    !byte %........            ;            ##
+    !byte %........            ;           ## #
+    !byte %........            ;           #####
+    !byte %........            ;        # # ##
+    !byte %.......#            ;       # # # ##
+    !byte %........            ;        # #   ##
+    !byte %......##            ;      ## #    ##
+    !byte %......##            ;      ###    ##
     !byte %....##..
     !byte %...##.#.
     !byte %...#####
@@ -9531,14 +9530,14 @@ guardianGraphics
     !byte %.#....##
     !byte %#....##.
 
-    !byte %.#......
-    !byte %#.#.#.#.
-    !byte %.#######
-    !byte %..######
-    !byte %.....#..
-    !byte %.....#..
-    !byte %.....#..
-    !byte %....#.#.
+    !byte %.#......            ; #      #
+    !byte %#.#.#.#.            ;# # # # #
+    !byte %.#######            ; ########
+    !byte %..######            ;  ######
+    !byte %.....#..            ;     #
+    !byte %.....#..            ;     #
+    !byte %.....#..            ;     #
+    !byte %....#.#.            ;    # #
     !byte %#.......
     !byte %#.......
     !byte %#.......
@@ -9548,14 +9547,14 @@ guardianGraphics
     !byte %........
     !byte %........
 
-    !byte %...##...
-    !byte %..##....
-    !byte %...#.#.#
-    !byte %....#.#.
-    !byte %...#.#.#
-    !byte %......#.
-    !byte %.....#.#
-    !byte %........
+    !byte %...##...            ;   ##   ##
+    !byte %..##....            ;  ##    ##
+    !byte %...#.#.#            ;   # # ###
+    !byte %....#.#.            ;    # # #
+    !byte %...#.#.#            ;   # # #
+    !byte %......#.            ;      #
+    !byte %.....#.#            ;     # #
+    !byte %........            ;
     !byte %##......
     !byte %##......
     !byte %##......
@@ -9565,14 +9564,14 @@ guardianGraphics
     !byte %........
     !byte %........
 
-    !byte %.....#..
-    !byte %....#.#.
-    !byte %.....###
-    !byte %......##
-    !byte %........
-    !byte %.......#
-    !byte %........
-    !byte %........
+    !byte %.....#..            ;     #     #
+    !byte %....#.#.            ;    # # # ##
+    !byte %.....###            ;     #######
+    !byte %......##            ;      #####
+    !byte %........            ;        #
+    !byte %.......#            ;       # #
+    !byte %........            ;
+    !byte %........            ;
     !byte %...#....
     !byte %#.##....
     !byte %####....
@@ -9582,14 +9581,14 @@ guardianGraphics
     !byte %........
     !byte %........
 
-    !byte %.......#
-    !byte %......##
-    !byte %.......#
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
+    !byte %.......#            ;       #    ##
+    !byte %......##            ;      ########
+    !byte %.......#            ;       #######
+    !byte %........            ;        #####
+    !byte %........            ;          #
+    !byte %........            ;          #
+    !byte %........            ;         # #
+    !byte %........            ;
     !byte %....##..
     !byte %######..
     !byte %######..
@@ -9599,14 +9598,14 @@ guardianGraphics
     !byte %.#.#....
     !byte %........
 
-    !byte %.....###
-    !byte %....#.##
-    !byte %...#..##
-    !byte %...#..##
-    !byte %...#..##
-    !byte %....#.##
-    !byte %.....###
-    !byte %.......#
+    !byte %.....###            ;     ###
+    !byte %....#.##            ;    # ###
+    !byte %...#..##            ;   #  ####
+    !byte %...#..##            ;   #  ####
+    !byte %...#..##            ;   #  ####
+    !byte %....#.##            ;    # ###
+    !byte %.....###            ;     ###
+    !byte %.......#            ;       #
     !byte %........
     !byte %#.......
     !byte %##......
@@ -9616,14 +9615,14 @@ guardianGraphics
     !byte %........
     !byte %........
 
-    !byte %.......#
-    !byte %......#.
-    !byte %.....#.#
-    !byte %.....#.#
-    !byte %.....#.#
-    !byte %......#.
-    !byte %.......#
-    !byte %........
+    !byte %.......#            ;       ###
+    !byte %......#.            ;      # ###
+    !byte %.....#.#            ;     # ### #
+    !byte %.....#.#            ;     # ### #
+    !byte %.....#.#            ;     # ### #
+    !byte %......#.            ;      # ###
+    !byte %.......#            ;       ###
+    !byte %........            ;         #
     !byte %##......
     !byte %###.....
     !byte %##.#....
@@ -9633,14 +9632,14 @@ guardianGraphics
     !byte %##......
     !byte %.#......
 
-    !byte %........
-    !byte %........
-    !byte %.......#
-    !byte %.......#
-    !byte %.......#
-    !byte %........
-    !byte %........
-    !byte %........
+    !byte %........            ;         ###
+    !byte %........            ;        ### #
+    !byte %.......#            ;       ####  #
+    !byte %.......#            ;       ####  #
+    !byte %.......#            ;       ####  #
+    !byte %........            ;        ### #
+    !byte %........            ;         ###
+    !byte %........            ;           #
     !byte %.###....
     !byte %###.#...
     !byte %###..#..
@@ -9650,14 +9649,14 @@ guardianGraphics
     !byte %.###....
     !byte %...#....
 
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
+    !byte %........            ;           ###
+    !byte %........            ;          ## ##
+    !byte %........            ;         ##   ##
+    !byte %........            ;         ##   ##
+    !byte %........            ;         ##   ##
+    !byte %........            ;          ## ##
+    !byte %........            ;           ###
+    !byte %........            ;             #
     !byte %...###..
     !byte %..##.##.
     !byte %.##...##
@@ -9667,14 +9666,14 @@ guardianGraphics
     !byte %...###..
     !byte %.....#..
 
-    !byte %.....###
-    !byte %.....#.#
-    !byte %.....###
-    !byte %.....###
-    !byte %.#..####
-    !byte %.#.#####
-    !byte %#######.
-    !byte %..####..
+    !byte %.....###            ;     ###
+    !byte %.....#.#            ;     # #
+    !byte %.....###            ;     ###
+    !byte %.....###            ;     ####
+    !byte %.#..####            ; #  #####
+    !byte %.#.#####            ; # #######
+    !byte %#######.            ;####### ##
+    !byte %..####..            ;  ####   #
     !byte %........
     !byte %........
     !byte %........
@@ -9684,14 +9683,14 @@ guardianGraphics
     !byte %##......
     !byte %.#......
 
-    !byte %.......#
-    !byte %.......#
-    !byte %.......#
-    !byte %.......#
-    !byte %..#...##
-    !byte %..#.####
-    !byte %.#######
-    !byte %...#####
+    !byte %.......#            ;       ###
+    !byte %.......#            ;       # #
+    !byte %.......#            ;       ###
+    !byte %.......#            ;       ####
+    !byte %..#...##            ;  #   #####
+    !byte %..#.####            ;  # ########
+    !byte %.#######            ; ######## ##
+    !byte %...#####            ;   #####   #
     !byte %##......
     !byte %.#......
     !byte %##......
@@ -9701,14 +9700,14 @@ guardianGraphics
     !byte %#.##....
     !byte %...#....
 
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %..#....#
-    !byte %..#..###
-    !byte %.#######
-    !byte %....####
+    !byte %........            ;         ###
+    !byte %........            ;         # #
+    !byte %........            ;         ###
+    !byte %........            ;        #####
+    !byte %..#....#            ;  #    ######
+    !byte %..#..###            ;  #  #########
+    !byte %.#######            ; ########## ##
+    !byte %....####            ;    ######   #
     !byte %.###....
     !byte %.#.#....
     !byte %.###....
@@ -9718,14 +9717,14 @@ guardianGraphics
     !byte %###.##..
     !byte %##...#..
 
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %....#...
-    !byte %....#...
-    !byte %...#####
-    !byte %......##
+    !byte %........            ;           ###
+    !byte %........            ;           # #
+    !byte %........            ;           ###
+    !byte %........            ;           ####
+    !byte %....#...            ;    #     #####
+    !byte %....#...            ;    #   ########
+    !byte %...#####            ;   ########## ##
+    !byte %......##            ;      ######   #
     !byte %...###..
     !byte %...#.#..
     !byte %...###..
@@ -9735,14 +9734,14 @@ guardianGraphics
     !byte %#####.##
     !byte %####...#
 
-    !byte %##......
-    !byte %##......
-    !byte %##......
-    !byte %##......
-    !byte %##......
-    !byte %##......
-    !byte %##......
-    !byte %##......
+    !byte %##......            ;##
+    !byte %##......            ;##
+    !byte %##......            ;##
+    !byte %##......            ;##
+    !byte %##......            ;##
+    !byte %##......            ;##
+    !byte %##......            ;##
+    !byte %##......            ;##
     !byte %........
     !byte %........
     !byte %........
@@ -9752,14 +9751,14 @@ guardianGraphics
     !byte %........
     !byte %........
 
-    !byte %..##....
-    !byte %..##....
-    !byte %..##....
-    !byte %..##....
-    !byte %..##....
-    !byte %..##....
-    !byte %..##..##
-    !byte %..##.#..
+    !byte %..##....            ;  ##
+    !byte %..##....            ;  ##
+    !byte %..##....            ;  ##
+    !byte %..##....            ;  ##
+    !byte %..##....            ;  ##      #
+    !byte %..##....            ;  ##    ##
+    !byte %..##..##            ;  ##  ##
+    !byte %..##.#..            ;  ## #
     !byte %........
     !byte %........
     !byte %........
@@ -9769,14 +9768,14 @@ guardianGraphics
     !byte %........
     !byte %........
 
-    !byte %...##...
-    !byte %...##...
-    !byte %...##...
-    !byte %...##...
-    !byte %...##...
-    !byte %...##...
-    !byte %...##...
-    !byte %...##..#
+    !byte %...##...            ;   ##
+    !byte %...##...            ;   ##
+    !byte %...##...            ;   ##     #
+    !byte %...##...            ;   ##    #
+    !byte %...##...            ;   ##    #
+    !byte %...##...            ;   ##   #
+    !byte %...##...            ;   ##   #
+    !byte %...##..#            ;   ##  #
     !byte %........
     !byte %........
     !byte %..#.....
@@ -9786,14 +9785,14 @@ guardianGraphics
     !byte %#.......
     !byte %........
 
-    !byte %......##
-    !byte %......##
-    !byte %......##
-    !byte %......##
-    !byte %......##
-    !byte %......##
-    !byte %......##
-    !byte %......##
+    !byte %......##            ;      ##
+    !byte %......##            ;      ##
+    !byte %......##            ;      ##
+    !byte %......##            ;      ##
+    !byte %......##            ;      ##      #
+    !byte %......##            ;      ##    ##
+    !byte %......##            ;      ##  ##
+    !byte %......##            ;      ## #
     !byte %........
     !byte %........
     !byte %........
@@ -9803,14 +9802,14 @@ guardianGraphics
     !byte %..##....
     !byte %.#......
 
-    !byte %##.#####
-    !byte %########
-    !byte %...#####
-    !byte %....####
-    !byte %.###.###
-    !byte %########
-    !byte %##.#####
-    !byte %##.#####
+    !byte %##.#####            ;## #######
+    !byte %########            ;##########
+    !byte %...#####            ;   #######
+    !byte %....####            ;    #####
+    !byte %.###.###            ; ### ####
+    !byte %########            ;########
+    !byte %##.#####            ;## #####
+    !byte %##.#####            ;## #####
     !byte %##......
     !byte %##......
     !byte %##......
@@ -9820,14 +9819,14 @@ guardianGraphics
     !byte %........
     !byte %........
 
-    !byte %..##.###
-    !byte %..######
-    !byte %.....###
-    !byte %......##
-    !byte %...###.#
-    !byte %..######
-    !byte %..##.###
-    !byte %..##.###
+    !byte %..##.###            ;  ## #######
+    !byte %..######            ;  ##########
+    !byte %.....###            ;     #######
+    !byte %......##            ;      #####
+    !byte %...###.#            ;   ### ####
+    !byte %..######            ;  ########
+    !byte %..##.###            ;  ## #####
+    !byte %..##.###            ;  ## #####
     !byte %####....
     !byte %####....
     !byte %####....
@@ -9837,14 +9836,14 @@ guardianGraphics
     !byte %##......
     !byte %##......
 
-    !byte %...##.##
-    !byte %...#####
-    !byte %......##
-    !byte %.......#
-    !byte %....###.
-    !byte %...#####
-    !byte %...##.##
-    !byte %...##.##
+    !byte %...##.##            ;   ## ########
+    !byte %...#####            ;   ###########
+    !byte %......##            ;      ########
+    !byte %.......#            ;       ######
+    !byte %....###.            ;    ### #####
+    !byte %...#####            ;   #########
+    !byte %...##.##            ;   ## ######
+    !byte %...##.##            ;   ## ######
     !byte %######..
     !byte %######..
     !byte %######..
@@ -9854,14 +9853,14 @@ guardianGraphics
     !byte %####....
     !byte %####....
 
-    !byte %......##
-    !byte %......##
-    !byte %........
-    !byte %........
-    !byte %.......#
-    !byte %......##
-    !byte %......##
-    !byte %......##
+    !byte %......##            ;      ## #######
+    !byte %......##            ;      ##########
+    !byte %........            ;         #######
+    !byte %........            ;          #####
+    !byte %.......#            ;       ### ####
+    !byte %......##            ;      ########
+    !byte %......##            ;      ## #####
+    !byte %......##            ;      ## #####
     !byte %.#######
     !byte %########
     !byte %.#######
@@ -9871,14 +9870,14 @@ guardianGraphics
     !byte %.#####..
     !byte %.#####..
 
-    !byte %...#####
-    !byte %.#######
-    !byte %.###..##
-    !byte %####..##
-    !byte %#######.
-    !byte %#####...
-    !byte %#######.
-    !byte %########
+    !byte %...#####            ;   #####
+    !byte %.#######            ; #########
+    !byte %.###..##            ; ###  #####
+    !byte %####..##            ;####  ###
+    !byte %#######.            ;#######
+    !byte %#####...            ;#####
+    !byte %#######.            ;#######
+    !byte %########            ;#########
     !byte %........
     !byte %##......
     !byte %###.....
@@ -9888,14 +9887,14 @@ guardianGraphics
     !byte %........
     !byte %#.......
 
-    !byte %.....###
-    !byte %...#####
-    !byte %...####.
-    !byte %..#####.
-    !byte %..######
-    !byte %..#####.
-    !byte %..######
-    !byte %..######
+    !byte %.....###            ;     #####
+    !byte %...#####            ;   #########
+    !byte %...####.            ;   ####  ###
+    !byte %..#####.            ;  #####  ####
+    !byte %..######            ;  ###########
+    !byte %..#####.            ;  #####
+    !byte %..######            ;  ###########
+    !byte %..######            ;  ###########
     !byte %##......
     !byte %####....
     !byte %.###....
@@ -9905,14 +9904,14 @@ guardianGraphics
     !byte %#####...
     !byte %#####...
 
-    !byte %.......#
-    !byte %.....###
-    !byte %.....###
-    !byte %....####
-    !byte %....####
-    !byte %....####
-    !byte %....####
-    !byte %....####
+    !byte %.......#            ;       #####
+    !byte %.....###            ;     #########
+    !byte %.....###            ;     ###  #####
+    !byte %....####            ;    ####  ###
+    !byte %....####            ;    #######
+    !byte %....####            ;    #####
+    !byte %....####            ;    #######
+    !byte %....####            ;    #########
     !byte %####....
     !byte %######..
     !byte %..#####.
@@ -9922,14 +9921,14 @@ guardianGraphics
     !byte %###.....
     !byte %#####...
 
-    !byte %........
-    !byte %.......#
-    !byte %.......#
-    !byte %......##
-    !byte %......##
-    !byte %......##
-    !byte %......##
-    !byte %......##
+    !byte %........            ;         #####
+    !byte %.......#            ;       ###  ####
+    !byte %.......#            ;       ###  ###
+    !byte %......##            ;      ########
+    !byte %......##            ;      ######
+    !byte %......##            ;      #####
+    !byte %......##            ;      ######
+    !byte %......##            ;      ########
     !byte %.#####..
     !byte %##..####
     !byte %##..###.
@@ -9939,14 +9938,14 @@ guardianGraphics
     !byte %####....
     !byte %######..
 
-    !byte %.#######
-    !byte %.#######
-    !byte %...#####
-    !byte %....#.#.
-    !byte %....#.#.
-    !byte %....#.#.
-    !byte %....#.#.
-    !byte %...#####
+    !byte %.#######            ; ##########
+    !byte %.#######            ; #########
+    !byte %...#####            ;   #####
+    !byte %....#.#.            ;    # #
+    !byte %....#.#.            ;    # #
+    !byte %....#.#.            ;    # #
+    !byte %....#.#.            ;    # #
+    !byte %...#####            ;   #####
     !byte %###.....
     !byte %##......
     !byte %........
@@ -9956,14 +9955,14 @@ guardianGraphics
     !byte %........
     !byte %........
 
-    !byte %...#####
-    !byte %...#####
-    !byte %.....###
-    !byte %......#.
-    !byte %......#.
-    !byte %.....###
-    !byte %........
-    !byte %........
+    !byte %...#####            ;   #########
+    !byte %...#####            ;   #########
+    !byte %.....###            ;     #####
+    !byte %......#.            ;      # #
+    !byte %......#.            ;      # #
+    !byte %.....###            ;     #####
+    !byte %........            ;
+    !byte %........            ;
     !byte %####....
     !byte %####....
     !byte %##......
@@ -9973,14 +9972,14 @@ guardianGraphics
     !byte %........
     !byte %........
 
-    !byte %.....###
-    !byte %.....###
-    !byte %.......#
-    !byte %.......#
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
+    !byte %.....###            ;     ##########
+    !byte %.....###            ;     #########
+    !byte %.......#            ;       #####
+    !byte %.......#            ;       #####
+    !byte %........            ;
+    !byte %........            ;
+    !byte %........            ;
+    !byte %........            ;
     !byte %#######.
     !byte %######..
     !byte %####....
@@ -9990,14 +9989,14 @@ guardianGraphics
     !byte %........
     !byte %........
 
-    !byte %.......#
-    !byte %.......#
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
+    !byte %.......#            ;       ########
+    !byte %.......#            ;       #########
+    !byte %........            ;         #####
+    !byte %........            ;          # #
+    !byte %........            ;          # #
+    !byte %........            ;         #####
+    !byte %........            ;
+    !byte %........            ;
     !byte %#######.
     !byte %########
     !byte %.#####..
@@ -10007,14 +10006,14 @@ guardianGraphics
     !byte %........
     !byte %........
 
-    !byte %...##...
-    !byte %...###..
-    !byte %....#.#.
-    !byte %....####
-    !byte %....##..
-    !byte %...###..
-    !byte %...####.
-    !byte %...###.#
+    !byte %...##...            ;   ##
+    !byte %...###..            ;   ###
+    !byte %....#.#.            ;    # # #
+    !byte %....####            ;    #####
+    !byte %....##..            ;    ##
+    !byte %...###..            ;   ###
+    !byte %...####.            ;   ####
+    !byte %...###.#            ;   ### #
     !byte %........
     !byte %........
     !byte %#.......
@@ -10024,14 +10023,14 @@ guardianGraphics
     !byte %........
     !byte %........
 
-    !byte %........
-    !byte %........
-    !byte %.....##.
-    !byte %.....###
-    !byte %......#.
-    !byte %......##
-    !byte %......##
-    !byte %.....###
+    !byte %........            ;
+    !byte %........            ;
+    !byte %.....##.            ;     ##
+    !byte %.....###            ;     ###
+    !byte %......#.            ;      # # #
+    !byte %......##            ;      #####
+    !byte %......##            ;      ###
+    !byte %.....###            ;     ###
     !byte %........
     !byte %........
     !byte %........
@@ -10041,14 +10040,14 @@ guardianGraphics
     !byte %#.......
     !byte %........
 
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %.......#
-    !byte %.......#
-    !byte %........
-    !byte %........
+    !byte %........            ;
+    !byte %........            ;
+    !byte %........            ;
+    !byte %........            ;
+    !byte %.......#            ;       ##
+    !byte %.......#            ;       ###
+    !byte %........            ;        # # #
+    !byte %........            ;        #####
     !byte %........
     !byte %........
     !byte %........
@@ -10058,14 +10057,14 @@ guardianGraphics
     !byte %#.#.#...
     !byte %#####...
 
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
+    !byte %........            ;
+    !byte %........            ;
+    !byte %........            ;         ##
+    !byte %........            ;         ###
+    !byte %........            ;          # # #
+    !byte %........            ;          #####
+    !byte %........            ;          ###
+    !byte %........            ;         ###
     !byte %........
     !byte %........
     !byte %.##.....
@@ -10075,14 +10074,14 @@ guardianGraphics
     !byte %..###...
     !byte %.###....
 
-    !byte %..####..
-    !byte %..####..
-    !byte %..#####.
-    !byte %..#####.
-    !byte %.##.###.
-    !byte %.#...#..
-    !byte %.#....#.
-    !byte %#......#
+    !byte %..####..            ;  ####
+    !byte %..####..            ;  ####
+    !byte %..#####.            ;  #####
+    !byte %..#####.            ;  #####
+    !byte %.##.###.            ; ## ###
+    !byte %.#...#..            ; #   #
+    !byte %.#....#.            ; #    #
+    !byte %#......#            ;#      #
     !byte %........
     !byte %........
     !byte %........
@@ -10092,14 +10091,14 @@ guardianGraphics
     !byte %........
     !byte %........
 
-    !byte %.....###
-    !byte %.....###
-    !byte %....####
-    !byte %....####
-    !byte %....####
-    !byte %...##.##
-    !byte %..##..##
-    !byte %.#.....#
+    !byte %.....###            ;     ####
+    !byte %.....###            ;     ### #
+    !byte %....####            ;    ####
+    !byte %....####            ;    #####
+    !byte %....####            ;    #####
+    !byte %...##.##            ;   ## ###
+    !byte %..##..##            ;  ##  ##
+    !byte %.#.....#            ; #     ###
     !byte %#.......
     !byte %.#......
     !byte %........
@@ -10109,14 +10108,14 @@ guardianGraphics
     !byte %........
     !byte %##......
 
-    !byte %........
-    !byte %.......#
-    !byte %.......#
-    !byte %.......#
-    !byte %......##
-    !byte %......##
-    !byte %.....###
-    !byte %..#####.
+    !byte %........            ;        ###
+    !byte %.......#            ;       ###
+    !byte %.......#            ;       ####
+    !byte %.......#            ;       ### #
+    !byte %......##            ;      ####
+    !byte %......##            ;      #####
+    !byte %.....###            ;     ######
+    !byte %..#####.            ;  ##### #####
     !byte %###.....
     !byte %##......
     !byte %###.....
@@ -10126,14 +10125,14 @@ guardianGraphics
     !byte %###.....
     !byte %#####...
 
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %.......#
-    !byte %.......#
-    !byte %......##
-    !byte %.....#..
+    !byte %........            ;         ####
+    !byte %........            ;         ### #
+    !byte %........            ;        ####
+    !byte %........            ;        #####
+    !byte %.......#            ;       ######
+    !byte %.......#            ;       ## ##
+    !byte %......##            ;      ##    ##
+    !byte %.....#..            ;     #
     !byte %.####...
     !byte %.###.#..
     !byte %####....
@@ -10143,14 +10142,14 @@ guardianGraphics
     !byte %....##..
     !byte %........
 
-    !byte %....#...
-    !byte %.....#.#
-    !byte %....#...
-    !byte %..#..#.#
-    !byte %.#..#...
-    !byte %..#....#
-    !byte %.#..##..
-    !byte %..##..##
+    !byte %....#...            ;    #
+    !byte %.....#.#            ;     # #
+    !byte %....#...            ;    #   #
+    !byte %..#..#.#            ;  #  # #
+    !byte %.#..#...            ; #  #   #
+    !byte %..#....#            ;  #    #
+    !byte %.#..##..            ; #  ##
+    !byte %..##..##            ;  ##  ##
     !byte %........
     !byte %........
     !byte %#.......
@@ -10160,14 +10159,14 @@ guardianGraphics
     !byte %........
     !byte %........
 
-    !byte %......#.
-    !byte %..#....#
-    !byte %...#..#.
-    !byte %..#....#
-    !byte %...#..#.
-    !byte %..#.....
-    !byte %......##
-    !byte %....##..
+    !byte %......#.            ;      #
+    !byte %..#....#            ;  #    #  #
+    !byte %...#..#.            ;   #  #  #
+    !byte %..#....#            ;  #    #  #
+    !byte %...#..#.            ;   #  #  #
+    !byte %..#.....            ;  #       #
+    !byte %......##            ;      ##
+    !byte %....##..            ;    ##  ##
     !byte %........
     !byte %..#.....
     !byte %.#......
@@ -10177,14 +10176,14 @@ guardianGraphics
     !byte %........
     !byte %##......
 
-    !byte %........
-    !byte %......#.
-    !byte %.....#..
-    !byte %......#.
-    !byte %.....#..
-    !byte %......#.
-    !byte %........
-    !byte %......##
+    !byte %........            ;         #
+    !byte %......#.            ;      #   #
+    !byte %.....#..            ;     #   #  #
+    !byte %......#.            ;      #   #  #
+    !byte %.....#..            ;     #   #  #
+    !byte %......#.            ;      #      #
+    !byte %........            ;        ##  #
+    !byte %......##            ;      ##  ##
     !byte %.#......
     !byte %..#.....
     !byte %.#..#...
@@ -10194,14 +10193,14 @@ guardianGraphics
     !byte %##..#...
     !byte %..##....
 
-    !byte %........
-    !byte %.......#
-    !byte %......#.
-    !byte %.......#
-    !byte %......#.
-    !byte %.......#
-    !byte %......#.
-    !byte %........
+    !byte %........            ;         #   #
+    !byte %.......#            ;       #  #   #
+    !byte %......#.            ;      #  #   #
+    !byte %.......#            ;       #  #   #
+    !byte %......#.            ;      #  #   #
+    !byte %.......#            ;       #      #
+    !byte %......#.            ;      #   ##
+    !byte %........            ;        ##  ##
     !byte %.#...#..
     !byte %..#...#.
     !byte %.#...#..
@@ -10211,14 +10210,14 @@ guardianGraphics
     !byte %..##....
     !byte %##..##..
 
-    !byte %.#...#..
-    !byte %.#...#..
-    !byte %#...#...
-    !byte %#....#..
-    !byte %.#..#...
-    !byte %.#..#...
-    !byte %..##..##
-    !byte %....##..
+    !byte %.#...#..            ; #   #  #
+    !byte %.#...#..            ; #   #  #
+    !byte %#...#...            ;#   #    #
+    !byte %#....#..            ;#    #   #
+    !byte %.#..#...            ; #  #   #
+    !byte %.#..#...            ; #  #   #
+    !byte %..##..##            ;  ##  ##
+    !byte %....##..            ;    ##
     !byte %#.......
     !byte %#.......
     !byte %.#......
@@ -10228,14 +10227,14 @@ guardianGraphics
     !byte %........
     !byte %........
 
-    !byte %...#....
-    !byte %...#....
-    !byte %..#...#.
-    !byte %..#..#.#
-    !byte %...##...
-    !byte %...#....
-    !byte %....##..
-    !byte %......##
+    !byte %...#....            ;   #      #
+    !byte %...#....            ;   #     ##
+    !byte %..#...#.            ;  #   # #  #
+    !byte %..#..#.#            ;  #  # #   #
+    !byte %...##...            ;   ##     #
+    !byte %...#....            ;   #      #
+    !byte %....##..            ;    ##  ##
+    !byte %......##            ;      ##
     !byte %..#.....
     !byte %.##.....
     !byte %#..#....
@@ -10245,14 +10244,14 @@ guardianGraphics
     !byte %##......
     !byte %........
 
-    !byte %.....#..
-    !byte %.....#..
-    !byte %....#.##
-    !byte %....#...
-    !byte %.....#..
-    !byte %.....#..
-    !byte %......##
-    !byte %........
+    !byte %.....#..            ;     #      #
+    !byte %.....#..            ;     #      #
+    !byte %....#.##            ;    # ## #   #
+    !byte %....#...            ;    #   # ## #
+    !byte %.....#..            ;     #      #
+    !byte %.....#..            ;     #      #
+    !byte %......##            ;      ##  ##
+    !byte %........            ;        ##
     !byte %....#...
     !byte %....#...
     !byte %.#...#..
@@ -10262,14 +10261,14 @@ guardianGraphics
     !byte %..##....
     !byte %##......
 
-    !byte %.......#
-    !byte %.......#
-    !byte %......#.
-    !byte %......#.
-    !byte %.......#
-    !byte %.......#
-    !byte %........
-    !byte %........
+    !byte %.......#            ;       # #    #
+    !byte %.......#            ;       #  #   #
+    !byte %......#.            ;      #    #   #
+    !byte %......#.            ;      #   #    #
+    !byte %.......#            ;       #   #  #
+    !byte %.......#            ;       #    # #
+    !byte %........            ;        ##  ##
+    !byte %........            ;          ##
     !byte %.#....#.
     !byte %..#...#.
     !byte %...#...#
@@ -10279,14 +10278,14 @@ guardianGraphics
     !byte %##..##..
     !byte %..##....
 
-    !byte %....##..
-    !byte %....##..
-    !byte %....##..
-    !byte %....##..
-    !byte %....##..
-    !byte %....##..
-    !byte %....##..
-    !byte %....##..
+    !byte %....##..            ;    ##
+    !byte %....##..            ;    ##
+    !byte %....##..            ;    ##
+    !byte %....##..            ;    ##
+    !byte %....##..            ;    ##
+    !byte %....##..            ;    ##
+    !byte %....##..            ;    ##
+    !byte %....##..            ;    ##
     !byte %........
     !byte %........
     !byte %........
@@ -10296,14 +10295,14 @@ guardianGraphics
     !byte %........
     !byte %........
 
-    !byte %......##
-    !byte %......##
-    !byte %......##
-    !byte %......##
-    !byte %......##
-    !byte %......##
-    !byte %......##
-    !byte %......##
+    !byte %......##            ;      ##
+    !byte %......##            ;      ##
+    !byte %......##            ;      ##
+    !byte %......##            ;      ##
+    !byte %......##            ;      ##
+    !byte %......##            ;      ##
+    !byte %......##            ;      ##
+    !byte %......##            ;      ##
     !byte %........
     !byte %........
     !byte %........
@@ -10313,14 +10312,14 @@ guardianGraphics
     !byte %........
     !byte %........
 
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
+    !byte %........            ;        ##
+    !byte %........            ;        ##
+    !byte %........            ;        ##
+    !byte %........            ;        ##
+    !byte %........            ;        ##
+    !byte %........            ;        ##
+    !byte %........            ;        ##
+    !byte %........            ;        ##
     !byte %##......
     !byte %##......
     !byte %##......
@@ -10330,14 +10329,14 @@ guardianGraphics
     !byte %##......
     !byte %##......
 
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
+    !byte %........            ;          ##
+    !byte %........            ;          ##
+    !byte %........            ;          ##
+    !byte %........            ;          ##
+    !byte %........            ;          ##
+    !byte %........            ;          ##
+    !byte %........            ;          ##
+    !byte %........            ;          ##
     !byte %..##....
     !byte %..##....
     !byte %..##....
@@ -10347,14 +10346,14 @@ guardianGraphics
     !byte %..##....
     !byte %..##....
 
-    !byte %....##..
-    !byte %....##..
-    !byte %########
-    !byte %....##..
-    !byte %.##....#
-    !byte %##.#..#.
-    !byte %#.##..##
-    !byte %.##....#
+    !byte %....##..            ;    ##
+    !byte %....##..            ;    ##
+    !byte %########            ;##########
+    !byte %....##..            ;    ##
+    !byte %.##....#            ; ##    ##
+    !byte %##.#..#.            ;## #  # ##
+    !byte %#.##..##            ;# ##  ## #
+    !byte %.##....#            ; ##    ##
     !byte %........
     !byte %........
     !byte %##......
@@ -10364,14 +10363,14 @@ guardianGraphics
     !byte %.#......
     !byte %#.......
 
-    !byte %......##
-    !byte %......##
-    !byte %..######
-    !byte %......##
-    !byte %...##...
-    !byte %..#..#..
-    !byte %..####..
-    !byte %...##...
+    !byte %......##            ;      ##
+    !byte %......##            ;      ##
+    !byte %..######            ;  ##########
+    !byte %......##            ;      ##
+    !byte %...##...            ;   ##    ##
+    !byte %..#..#..            ;  #  #  ## #
+    !byte %..####..            ;  ####  ## #
+    !byte %...##...            ;   ##    ##
     !byte %........
     !byte %........
     !byte %####....
@@ -10381,14 +10380,14 @@ guardianGraphics
     !byte %##.#....
     !byte %.##.....
 
-    !byte %........
-    !byte %........
-    !byte %....####
-    !byte %........
-    !byte %.....##.
-    !byte %....#.##
-    !byte %....##.#
-    !byte %.....##.
+    !byte %........            ;        ##
+    !byte %........            ;        ##
+    !byte %....####            ;    ##########
+    !byte %........            ;        ##
+    !byte %.....##.            ;     ##    ##
+    !byte %....#.##            ;    # ##  ## #
+    !byte %....##.#            ;    ## #  # ##
+    !byte %.....##.            ;     ##    ##
     !byte %##......
     !byte %##......
     !byte %######..
@@ -10398,14 +10397,14 @@ guardianGraphics
     !byte %..#.##..
     !byte %...##...
 
-    !byte %........
-    !byte %........
-    !byte %......##
-    !byte %........
-    !byte %.......#
-    !byte %......#.
-    !byte %......##
-    !byte %.......#
+    !byte %........            ;          ##
+    !byte %........            ;          ##
+    !byte %......##            ;      ##########
+    !byte %........            ;          ##
+    !byte %.......#            ;       ##    ##
+    !byte %......#.            ;      #  #  ## #
+    !byte %......##            ;      ####  ## #
+    !byte %.......#            ;       ##    ##
     !byte %..##....
     !byte %..##....
     !byte %########
@@ -10415,14 +10414,14 @@ guardianGraphics
     !byte %##..##.#
     !byte %#....##.
 
-    !byte %.###....
-    !byte %.#.#....
-    !byte %.#####..
-    !byte %..##.#..
-    !byte %..#####.
-    !byte %..#####.
-    !byte %...##...
-    !byte %..####..
+    !byte %.###....            ; ###
+    !byte %.#.#....            ; # #
+    !byte %.#####..            ; #####
+    !byte %..##.#..            ;  ## #
+    !byte %..#####.            ;  #####
+    !byte %..#####.            ;  #####
+    !byte %...##...            ;   ##
+    !byte %..####..            ;  ####
     !byte %........
     !byte %........
     !byte %........
@@ -10432,14 +10431,14 @@ guardianGraphics
     !byte %........
     !byte %........
 
-    !byte %...###..
-    !byte %...#.#..
-    !byte %...#####
-    !byte %....##.#
-    !byte %....####
-    !byte %....####
-    !byte %.....##.
-    !byte %....####
+    !byte %...###..            ;   ###
+    !byte %...#.#..            ;   # #
+    !byte %...#####            ;   #####
+    !byte %....##.#            ;    ## #
+    !byte %....####            ;    #####
+    !byte %....####            ;    #####
+    !byte %.....##.            ;     ##
+    !byte %....####            ;    ####
     !byte %........
     !byte %........
     !byte %........
@@ -10449,14 +10448,14 @@ guardianGraphics
     !byte %........
     !byte %........
 
-    !byte %.....###
-    !byte %.....#.#
-    !byte %.....###
-    !byte %......##
-    !byte %......##
-    !byte %......##
-    !byte %.......#
-    !byte %......##
+    !byte %.....###            ;     ###
+    !byte %.....#.#            ;     # #
+    !byte %.....###            ;     #####
+    !byte %......##            ;      ## #
+    !byte %......##            ;      #####
+    !byte %......##            ;      #####
+    !byte %.......#            ;       ##
+    !byte %......##            ;      ####
     !byte %........
     !byte %........
     !byte %##......
@@ -10466,14 +10465,14 @@ guardianGraphics
     !byte %#.......
     !byte %##......
 
-    !byte %.......#
-    !byte %.......#
-    !byte %.......#
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
+    !byte %.......#            ;       ###
+    !byte %.......#            ;       # #
+    !byte %.......#            ;       #####
+    !byte %........            ;        ## #
+    !byte %........            ;        #####
+    !byte %........            ;        #####
+    !byte %........            ;         ##
+    !byte %........            ;        ####
     !byte %##......
     !byte %.#......
     !byte %####....
@@ -10483,14 +10482,14 @@ guardianGraphics
     !byte %.##.....
     !byte %####....
 
-    !byte %.######.
-    !byte %.######.
-    !byte %####.###
-    !byte %#####.##
-    !byte %..####..
-    !byte %.###.##.
-    !byte %.##.###.
-    !byte %.###.###
+    !byte %.######.            ; ######
+    !byte %.######.            ; ######
+    !byte %####.###            ;#### ###
+    !byte %#####.##            ;##### ##
+    !byte %..####..            ;  ####
+    !byte %.###.##.            ; ### ##
+    !byte %.##.###.            ; ## ###
+    !byte %.###.###            ; ### ###
     !byte %........
     !byte %........
     !byte %........
@@ -10500,14 +10499,14 @@ guardianGraphics
     !byte %........
     !byte %........
 
-    !byte %...##.##
-    !byte %...##.##
-    !byte %...##.##
-    !byte %...###.#
-    !byte %....####
-    !byte %.....##.
-    !byte %.....##.
-    !byte %.....###
+    !byte %...##.##            ;   ## ###
+    !byte %...##.##            ;   ## ###
+    !byte %...##.##            ;   ## ###
+    !byte %...###.#            ;   ### ##
+    !byte %....####            ;    ####
+    !byte %.....##.            ;     ##
+    !byte %.....##.            ;     ##
+    !byte %.....###            ;     ###
     !byte %#.......
     !byte %#.......
     !byte %#.......
@@ -10517,14 +10516,14 @@ guardianGraphics
     !byte %........
     !byte %........
 
-    !byte %.....###
-    !byte %.....###
-    !byte %....####
-    !byte %....####
-    !byte %......##
-    !byte %.....###
-    !byte %.....##.
-    !byte %.....###
+    !byte %.....###            ;     ######
+    !byte %.....###            ;     ######
+    !byte %....####            ;    #### ###
+    !byte %....####            ;    ##### ##
+    !byte %......##            ;      ####
+    !byte %.....###            ;     ### ##
+    !byte %.....##.            ;     ## ###
+    !byte %.....###            ;     ### ###
     !byte %###.....
     !byte %###.....
     !byte %.###....
@@ -10534,14 +10533,14 @@ guardianGraphics
     !byte %###.....
     !byte %.###....
 
-    !byte %.......#
-    !byte %......##
-    !byte %.....###
-    !byte %.....##.
-    !byte %........
-    !byte %.......#
-    !byte %......##
-    !byte %......##
+    !byte %.......#            ;       ######
+    !byte %......##            ;      ########
+    !byte %.....###            ;     ##########
+    !byte %.....##.            ;     ## #### ##
+    !byte %........            ;        #####
+    !byte %.......#            ;       ### ## #
+    !byte %......##            ;      ##    ###
+    !byte %......##            ;      ###    #
     !byte %#####...
     !byte %######..
     !byte %#######.
@@ -10551,14 +10550,14 @@ guardianGraphics
     !byte %....###.
     !byte %#....#..
 
-    !byte %....##..
-    !byte %...#.##.
-    !byte %..#.##.#
-    !byte %.#..##..
-    !byte %#...##..
-    !byte %#...##..
-    !byte %.#..##..
-    !byte %..#.##.#
+    !byte %....##..            ;    ##
+    !byte %...#.##.            ;   # ##
+    !byte %..#.##.#            ;  # ## #
+    !byte %.#..##..            ; #  ##  #
+    !byte %#...##..            ;#   ##   #
+    !byte %#...##..            ;#   ##   #
+    !byte %.#..##..            ; #  ##  #
+    !byte %..#.##.#            ;  # ## #
     !byte %........
     !byte %........
     !byte %........
@@ -10568,14 +10567,14 @@ guardianGraphics
     !byte %#.......
     !byte %........
 
-    !byte %......##
-    !byte %......##
-    !byte %.....#.#
-    !byte %.....###
-    !byte %....#.##
-    !byte %....#.##
-    !byte %.....###
-    !byte %.....#.#
+    !byte %......##            ;      ##
+    !byte %......##            ;      ##
+    !byte %.....#.#            ;     # ##
+    !byte %.....###            ;     ####
+    !byte %....#.##            ;    # ## #
+    !byte %....#.##            ;    # ## #
+    !byte %.....###            ;     ####
+    !byte %.....#.#            ;     # ##
     !byte %........
     !byte %........
     !byte %#.......
@@ -10585,14 +10584,14 @@ guardianGraphics
     !byte %#.......
     !byte %#.......
 
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
+    !byte %........            ;        ##
+    !byte %........            ;        ##
+    !byte %........            ;        ##
+    !byte %........            ;        ##
+    !byte %........            ;        #
+    !byte %........            ;        #
+    !byte %........            ;        ##
+    !byte %........            ;        ##
     !byte %##......
     !byte %##......
     !byte %##......
@@ -10602,14 +10601,14 @@ guardianGraphics
     !byte %##......
     !byte %##......
 
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %.......#
-    !byte %.......#
-    !byte %........
-    !byte %........
+    !byte %........            ;          ##
+    !byte %........            ;         ## #
+    !byte %........            ;        # ## #
+    !byte %........            ;        # ## #
+    !byte %.......#            ;       #  ##  #
+    !byte %.......#            ;       #  ##  #
+    !byte %........            ;        # ## #
+    !byte %........            ;        # ## #
     !byte %..##....
     !byte %.##.#...
     !byte %#.##.#..
@@ -10619,14 +10618,14 @@ guardianGraphics
     !byte %#.##.#..
     !byte %#.##.#..
 
-    !byte %...#.##.
-    !byte %....##..
-    !byte %..##.###
-    !byte %.#..##..
-    !byte %.#######
-    !byte %.#######
-    !byte %..#.....
-    !byte %...#.###
+    !byte %...#.##.            ;   # ##
+    !byte %....##..            ;    ##
+    !byte %..##.###            ;  ## ###
+    !byte %.#..##..            ; #  ##
+    !byte %.#######            ; ##########
+    !byte %.#######            ; ##########
+    !byte %..#.....            ;  #      #
+    !byte %...#.###            ;   # ###
     !byte %........
     !byte %........
     !byte %........
@@ -10636,14 +10635,14 @@ guardianGraphics
     !byte %.#......
     !byte %........
 
-    !byte %......##
-    !byte %......##
-    !byte %....###.
-    !byte %......##
-    !byte %..######
-    !byte %..######
-    !byte %...#....
-    !byte %.....###
+    !byte %......##            ;      ##
+    !byte %......##            ;      ##
+    !byte %....###.            ;    ### ##
+    !byte %......##            ;      ##  #
+    !byte %..######            ;  #########
+    !byte %..######            ;  ##########
+    !byte %...#....            ;   #      #
+    !byte %.....###            ;     ### #
     !byte %........
     !byte %........
     !byte %##......
@@ -10653,14 +10652,14 @@ guardianGraphics
     !byte %..#.....
     !byte %.#......
 
-    !byte %........
-    !byte %........
-    !byte %.......#
-    !byte %.....#..
-    !byte %....####
-    !byte %....####
-    !byte %........
-    !byte %......##
+    !byte %........            ;        ##
+    !byte %........            ;        ##
+    !byte %.......#            ;       ### #
+    !byte %.....#..            ;     #  ##  #
+    !byte %....####            ;    ##########
+    !byte %....####            ;    #########
+    !byte %........            ;            #
+    !byte %......##            ;      ### ##
     !byte %##......
     !byte %##......
     !byte %##.#....
@@ -10670,14 +10669,14 @@ guardianGraphics
     !byte %....#...
     !byte %#.##....
 
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %.......#
-    !byte %......##
-    !byte %.......#
-    !byte %.......#
-    !byte %........
+    !byte %........            ;         ## #
+    !byte %........            ;          ##
+    !byte %........            ;        # ###
+    !byte %.......#            ;       #  ##  #
+    !byte %......##            ;      ##########
+    !byte %.......#            ;       #########
+    !byte %.......#            ;       #
+    !byte %........            ;        ## ###
     !byte %.##.#...
     !byte %..##....
     !byte %#.###...
@@ -10687,14 +10686,14 @@ guardianGraphics
     !byte %........
     !byte %##.###..
 
-    !byte %.##....#
-    !byte %#.##..#.
-    !byte %#.##..##
-    !byte %.##....#
-    !byte %....##..
-    !byte %########
-    !byte %.#.#..#.
-    !byte %...#..#.
+    !byte %.##....#            ; ##    ##
+    !byte %#.##..#.            ;# ##  #  #
+    !byte %#.##..##            ;# ##  ####
+    !byte %.##....#            ; ##    ##
+    !byte %....##..            ;    ##
+    !byte %########            ;##########
+    !byte %.#.#..#.            ; # #  # #
+    !byte %...#..#.            ;   #  #
     !byte %#.......
     !byte %.#......
     !byte %##......
@@ -10704,14 +10703,14 @@ guardianGraphics
     !byte %#.......
     !byte %........
 
-    !byte %...##...
-    !byte %..#..#..
-    !byte %..####..
-    !byte %...##...
-    !byte %......##
-    !byte %..######
-    !byte %...#.#..
-    !byte %.....#..
+    !byte %...##...            ;   ##    ##
+    !byte %..#..#..            ;  #  #  ## #
+    !byte %..####..            ;  ####  ## #
+    !byte %...##...            ;   ##    ##
+    !byte %......##            ;      ##
+    !byte %..######            ;  ##########
+    !byte %...#.#..            ;   # #  # #
+    !byte %.....#..            ;     #  #
     !byte %.##.....
     !byte %##.#....
     !byte %##.#....
@@ -10721,14 +10720,14 @@ guardianGraphics
     !byte %#.#.....
     !byte %#.......
 
-    !byte %.....##.
-    !byte %....##.#
-    !byte %....##.#
-    !byte %.....##.
-    !byte %........
-    !byte %....####
-    !byte %.....#.#
-    !byte %.......#
+    !byte %.....##.            ;     ##    ##
+    !byte %....##.#            ;    ## #  ####
+    !byte %....##.#            ;    ## #  #  #
+    !byte %.....##.            ;     ##    ##
+    !byte %........            ;        ##
+    !byte %....####            ;    ##########
+    !byte %.....#.#            ;     # #  # #
+    !byte %.......#            ;       #  #
     !byte %...##...
     !byte %..####..
     !byte %..#..#..
@@ -10738,14 +10737,14 @@ guardianGraphics
     !byte %..#.#...
     !byte %..#.....
 
-    !byte %.......#
-    !byte %......##
-    !byte %......#.
-    !byte %.......#
-    !byte %........
-    !byte %......##
-    !byte %.......#
-    !byte %........
+    !byte %.......#            ;       ##    ##
+    !byte %......##            ;      ####  # ##
+    !byte %......#.            ;      #  #  # ##
+    !byte %.......#            ;       ##    ##
+    !byte %........            ;          ##
+    !byte %......##            ;      ##########
+    !byte %.......#            ;       # #  # #
+    !byte %........            ;         #  #
     !byte %#....##.
     !byte %##..#.##
     !byte %.#..#.##
@@ -10755,14 +10754,14 @@ guardianGraphics
     !byte %.#..#.#.
     !byte %.#..#...
 
-    !byte %...#..#.
-    !byte %...####.
-    !byte %....##..
-    !byte %....##..
-    !byte %....##..
-    !byte %....##..
-    !byte %...####.
-    !byte %..######
+    !byte %...#..#.            ;   #  #
+    !byte %...####.            ;   ####
+    !byte %....##..            ;    ##
+    !byte %....##..            ;    ##
+    !byte %....##..            ;    ##
+    !byte %....##..            ;    ##
+    !byte %...####.            ;   ####
+    !byte %..######            ;  ######
     !byte %........
     !byte %........
     !byte %........
@@ -10772,14 +10771,14 @@ guardianGraphics
     !byte %........
     !byte %........
 
-    !byte %.....#..
-    !byte %.....###
-    !byte %......##
-    !byte %......##
-    !byte %.....###
-    !byte %....####
-    !byte %........
-    !byte %........
+    !byte %.....#..            ;     #  #
+    !byte %.....###            ;     ####
+    !byte %......##            ;      ##
+    !byte %......##            ;      ##
+    !byte %.....###            ;     ####
+    !byte %....####            ;    ######
+    !byte %........            ;
+    !byte %........            ;
     !byte %#.......
     !byte %#.......
     !byte %........
@@ -10789,14 +10788,14 @@ guardianGraphics
     !byte %........
     !byte %........
 
-    !byte %.......#
-    !byte %.......#
-    !byte %.......#
-    !byte %......##
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
+    !byte %.......#            ;       #  #
+    !byte %.......#            ;       ####
+    !byte %.......#            ;       ####
+    !byte %......##            ;      ######
+    !byte %........            ;
+    !byte %........            ;
+    !byte %........            ;
+    !byte %........            ;
     !byte %..#.....
     !byte %###.....
     !byte %###.....
@@ -10806,14 +10805,14 @@ guardianGraphics
     !byte %........
     !byte %........
 
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
+    !byte %........            ;         #  #
+    !byte %........            ;         ####
+    !byte %........            ;          ##
+    !byte %........            ;          ##
+    !byte %........            ;         ####
+    !byte %........            ;        ######
+    !byte %........            ;
+    !byte %........            ;
     !byte %.#..#...
     !byte %.####...
     !byte %..##....
@@ -10823,14 +10822,14 @@ guardianGraphics
     !byte %........
     !byte %........
 
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
+    !byte %........            ;
+    !byte %........            ;
+    !byte %........            ;
+    !byte %........            ;
+    !byte %........            ;
+    !byte %........            ;
+    !byte %........            ;
+    !byte %........            ;
     !byte %........
     !byte %........
     !byte %........
@@ -10840,14 +10839,14 @@ guardianGraphics
     !byte %........
     !byte %........
 
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %..######
-    !byte %..#.....
+    !byte %........            ;
+    !byte %........            ;
+    !byte %........            ;
+    !byte %........            ;
+    !byte %........            ;
+    !byte %........            ;
+    !byte %..######            ;  ##########
+    !byte %..#.....            ;  #      ###
     !byte %........
     !byte %........
     !byte %........
@@ -10857,14 +10856,14 @@ guardianGraphics
     !byte %####....
     !byte %.###....
 
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %....####
-    !byte %....#...
-    !byte %....####
-    !byte %....#...
+    !byte %........            ;
+    !byte %........            ;
+    !byte %........            ;
+    !byte %........            ;
+    !byte %....####            ;    ##########
+    !byte %....#...            ;    #      ###
+    !byte %....####            ;    ##########
+    !byte %....#...            ;    #     #  #
     !byte %........
     !byte %........
     !byte %........
@@ -10874,14 +10873,14 @@ guardianGraphics
     !byte %######..
     !byte %..#..#..
 
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %......##
-    !byte %......#.
+    !byte %........            ;
+    !byte %........            ;
+    !byte %........            ;
+    !byte %........            ;
+    !byte %........            ;
+    !byte %........            ;
+    !byte %......##            ;      ##########
+    !byte %......#.            ;      #      ###
     !byte %........
     !byte %........
     !byte %........
@@ -10891,14 +10890,14 @@ guardianGraphics
     !byte %########
     !byte %.....###
 
-    !byte %........
-    !byte %........
-    !byte %########
-    !byte %#......#
-    !byte %########
-    !byte %#.....#.
-    !byte %#######.
-    !byte %########
+    !byte %........            ;
+    !byte %........            ;
+    !byte %########            ;##########
+    !byte %#......#            ;#      ###
+    !byte %########            ;##########
+    !byte %#.....#.            ;#     #  #
+    !byte %#######.            ;#######  #
+    !byte %########            ;##########
     !byte %........
     !byte %........
     !byte %##......
@@ -10908,14 +10907,14 @@ guardianGraphics
     !byte %.#......
     !byte %##......
 
-    !byte %..######
-    !byte %..#.....
-    !byte %..######
-    !byte %..######
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
+    !byte %..######            ;  ##########
+    !byte %..#.....            ;  #     #  #
+    !byte %..######            ;  #######  #
+    !byte %..######            ;  ##########
+    !byte %........            ;
+    !byte %........            ;
+    !byte %........            ;
+    !byte %........            ;
     !byte %####....
     !byte %#..#....
     !byte %#..#....
@@ -10925,14 +10924,14 @@ guardianGraphics
     !byte %........
     !byte %........
 
-    !byte %....####
-    !byte %....####
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
+    !byte %....####            ;    #######  #
+    !byte %....####            ;    ##########
+    !byte %........            ;
+    !byte %........            ;
+    !byte %........            ;
+    !byte %........            ;
+    !byte %........            ;
+    !byte %........            ;
     !byte %###..#..
     !byte %######..
     !byte %........
@@ -10942,14 +10941,14 @@ guardianGraphics
     !byte %........
     !byte %........
 
-    !byte %......##
-    !byte %......#.
-    !byte %......##
-    !byte %......##
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
+    !byte %......##            ;      ##########
+    !byte %......#.            ;      #     #  #
+    !byte %......##            ;      #######  #
+    !byte %......##            ;      ##########
+    !byte %........            ;
+    !byte %........            ;
+    !byte %........            ;
+    !byte %........            ;
     !byte %########
     !byte %....#..#
     !byte %#####..#
@@ -10959,14 +10958,14 @@ guardianGraphics
     !byte %........
     !byte %........
 
-    !byte %........
-    !byte %....#...
-    !byte %...#.#..
-    !byte %..#.#.#.
-    !byte %.#.#.#.#
-    !byte %.#..#.#.
-    !byte %#....#..
-    !byte %#.......
+    !byte %........            ;
+    !byte %....#...            ;    #
+    !byte %...#.#..            ;   # #
+    !byte %..#.#.#.            ;  # # #
+    !byte %.#.#.#.#            ; # # # #
+    !byte %.#..#.#.            ; #  # #
+    !byte %#....#..            ;#    #
+    !byte %#.......            ;#       ##
     !byte %........
     !byte %........
     !byte %........
@@ -10976,14 +10975,14 @@ guardianGraphics
     !byte %........
     !byte %##......
 
-    !byte %..#.#.#.
-    !byte %...#.#.#
-    !byte %..#.#.#.
-    !byte %...#.#.#
-    !byte %..#.....
-    !byte %..#.....
-    !byte %..#.....
-    !byte %..#.....
+    !byte %..#.#.#.            ;  # # #
+    !byte %...#.#.#            ;   # # #
+    !byte %..#.#.#.            ;  # # #
+    !byte %...#.#.#            ;   # # #
+    !byte %..#.....            ;  #
+    !byte %..#.....            ;  #
+    !byte %..#.....            ;  #
+    !byte %..#.....            ;  #        ##
     !byte %........
     !byte %........
     !byte %........
@@ -10993,14 +10992,14 @@ guardianGraphics
     !byte %........
     !byte %...##...
 
-    !byte %........
-    !byte %...#....
-    !byte %..#.#...
-    !byte %.#.#.#..
-    !byte %#.#.#.#.
-    !byte %.#.#...#
-    !byte %..#....#
-    !byte %.......#
+    !byte %........            ;
+    !byte %...#....            ;   #
+    !byte %..#.#...            ;  # #
+    !byte %.#.#.#..            ; # # #
+    !byte %#.#.#.#.            ;# # # #
+    !byte %.#.#...#            ; # #   #
+    !byte %..#....#            ;  #    #
+    !byte %.......#            ;       #    ##
     !byte %........
     !byte %........
     !byte %........
@@ -11010,14 +11009,14 @@ guardianGraphics
     !byte %........
     !byte %....##..
 
-    !byte %...#.#.#
-    !byte %..#.#.#.
-    !byte %...#.#.#
-    !byte %..#.#.#.
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
+    !byte %...#.#.#            ;   # # # #
+    !byte %..#.#.#.            ;  # # # #
+    !byte %...#.#.#            ;   # # # #
+    !byte %..#.#.#.            ;  # # # #
+    !byte %........            ;         #
+    !byte %........            ;         #
+    !byte %........            ;         #
+    !byte %........            ;         #    ##
     !byte %.#......
     !byte %#.......
     !byte %.#......
@@ -11027,14 +11026,14 @@ guardianGraphics
     !byte %.#......
     !byte %.#....##
 
-    !byte %#.......
-    !byte %.#.....#
-    !byte %.#######
-    !byte %..######
-    !byte %...#####
-    !byte %....####
-    !byte %....#.#.
-    !byte %...#..#.
+    !byte %#.......            ;#       ##
+    !byte %.#.....#            ; #     #
+    !byte %.#######            ; ########
+    !byte %..######            ;  ########
+    !byte %...#####            ;   ######
+    !byte %....####            ;    ####
+    !byte %....#.#.            ;    # # #
+    !byte %...#..#.            ;   #  #  #
     !byte %##......
     !byte %........
     !byte %#.......
@@ -11044,14 +11043,14 @@ guardianGraphics
     !byte %#.......
     !byte %.#......
 
-    !byte %..#.....
-    !byte %...#....
-    !byte %...#####
-    !byte %....####
-    !byte %.....###
-    !byte %......##
-    !byte %......#.
-    !byte %.....#..
+    !byte %..#.....            ;  #        ##
+    !byte %...#....            ;   #      #
+    !byte %...#####            ;   #########
+    !byte %....####            ;    #########
+    !byte %.....###            ;     #######
+    !byte %......##            ;      #####
+    !byte %......#.            ;      # #  #
+    !byte %.....#..            ;     #  #   #
     !byte %...##...
     !byte %..#.....
     !byte %####....
@@ -11061,14 +11060,14 @@ guardianGraphics
     !byte %#..#....
     !byte %#...#...
 
-    !byte %......#.
-    !byte %......#.
-    !byte %......##
-    !byte %......##
-    !byte %.......#
-    !byte %........
-    !byte %........
-    !byte %.......#
+    !byte %......#.            ;      #     ##
+    !byte %......#.            ;      #    #
+    !byte %......##            ;      #######
+    !byte %......##            ;      ########
+    !byte %.......#            ;       ######
+    !byte %........            ;        ####
+    !byte %........            ;        # # #
+    !byte %.......#            ;       #  #  #
     !byte %....##..
     !byte %...#....
     !byte %#####...
@@ -11078,14 +11077,14 @@ guardianGraphics
     !byte %#.#.#...
     !byte %..#..#..
 
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
+    !byte %........            ;        #     ##
+    !byte %........            ;        #    #
+    !byte %........            ;        #######
+    !byte %........            ;        ########
+    !byte %........            ;         ######
+    !byte %........            ;          ####
+    !byte %........            ;          # # #
+    !byte %........            ;         #  #  #
     !byte %#.....##
     !byte %#....#..
     !byte %#######.
@@ -11095,14 +11094,14 @@ guardianGraphics
     !byte %..#.#.#.
     !byte %.#..#..#
 
-    !byte %.######.
-    !byte %#..##..#
-    !byte %########
-    !byte %##.##.##
-    !byte %###..###
-    !byte %.######.
-    !byte %..#..#..
-    !byte %..#..#..
+    !byte %.######.            ; ######
+    !byte %#..##..#            ;#  ##  #
+    !byte %########            ;########
+    !byte %##.##.##            ;## ## ##
+    !byte %###..###            ;###  ###
+    !byte %.######.            ; ######
+    !byte %..#..#..            ;  #  #
+    !byte %..#..#..            ;  #  #
     !byte %........
     !byte %........
     !byte %........
@@ -11112,14 +11111,14 @@ guardianGraphics
     !byte %........
     !byte %........
 
-    !byte %........
-    !byte %....####
-    !byte %...#..##
-    !byte %...#####
-    !byte %...##.##
-    !byte %...###..
-    !byte %....####
-    !byte %....#...
+    !byte %........            ;
+    !byte %....####            ;    ######
+    !byte %...#..##            ;   #  ##  #
+    !byte %...#####            ;   ########
+    !byte %...##.##            ;   ## ## ##
+    !byte %...###..            ;   ###  ###
+    !byte %....####            ;    ######
+    !byte %....#...            ;    #    #
     !byte %........
     !byte %##......
     !byte %..#.....
@@ -11129,14 +11128,14 @@ guardianGraphics
     !byte %##......
     !byte %.#......
 
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %.....###
-    !byte %....#..#
-    !byte %....####
-    !byte %....##.#
-    !byte %....###.
+    !byte %........            ;
+    !byte %........            ;
+    !byte %........            ;
+    !byte %.....###            ;     ######
+    !byte %....#..#            ;    #  ##  #
+    !byte %....####            ;    ########
+    !byte %....##.#            ;    ## ## ##
+    !byte %....###.            ;    ###  ###
     !byte %........
     !byte %........
     !byte %........
@@ -11146,14 +11145,14 @@ guardianGraphics
     !byte %#.##....
     !byte %.###....
 
-    !byte %........
-    !byte %.......#
-    !byte %......#.
-    !byte %......##
-    !byte %......##
-    !byte %......##
-    !byte %.......#
-    !byte %.......#
+    !byte %........            ;
+    !byte %.......#            ;       ######
+    !byte %......#.            ;      #  ##  #
+    !byte %......##            ;      ########
+    !byte %......##            ;      ## ## ##
+    !byte %......##            ;      ###  ###
+    !byte %.......#            ;       ######
+    !byte %.......#            ;       #    #
     !byte %........
     !byte %#####...
     !byte %.##..#..
@@ -11163,14 +11162,14 @@ guardianGraphics
     !byte %#####...
     !byte %....#...
 
-    !byte %..#..#..
-    !byte %.#....#.
-    !byte %.#....#.
-    !byte %.#....#.
-    !byte %#......#
-    !byte %#......#
-    !byte %##....##
-    !byte %##....##
+    !byte %..#..#..            ;  #  #
+    !byte %.#....#.            ; #    #
+    !byte %.#....#.            ; #    #
+    !byte %.#....#.            ; #    #
+    !byte %#......#            ;#      #
+    !byte %#......#            ;#      #
+    !byte %##....##            ;##    ##
+    !byte %##....##            ;##    ##
     !byte %........
     !byte %........
     !byte %........
@@ -11180,14 +11179,14 @@ guardianGraphics
     !byte %........
     !byte %........
 
-    !byte %...#....
-    !byte %...#....
-    !byte %..#.....
-    !byte %..#.....
-    !byte %.#......
-    !byte %.#......
-    !byte %.##.....
-    !byte %.##.....
+    !byte %...#....            ;   #      #
+    !byte %...#....            ;   #      #
+    !byte %..#.....            ;  #        #
+    !byte %..#.....            ;  #        #
+    !byte %.#......            ; #          #
+    !byte %.#......            ; #         ##
+    !byte %.##.....            ; ##        ##
+    !byte %.##.....            ; ##
     !byte %..#.....
     !byte %..#.....
     !byte %...#....
@@ -11197,14 +11196,14 @@ guardianGraphics
     !byte %...##...
     !byte %........
 
-    !byte %.....###
-    !byte %....#...
-    !byte %...#....
-    !byte %..#.....
-    !byte %.#......
-    !byte %#.......
-    !byte %##......
-    !byte %##......
+    !byte %.....###            ;     ######
+    !byte %....#...            ;    #      #
+    !byte %...#....            ;   #        #
+    !byte %..#.....            ;  #          #
+    !byte %.#......            ; #            #
+    !byte %#.......            ;#              #
+    !byte %##......            ;##            ##
+    !byte %##......            ;##            ##
     !byte %###.....
     !byte %...#....
     !byte %....#...
@@ -11214,14 +11213,14 @@ guardianGraphics
     !byte %......##
     !byte %......##
 
-    !byte %......#.
-    !byte %......#.
-    !byte %.....#..
-    !byte %.....#..
-    !byte %....#...
-    !byte %....##..
-    !byte %....##..
-    !byte %........
+    !byte %......#.            ;      #      #
+    !byte %......#.            ;      #      #
+    !byte %.....#..            ;     #        #
+    !byte %.....#..            ;     #        #
+    !byte %....#...            ;    #          #
+    !byte %....##..            ;    ##         #
+    !byte %....##..            ;    ##        ##
+    !byte %........            ;              ##
     !byte %.....#..
     !byte %.....#..
     !byte %......#.
@@ -11231,14 +11230,14 @@ guardianGraphics
     !byte %......##
     !byte %......##
 
-    !byte %.....##.
-    !byte %....##..
-    !byte %...##...
-    !byte %..###...
-    !byte %.###.#..
-    !byte %##..#.#.
-    !byte %#....#.#
-    !byte %......##
+    !byte %.....##.            ;     ##
+    !byte %....##..            ;    ##
+    !byte %...##...            ;   ##
+    !byte %..###...            ;  ###
+    !byte %.###.#..            ; ### #
+    !byte %##..#.#.            ;##  # #  #
+    !byte %#....#.#            ;#    # ####
+    !byte %......##            ;      #####
     !byte %........
     !byte %........
     !byte %........
@@ -11248,14 +11247,14 @@ guardianGraphics
     !byte %###.....
     !byte %###.....
 
-    !byte %.......#
-    !byte %......##
-    !byte %.....##.
-    !byte %....###.
-    !byte %...###.#
-    !byte %..##..#.
-    !byte %..#....#
-    !byte %........
+    !byte %.......#            ;       ##
+    !byte %......##            ;      ##
+    !byte %.....##.            ;     ##
+    !byte %....###.            ;    ###
+    !byte %...###.#            ;   ### #
+    !byte %..##..#.            ;  ##  # # #
+    !byte %..#....#            ;  #    # ###
+    !byte %........            ;        ####
     !byte %#.......
     !byte %........
     !byte %........
@@ -11265,14 +11264,14 @@ guardianGraphics
     !byte %.###....
     !byte %####....
 
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %.......#
-    !byte %......##
-    !byte %.....##.
-    !byte %.....#..
-    !byte %........
+    !byte %........            ;          ##
+    !byte %........            ;         ##
+    !byte %........            ;        ##
+    !byte %.......#            ;       ###
+    !byte %......##            ;      ### #
+    !byte %.....##.            ;     ##  # # #
+    !byte %.....#..            ;     #    # ###
+    !byte %........            ;           ####
     !byte %..##....
     !byte %.##.....
     !byte %##......
@@ -11282,14 +11281,14 @@ guardianGraphics
     !byte %..#.###.
     !byte %...####.
 
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %.......#
-    !byte %.......#
-    !byte %........
+    !byte %........            ;            ##
+    !byte %........            ;           ##
+    !byte %........            ;          ##
+    !byte %........            ;         ##
+    !byte %........            ;        ####
+    !byte %.......#            ;       ## # # #
+    !byte %.......#            ;       #   # ###
+    !byte %........            ;            ####
     !byte %....##..
     !byte %...##...
     !byte %..##....
@@ -11299,14 +11298,14 @@ guardianGraphics
     !byte %...#.###
     !byte %....####
 
-    !byte %.....###
-    !byte %##..####
-    !byte %##.###..
-    !byte %########
-    !byte %###...#.
-    !byte %##..#...
-    !byte %##.#.#.#
-    !byte %....#...
+    !byte %.....###            ;     ###  #
+    !byte %##..####            ;##  #### ##
+    !byte %##.###..            ;## ###    #
+    !byte %########            ;###########
+    !byte %###...#.            ;###   #
+    !byte %##..#...            ;##  #   #
+    !byte %##.#.#.#            ;## # # # #
+    !byte %....#...            ;    #   #
     !byte %..#.....
     !byte %.##.....
     !byte %..#.....
@@ -11316,14 +11315,14 @@ guardianGraphics
     !byte %.#......
     !byte %#.......
 
-    !byte %.##....#
-    !byte %.##...##
-    !byte %.##..##.
-    !byte %.#######
-    !byte %.####...
-    !byte %.##...#.
-    !byte %.##..#.#
-    !byte %......#.
+    !byte %.##....#            ; ##    ##  #
+    !byte %.##...##            ; ##   ### ##
+    !byte %.##..##.            ; ##  ##    #
+    !byte %.#######            ; ###########
+    !byte %.####...            ; ####   #
+    !byte %.##...#.            ; ##   #   #
+    !byte %.##..#.#            ; ##  # # # #
+    !byte %......#.            ;      #   #
     !byte %#..#....
     !byte %#.##....
     !byte %...#....
@@ -11333,14 +11332,14 @@ guardianGraphics
     !byte %.#.#....
     !byte %..#.....
 
-    !byte %..##....
-    !byte %..##....
-    !byte %..##....
-    !byte %..######
-    !byte %..#####.
-    !byte %..##....
-    !byte %..##....
-    !byte %........
+    !byte %..##....            ;  ##      ##  #
+    !byte %..##....            ;  ##     ### ##
+    !byte %..##....            ;  ##    ##    #
+    !byte %..######            ;  #############
+    !byte %..#####.            ;  #####    #
+    !byte %..##....            ;  ##     #   #
+    !byte %..##....            ;  ##    # # # #
+    !byte %........            ;         #   #
     !byte %..##..#.
     !byte %.###.##.
     !byte %##....#.
@@ -11350,14 +11349,14 @@ guardianGraphics
     !byte %#.#.#.#.
     !byte %.#...#..
 
-    !byte %........
-    !byte %.....##.
-    !byte %.....##.
-    !byte %.....###
-    !byte %.....###
-    !byte %.....##.
-    !byte %.....##.
-    !byte %........
+    !byte %........            ;           ##  #
+    !byte %.....##.            ;     ##   ### ##
+    !byte %.....##.            ;     ##  #     #
+    !byte %.....###            ;     ###########
+    !byte %.....###            ;     ####   #
+    !byte %.....##.            ;     ##   #   #
+    !byte %.....##.            ;     ##  # # # #
+    !byte %........            ;          #   #
     !byte %...##..#
     !byte %..###.##
     !byte %.#.....#
@@ -11367,6 +11366,7 @@ guardianGraphics
     !byte %.#.#.#.#
     !byte %..#...#.
 
+    ; skylab crashing sprites in 4 colour 'MODE 1' format
 skylab4Sprite
     !byte %........
     !byte %........
@@ -11541,22 +11541,22 @@ eugeneSprite
     !byte %........
 
 pedestalSprite
-    !byte %########            ; ################
-    !byte %.###..#.            ;  ###  #  #  ###
-    !byte %#...#.#.            ; #   # #  # #   #
-    !byte %#.#.#.#.            ; # # # #  # # # #
-    !byte %.#..#.#.            ;  #  # #  # #  #
-    !byte %...#..#.            ;    #  #  #  #
-    !byte %..#...#.            ;   #   #  #   #
-    !byte %..#.#.#.            ;   # # #  # # #
-    !byte %########            ;   # # #  # # #
-    !byte %.#..###.            ;   # # #  # # #
-    !byte %.#.#...#            ;   # # #  # # #
-    !byte %.#.#.#.#            ;   # # #  # # #
-    !byte %.#.#..#.            ;   # # #  # # #
-    !byte %.#..#...            ;   # # #  # # #
-    !byte %.#...#..            ;   # # #  # # #
-    !byte %.#.#.#..            ; ################
+    !byte %########             ; ################
+    !byte %.###..#.             ;  ###  #  #  ###
+    !byte %#...#.#.             ; #   # #  # #   #
+    !byte %#.#.#.#.             ; # # # #  # # # #
+    !byte %.#..#.#.             ;  #  # #  # #  #
+    !byte %...#..#.             ;    #  #  #  #
+    !byte %..#...#.             ;   #   #  #   #
+    !byte %..#.#.#.             ;   # # #  # # #
+    !byte %########             ;   # # #  # # #
+    !byte %.#..###.             ;   # # #  # # #
+    !byte %.#.#...#             ;   # # #  # # #
+    !byte %.#.#.#.#             ;   # # #  # # #
+    !byte %.#.#..#.             ;   # # #  # # #
+    !byte %.#..#...             ;   # # #  # # #
+    !byte %.#...#..             ;   # # #  # # #
+    !byte %.#.#.#..             ; ################
 
     !byte %..#.#.#.
     !byte %..#.#.#.
@@ -11575,22 +11575,23 @@ pedestalSprite
     !byte %.#.#.#..
     !byte %########
 
-    !byte %........
-    !byte %........
-    !byte %....#...
-    !byte %.......#
-    !byte %........
-    !byte %..#.....
-    !byte %......#.
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %#.......
-    !byte %........
-    !byte %.....#..
-    !byte %..#...#.
+
+    !byte %........            ;
+    !byte %........            ;
+    !byte %....#...            ;    #
+    !byte %.......#            ;       #
+    !byte %........            ;        #
+    !byte %..#.....            ;  #
+    !byte %......#.            ;      #      #
+    !byte %........            ;          #   #
+    !byte %........            ;     ###   # #
+    !byte %........            ;   ### #  #
+    !byte %........            ;#  # ####
+    !byte %........            ; ##  #       #
+    !byte %#.......            ;##  ###
+    !byte %........            ; ##  #        #
+    !byte %.....#..            ;    #  ##    #
+    !byte %..#...#.            ;##   #   #  #
 
     !byte %.....###
     !byte %...###.#
@@ -11609,22 +11610,22 @@ pedestalSprite
     !byte %#....#..
     !byte %.#..#...
 
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %......#.
-    !byte %...#....
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %#.......
+    !byte %........            ;
+    !byte %........            ;
+    !byte %........            ;
+    !byte %........            ;
+    !byte %........            ;
+    !byte %......#.            ;      #
+    !byte %...#....            ;   #
+    !byte %........            ;        #
+    !byte %........            ;  #
+    !byte %........            ;
+    !byte %........            ;      #      #
+    !byte %........            ;          #   #
+    !byte %........            ;     ###   # #
+    !byte %........            ;   ### #  #
+    !byte %........            ;#  # ####
+    !byte %#.......            ; ##  #  ###
 
     !byte %..#.....
     !byte %........
@@ -11644,22 +11645,22 @@ pedestalSprite
     !byte %###.....
 
 kongBeastSprite
-    !byte %...#..##
-    !byte %...###.#
-    !byte %....####
-    !byte %.....##.
-    !byte %.....#.#
-    !byte %......#.
-    !byte %.....###
-    !byte %....####
-    !byte %##..#...
-    !byte %#.###...
-    !byte %####....
-    !byte %.##.....
-    !byte %#.#.....
-    !byte %.#......
-    !byte %###.....
-    !byte %####....
+    !byte %...#..##            ;   #  ####  #
+    !byte %...###.#            ;   ### ## ###
+    !byte %....####            ;    ########
+    !byte %.....##.            ;     ##  ##
+    !byte %.....#.#            ;     # ## #
+    !byte %......#.            ;      #  #
+    !byte %.....###            ;     ######
+    !byte %....####            ;    ########
+    !byte %##..#...            ;   ##########
+    !byte %#.###...            ;  ##  ####  ##
+    !byte %####....            ; ##   ####   ##
+    !byte %.##.....            ; #   ##  ##   #
+    !byte %#.#.....            ;  # ##    ## #
+    !byte %.#......            ;     ##  ##
+    !byte %###.....            ;      #  #
+    !byte %####....            ;    ###  ###
 
     !byte %...#####
     !byte %..##..##
@@ -11678,22 +11679,22 @@ kongBeastSprite
     !byte %.#......
     !byte %.###....
 
-    !byte %....#.##
-    !byte %....##.#
-    !byte %....####
-    !byte %.....##.
-    !byte %.....#.#
-    !byte %......#.
-    !byte %......##
-    !byte %...#####
-    !byte %##.#....
-    !byte %#.##....
-    !byte %####....
-    !byte %.##.....
-    !byte %#.#.....
-    !byte %.#......
-    !byte %##......
-    !byte %#####...
+    !byte %....#.##            ;    # #### #
+    !byte %....##.#            ;    ## ## ##
+    !byte %....####            ;    ########
+    !byte %.....##.            ;     ##  ##
+    !byte %.....#.#            ;     # ## #
+    !byte %......#.            ;      #  #
+    !byte %......##            ;      ####
+    !byte %...#####            ;   ##########
+    !byte %##.#....            ; ##############
+    !byte %#.##....            ;###  ######  ###
+    !byte %####....            ;#     ####     #
+    !byte %.##.....            ;##   ######   ##
+    !byte %#.#.....            ;     ##  ##
+    !byte %.#......            ;    ##    ##
+    !byte %##......            ;    #      #
+    !byte %#####...            ;  ###      ###
 
     !byte %.#######
     !byte %###..###
@@ -11712,22 +11713,22 @@ kongBeastSprite
     !byte %...#....
     !byte %...###..
 
-    !byte %...###..
-    !byte %.....##.
-    !byte %....##..
-    !byte %.....##.
-    !byte %.##...##
-    !byte %..#..###
-    !byte %.##..###
-    !byte %..##.###
-    !byte %..###...
-    !byte %.##.....
-    !byte %..##....
-    !byte %.##.....
-    !byte %##...##.
-    !byte %###..#..
-    !byte %###..##.
-    !byte %###.##..
+    !byte %...###..            ;   ###    ###
+    !byte %.....##.            ;     ##  ##
+    !byte %....##..            ;    ##    ##
+    !byte %.....##.            ;     ##  ##
+    !byte %.##...##            ; ##   ####   ##
+    !byte %..#..###            ;  #  ######  #
+    !byte %.##..###            ; ##  ######  ##
+    !byte %..##.###            ;  ## ###### ##
+    !byte %..###...            ;   ##########
+    !byte %.##.....            ;    ########
+    !byte %..##....            ;      #  #
+    !byte %.##.....            ;     # ## #
+    !byte %##...##.            ;     ##  ##
+    !byte %###..#..            ;    ########
+    !byte %###..##.            ;    ## ## ##
+    !byte %###.##..            ;    # #### #
 
     !byte %...#####
     !byte %....####
@@ -11746,22 +11747,22 @@ kongBeastSprite
     !byte %#.##....
     !byte %##.#....
 
-    !byte %.###....
-    !byte %...##...
-    !byte %....##..
-    !byte %.....##.
-    !byte %.##...##
-    !byte %..#..###
-    !byte %.##..###
-    !byte %..##.###
-    !byte %....###.
-    !byte %...##...
-    !byte %..##....
-    !byte %.##.....
-    !byte %##...##.
-    !byte %###..#..
-    !byte %###..##.
-    !byte %###.##..
+    !byte %.###....            ; ###        ###
+    !byte %...##...            ;   ##      ##
+    !byte %....##..            ;    ##    ##
+    !byte %.....##.            ;     ##  ##
+    !byte %.##...##            ; ##   ####   ##
+    !byte %..#..###            ;  #  ######  #
+    !byte %.##..###            ; ##  ######  ##
+    !byte %..##.###            ;  ## ###### ##
+    !byte %....###.            ;   ##########
+    !byte %...##...            ;    ########
+    !byte %..##....            ;      #  #
+    !byte %.##.....            ;     # ## #
+    !byte %##...##.            ;   # ##  ## #
+    !byte %###..#..            ;    ########
+    !byte %###..##.            ;    ## ## ##
+    !byte %###.##..            ;     ######
 
     !byte %...#####
     !byte %....####
@@ -11780,22 +11781,22 @@ kongBeastSprite
     !byte %#.##....
     !byte %###.....
 
-    !byte %........
-    !byte %........
-    !byte %..######
-    !byte %.##...##
-    !byte %###.#.##
-    !byte %###.#...
-    !byte %....####
-    !byte %.....###
-    !byte %........
-    !byte %........
-    !byte %######..
-    !byte %##...##.
-    !byte %##.#.###
-    !byte %...#.###
-    !byte %####....
-    !byte %###.....
+    !byte %........            ;
+    !byte %........            ;
+    !byte %..######            ;  ############
+    !byte %.##...##            ; ##   ####   ##
+    !byte %###.#.##            ;### # #### # ###
+    !byte %###.#...            ;### #      # ###
+    !byte %....####            ;    ########
+    !byte %.....###            ;     ######
+    !byte %........            ;    ##    ##
+    !byte %........            ;    # #### #
+    !byte %######..            ;   ## #### ##
+    !byte %##...##.            ;   ###    ###
+    !byte %##.#.###            ;  ############
+    !byte %...#.###            ;  ############
+    !byte %####....            ;  ############
+    !byte %###.....            ;
 
     !byte %....##..
     !byte %....#.##
@@ -11814,22 +11815,22 @@ kongBeastSprite
     !byte %######..
     !byte %........
 
-    !byte %..####..
-    !byte %.#######
-    !byte %.#######
-    !byte %.##...##
-    !byte %....#...
-    !byte %....#...
-    !byte %....####
-    !byte %.....###
-    !byte %........
-    !byte %##......
-    !byte %#####...
-    !byte %##...##.
-    !byte %.#.#.###
-    !byte %...#.###
-    !byte %####.###
-    !byte %###.....
+    !byte %..####..            ;  ####
+    !byte %.#######            ; #########
+    !byte %.#######            ; ############
+    !byte %.##...##            ; ##   ####   ##
+    !byte %....#...            ;    #    # # ###
+    !byte %....#...            ;    #      # ###
+    !byte %....####            ;    ######## ###
+    !byte %.....###            ;     ######
+    !byte %........            ;    ##    ##
+    !byte %##......            ;    # #### #
+    !byte %#####...            ;   ## #### ##
+    !byte %##...##.            ;   ###    ###
+    !byte %.#.#.###            ;  ############
+    !byte %...#.###            ;  ############
+    !byte %####.###            ;  ############
+    !byte %###.....            ;
 
     !byte %....##..
     !byte %....#.##
@@ -11848,22 +11849,22 @@ kongBeastSprite
     !byte %######..
     !byte %........
 
-    !byte %........
-    !byte %........
-    !byte %..######
-    !byte %.##...##
-    !byte %###.#...
-    !byte %###.#...
-    !byte %....####
-    !byte %.....###
-    !byte %........
-    !byte %........
-    !byte %######..
-    !byte %##...##.
-    !byte %...#.###
-    !byte %...#.###
-    !byte %####....
-    !byte %###.....
+    !byte %........            ;
+    !byte %........            ;
+    !byte %..######            ;  ############
+    !byte %.##...##            ; ##   ####   ##
+    !byte %###.#...            ;### #      # ###
+    !byte %###.#...            ;### #      # ###
+    !byte %....####            ;    ########
+    !byte %.....###            ;     ######
+    !byte %........            ;    ##    ##
+    !byte %........            ;    # #### #
+    !byte %######..            ;   ## #### ##
+    !byte %##...##.            ;   ###    ###
+    !byte %...#.###            ;  ############
+    !byte %...#.###            ;  ############
+    !byte %####....            ;  ############
+    !byte %###.....            ;
 
     !byte %....##..
     !byte %....#.##
@@ -11882,22 +11883,22 @@ kongBeastSprite
     !byte %######..
     !byte %........
 
-    !byte %........
-    !byte %......##
-    !byte %...#####
-    !byte %.##...##
-    !byte %###.#...
-    !byte %###.#...
-    !byte %###.####
-    !byte %.....###
-    !byte %..####..
-    !byte %#######.
-    !byte %#######.
-    !byte %##...##.
-    !byte %...#....
-    !byte %...#....
-    !byte %####....
-    !byte %###.....
+    !byte %........            ;          ####
+    !byte %......##            ;      #########
+    !byte %...#####            ;   ############
+    !byte %.##...##            ; ##   ####   ##
+    !byte %###.#...            ;### #      #
+    !byte %###.#...            ;### #      #
+    !byte %###.####            ;### ########
+    !byte %.....###            ;     ######
+    !byte %..####..            ;    ##    ##
+    !byte %#######.            ;    # #### #
+    !byte %#######.            ;   ## #### ##
+    !byte %##...##.            ;   ###    ###
+    !byte %...#....            ;  ############
+    !byte %...#....            ;  ############
+    !byte %####....            ;  ############
+    !byte %###.....            ;
 
     !byte %....##..
     !byte %....#.##
@@ -11916,22 +11917,22 @@ kongBeastSprite
     !byte %######..
     !byte %........
 
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %......##
-    !byte %....##..
-    !byte %...#....
-    !byte %..#.....
-    !byte %.#......
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %##......
-    !byte %..##....
-    !byte %....#...
-    !byte %.....#..
-    !byte %......#.
+    !byte %........            ;
+    !byte %........            ;
+    !byte %........            ;
+    !byte %......##            ;      ####
+    !byte %....##..            ;    ##    ##
+    !byte %...#....            ;   #        #
+    !byte %..#.....            ;  #          #
+    !byte %.#......            ; #            #
+    !byte %........            ;#              #
+    !byte %........            ; #            #
+    !byte %........            ;  #          #
+    !byte %##......            ;## #        # ##
+    !byte %..##....            ;  # ##    ## #
+    !byte %....#...            ; #  # #### #  #
+    !byte %.....#..            ;   #  #  #  #
+    !byte %......#.            ;      #  #
 
     !byte %#.......
     !byte %.#......
@@ -11950,22 +11951,22 @@ kongBeastSprite
     !byte %.#..#...
     !byte %.#......
 
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %......##
-    !byte %....##..
-    !byte %...#....
-    !byte %..#.....
-    !byte %.#......
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %##......
-    !byte %..##....
-    !byte %....#...
-    !byte %.....#..
-    !byte %......#.
+    !byte %........            ;
+    !byte %........            ;
+    !byte %........            ;
+    !byte %......##            ;      ####
+    !byte %....##..            ;    ##    ##
+    !byte %...#....            ;   #        #
+    !byte %..#.....            ;  #          #
+    !byte %.#......            ; #            #
+    !byte %........            ;#####      #####
+    !byte %........            ; # # ###### # #
+    !byte %........            ;  # # #### # #
+    !byte %##......            ;   #  #  #  #
+    !byte %..##....            ;    ##    ##
+    !byte %....#...            ;      ####
+    !byte %.....#..            ;
+    !byte %......#.            ;
 
     !byte %#####...
     !byte %.#.#.###
@@ -11984,22 +11985,22 @@ kongBeastSprite
     !byte %........
     !byte %........
 
-    !byte %.....#..
-    !byte %.....#..
-    !byte %...#..#.
-    !byte %.#..#.##
-    !byte %..#.##..
-    !byte %#..#..##
-    !byte %#.#..###
-    !byte %.#...##.
-    !byte %..#.....
-    !byte %..#.....
-    !byte %.#..#...
-    !byte %##.#..#.
-    !byte %..##.#..
-    !byte %##..#..#
-    !byte %###..#.#
-    !byte %.##...#.
+    !byte %.....#..            ;     #    #
+    !byte %.....#..            ;     #    #
+    !byte %...#..#.            ;   #  #  #  #
+    !byte %.#..#.##            ; #  # #### #  #
+    !byte %..#.##..            ;  # ##    ## #
+    !byte %#..#..##            ;#  #  ####  #  #
+    !byte %#.#..###            ;# #  ######  # #
+    !byte %.#...##.            ; #   ##  ##   #
+    !byte %..#.....            ;#    ##  ##    #
+    !byte %..#.....            ; #   ######   #
+    !byte %.#..#...            ;  #   ####   #
+    !byte %##.#..#.            ;   #        #
+    !byte %..##.#..            ;    ##    ##
+    !byte %##..#..#            ;      ####
+    !byte %###..#.#            ;
+    !byte %.##...#.            ;
 
     !byte %#....##.
     !byte %.#...###
@@ -12018,22 +12019,22 @@ kongBeastSprite
     !byte %........
     !byte %........
 
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %......##
-    !byte %....##..
-    !byte %...#..#.
-    !byte %..#.#.#.
-    !byte %.#.#####
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %##......
-    !byte %..##....
-    !byte %.#..#...
-    !byte %.#.#.#..
-    !byte %#####.#.
+    !byte %........            ;
+    !byte %........            ;
+    !byte %........            ;
+    !byte %......##            ;      ####
+    !byte %....##..            ;    ##    ##
+    !byte %...#..#.            ;   #  #  #  #
+    !byte %..#.#.#.            ;  # # #  # # #
+    !byte %.#.#####            ; # ########## #
+    !byte %........            ;#### ##  #######
+    !byte %........            ; #   ######   #
+    !byte %........            ;  #   ####   #
+    !byte %##......            ;   #        #
+    !byte %..##....            ;    ##    ##
+    !byte %.#..#...            ;      ####
+    !byte %.#.#.#..            ;
+    !byte %#####.#.            ;
 
     !byte %####.##.
     !byte %.#...###
@@ -12052,22 +12053,22 @@ kongBeastSprite
     !byte %........
     !byte %........
 
-    !byte %......##
-    !byte %########
-    !byte %#.#.#.##
-    !byte %########
-    !byte %...#..##
-    !byte %..#.#..#
-    !byte %...#.#.#
-    !byte %....#.##
-    !byte %##......
-    !byte %########
-    !byte %##.#.#.#
-    !byte %########
-    !byte %##..#...
-    !byte %#..#.#..
-    !byte %#.#.#...
-    !byte %##.#....
+    !byte %......##            ;      ####
+    !byte %########            ;################
+    !byte %#.#.#.##            ;# # # #### # # #
+    !byte %########            ;################
+    !byte %...#..##            ;   #  ####  #
+    !byte %..#.#..#            ;  # #  ##  # #
+    !byte %...#.#.#            ;   # # ## # #
+    !byte %....#.##            ;    # #### #
+    !byte %##......            ;     # ## #
+    !byte %########            ;      ####
+    !byte %##.#.#.#            ;      ####
+    !byte %########            ;     # ## #
+    !byte %##..#...            ;    # #  # #
+    !byte %#..#.#..            ;   # #    # #
+    !byte %#.#.#...            ;  # #      # #
+    !byte %##.#....            ;   #        #
 
     !byte %.....#.#
     !byte %......##
@@ -12086,22 +12087,22 @@ kongBeastSprite
     !byte %...#.#..
     !byte %....#...
 
-    !byte %........
-    !byte %........
-    !byte %......##
-    !byte %########
-    !byte %#.#.#.##
-    !byte %########
-    !byte %...#..##
-    !byte %..#.#..#
-    !byte %........
-    !byte %........
-    !byte %##......
-    !byte %########
-    !byte %##.#.#.#
-    !byte %########
-    !byte %##..#...
-    !byte %#..#.#..
+    !byte %........            ;
+    !byte %........            ;
+    !byte %......##            ;      ####
+    !byte %########            ;################
+    !byte %#.#.#.##            ;# # # #### # # #
+    !byte %########            ;################
+    !byte %...#..##            ;   #  ####  #
+    !byte %..#.#..#            ;  # #  ##  # #
+    !byte %........            ;   # # ## # #
+    !byte %........            ;    # #### #
+    !byte %##......            ;     # ## #
+    !byte %########            ;      ####
+    !byte %##.#.#.#            ;  #   ####
+    !byte %########            ; #   # ## # #
+    !byte %##..#...            ;    # #  # # #
+    !byte %#..#.#..            ;   # #    # #
 
     !byte %...#.#.#
     !byte %....#.##
@@ -12120,22 +12121,22 @@ kongBeastSprite
     !byte %.#.#.#..
     !byte %..#.#...
 
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %......##
-    !byte %########
-    !byte %#.#.#.##
-    !byte %########
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %.....###
-    !byte %######.#
-    !byte %##.#.###
-    !byte %#####...
-    !byte %##......
+    !byte %........            ;
+    !byte %........            ;
+    !byte %........            ;
+    !byte %........            ;             ###
+    !byte %......##            ;      ######## #
+    !byte %########            ;########## # ###
+    !byte %#.#.#.##            ;# # # #######
+    !byte %########            ;##########
+    !byte %........            ;      ####
+    !byte %........            ;       ##
+    !byte %........            ;   # # ## #  #
+    !byte %.....###            ; #  # #### #  #
+    !byte %######.#            ;     # ## #  #
+    !byte %##.#.###            ;  #   ####    #
+    !byte %#####...            ;    # #### #
+    !byte %##......            ;  #  # ## # #
 
     !byte %......##
     !byte %.......#
@@ -12154,22 +12155,22 @@ kongBeastSprite
     !byte %##.#....
     !byte %#.#.#...
 
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %......##
-    !byte %...#####
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %##...###
-    !byte %######.#
+    !byte %........            ;
+    !byte %........            ;
+    !byte %........            ;
+    !byte %........            ;
+    !byte %........            ;
+    !byte %........            ;
+    !byte %......##            ;      ####   ###
+    !byte %...#####            ;   ########### #
+    !byte %........            ;##  # #### # ###
+    !byte %........            ;# #  ########
+    !byte %........            ;###   ####
+    !byte %........            ;       ##     #
+    !byte %........            ;  #  # ## #  # #
+    !byte %........            ; #  # #### #
+    !byte %##...###            ;     # ## #   #
+    !byte %######.#            ; # #  ####   #
 
     !byte %##..#.##
     !byte %#.#..###
@@ -12188,22 +12189,22 @@ kongBeastSprite
     !byte %#.#...#.
     !byte %##...#..
 
-    !byte %.##....#
-    !byte %#..#####
-    !byte %#..#####
-    !byte %.##....#
-    !byte %.....###
-    !byte %########
-    !byte %#.......
-    !byte %#.#.#.#.
-    !byte %#....##.
-    !byte %#####..#
-    !byte %#####..#
-    !byte %#....##.
-    !byte %###.....
-    !byte %########
-    !byte %.......#
-    !byte %#.#.#..#
+    !byte %.##....#            ; ##    ##    ##
+    !byte %#..#####            ;#  ##########  #
+    !byte %#..#####            ;#  ##########  #
+    !byte %.##....#            ; ##    ##    ##
+    !byte %.....###            ;     ######
+    !byte %########            ;################
+    !byte %#.......            ;#              #
+    !byte %#.#.#.#.            ;# # # # # # #  #
+    !byte %#....##.            ;#  ########### #
+    !byte %#####..#            ;# ## # # # ##  #
+    !byte %#####..#            ;#  #        ## #
+    !byte %#....##.            ;# ## # # # ##  #
+    !byte %###.....            ;#  ########### #
+    !byte %########            ;# # # # # # #  #
+    !byte %.......#            ;#              #
+    !byte %#.#.#..#            ;################
 
     !byte %#..#####
     !byte %#.##.#.#
@@ -12222,22 +12223,22 @@ kongBeastSprite
     !byte %.......#
     !byte %########
 
-    !byte %...###.#
-    !byte %..#...#.
-    !byte %..#...#.
-    !byte %...###.#
-    !byte %......##
-    !byte %########
-    !byte %##.#.#.#
-    !byte %#.######
-    !byte %#.###...
-    !byte %###..#..
-    !byte %###..#..
-    !byte %#.###...
-    !byte %##......
-    !byte %########
-    !byte %.#.#.#.#
-    !byte %########
+    !byte %...###.#            ;   ### ## ###
+    !byte %..#...#.            ;  #   # ###  #
+    !byte %..#...#.            ;  #   # ###  #
+    !byte %...###.#            ;   ### ## ###
+    !byte %......##            ;      ####
+    !byte %########            ;################
+    !byte %##.#.#.#            ;## # # # # # # #
+    !byte %#.######            ;# ##############
+    !byte %#.###...            ;### # # # # ## #
+    !byte %###..#..            ;# ##         ###
+    !byte %###..#..            ;###  # # #  ## #
+    !byte %#.###...            ;# ##         ###
+    !byte %##......            ;### # # # # ## #
+    !byte %########            ;# ##############
+    !byte %.#.#.#.#            ;## # # # # # # #
+    !byte %########            ;################
 
     !byte %###.#.#.
     !byte %#.##....
@@ -12256,22 +12257,22 @@ kongBeastSprite
     !byte %.#.#.#.#
     !byte %########
 
-    !byte %.....###
-    !byte %....#...
-    !byte %....#...
-    !byte %.....###
-    !byte %......##
-    !byte %########
-    !byte %########
-    !byte %##.#.#.#
-    !byte %###.....
-    !byte %...#....
-    !byte %...#....
-    !byte %###.....
-    !byte %##......
-    !byte %########
-    !byte %########
-    !byte %.#.#.###
+    !byte %.....###            ;     ######
+    !byte %....#...            ;    #      #
+    !byte %....#...            ;    #      #
+    !byte %.....###            ;     ######
+    !byte %......##            ;      ####
+    !byte %########            ;################
+    !byte %########            ;################
+    !byte %##.#.#.#            ;## # # # # # ###
+    !byte %###.....            ;###           ##
+    !byte %...#....            ;##  # # # #  ###
+    !byte %...#....            ;###  #######  ##
+    !byte %###.....            ;##  # #   #  ###
+    !byte %##......            ;###           ##
+    !byte %########            ;## # # # # # ###
+    !byte %########            ;################
+    !byte %.#.#.###            ;################
 
     !byte %###.....
     !byte %##..#.#.
@@ -12290,22 +12291,22 @@ kongBeastSprite
     !byte %########
     !byte %########
 
-    !byte %...###.#
-    !byte %..#.####
-    !byte %..#.####
-    !byte %...###.#
-    !byte %......##
-    !byte %########
-    !byte %#.#.#.#.
-    !byte %##......
-    !byte %#.###...
-    !byte %.#...#..
-    !byte %.#...#..
-    !byte %#.###...
-    !byte %##......
-    !byte %########
-    !byte %#.#.#.##
-    !byte %.......#
+    !byte %...###.#            ;   ### ## ###
+    !byte %..#.####            ;  # #### #   #
+    !byte %..#.####            ;  # #### #   #
+    !byte %...###.#            ;   ### ## ###
+    !byte %......##            ;      ####
+    !byte %########            ;################
+    !byte %#.#.#.#.            ;# # # # # # # ##
+    !byte %##......            ;##             #
+    !byte %#.###...            ;#  # # # # #  ##
+    !byte %.#...#..            ;##  #########  #
+    !byte %.#...#..            ;#  ##      #  ##
+    !byte %#.###...            ;##  #########  #
+    !byte %##......            ;#  # # # # #  ##
+    !byte %########            ;##             #
+    !byte %#.#.#.##            ;# # # # # # # ##
+    !byte %.......#            ;################
 
     !byte %#..#.#.#
     !byte %##..####
@@ -12324,22 +12325,22 @@ kongBeastSprite
     !byte %#.#.#.##
     !byte %########
 
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %......##
-    !byte %....##..
-    !byte %..##...#
-    !byte %##...##.
-    !byte %#..##..#
-    !byte %....###.
-    !byte %..##..##
-    !byte %##...#.#
-    !byte %...##..#
-    !byte %.##..#.#
-    !byte %#..###.#
-    !byte %.#####.#
-    !byte %#..###.#
+    !byte %........            ;            ###
+    !byte %........            ;          ##  ##
+    !byte %........            ;        ##   # #
+    !byte %......##            ;      ##   ##  #
+    !byte %....##..            ;    ##   ##  # #
+    !byte %..##...#            ;  ##   ##  ### #
+    !byte %##...##.            ;##   ##  ##### #
+    !byte %#..##..#            ;#  ##  ##  ### #
+    !byte %....###.            ;##   ##    ### #
+    !byte %..##..##            ;####   ##  ### #
+    !byte %##...#.#            ; #####   ##### #
+    !byte %...##..#            ;   #####   ### #
+    !byte %.##..#.#            ;     ##### ### #
+    !byte %#..###.#            ;       ####### #
+    !byte %.#####.#            ;         #######
+    !byte %#..###.#            ;           ####
 
     !byte %##...##.
     !byte %####...#
@@ -12358,22 +12359,22 @@ kongBeastSprite
     !byte %.#######
     !byte %...####.
 
-    !byte %......##
-    !byte %.....###
-    !byte %.....##.
-    !byte %....###.
-    !byte %....##..
-    !byte %...###.#
-    !byte %...##..#
-    !byte %..###.#.
-    !byte %##......
-    !byte %.#......
-    !byte %..#.....
-    !byte %#.#.....
-    !byte %#..#....
-    !byte %.#.#....
-    !byte %.#..#...
-    !byte %..#.#...
+    !byte %......##            ;      ####
+    !byte %.....###            ;     ### #
+    !byte %.....##.            ;     ##   #
+    !byte %....###.            ;    ### # #
+    !byte %....##..            ;    ##  #  #
+    !byte %...###.#            ;   ### # # #
+    !byte %...##..#            ;   ##  # #  #
+    !byte %..###.#.            ;  ### #   # #
+    !byte %##......            ;  ##  #   #  #
+    !byte %.#......            ; ### #     # #
+    !byte %..#.....            ; ##  #     #  #
+    !byte %#.#.....            ;########### # #
+    !byte %#..#....            ;########### #  #
+    !byte %.#.#....            ;############ # #
+    !byte %.#..#...            ; #            ##
+    !byte %..#.#...            ; ##############
 
     !byte %..##..#.
     !byte %.###.#..
@@ -12392,22 +12393,22 @@ kongBeastSprite
     !byte %......##
     !byte %#######.
 
-    !byte %..###...
-    !byte %#######.
-    !byte %#.######
-    !byte %#.###.##
-    !byte %#.###...
-    !byte %#.#####.
-    !byte %#.###..#
-    !byte %#.###...
-    !byte %........
-    !byte %........
-    !byte %#.......
-    !byte %###.....
-    !byte %#####...
-    !byte %..#####.
-    !byte %#...####
-    !byte %.##...##
+    !byte %..###...            ;  ###
+    !byte %#######.            ;#######
+    !byte %#.######            ;# #######
+    !byte %#.###.##            ;# ### #####
+    !byte %#.###...            ;# ###   #####
+    !byte %#.#####.            ;# #####   #####
+    !byte %#.###..#            ;# ###  ##   ####
+    !byte %#.###...            ;# ###    ##   ##
+    !byte %........            ;# ###  ##  ##  #
+    !byte %........            ;# #####  ##   ##
+    !byte %#.......            ;# ###  ##   ##
+    !byte %###.....            ;# #  ##   ##
+    !byte %#####...            ;#  ##   ##
+    !byte %..#####.            ;# #   ##
+    !byte %#...####            ;##  ##
+    !byte %.##...##            ; ###
 
     !byte %#.###..#
     !byte %#.#####.
@@ -12426,22 +12427,22 @@ kongBeastSprite
     !byte %........
     !byte %........
 
-    !byte %.#######
-    !byte %#.......
-    !byte %#.#.####
-    !byte %#..#.###
-    !byte %.#.#.###
-    !byte %.#..#.#.
-    !byte %..#.#.#.
-    !byte %..#..#.#
-    !byte %#######.
-    !byte %......#.
-    !byte %########
-    !byte %########
-    !byte %########
-    !byte %..#..##.
-    !byte %..#.###.
-    !byte %.#..##..
+    !byte %.#######            ; ##############
+    !byte %#.......            ;#             #
+    !byte %#.#.####            ;# # ############
+    !byte %#..#.###            ;#  # ###########
+    !byte %.#.#.###            ; # # ###########
+    !byte %.#..#.#.            ; #  # #   #  ##
+    !byte %..#.#.#.            ;  # # #   # ###
+    !byte %..#..#.#            ;  #  # # #  ##
+    !byte %#######.            ;   # # # # ###
+    !byte %......#.            ;   #  # #  ##
+    !byte %########            ;    # # # ###
+    !byte %########            ;    #  #  ##
+    !byte %########            ;     # # ###
+    !byte %..#..##.            ;     #   ##
+    !byte %..#.###.            ;      # ###
+    !byte %.#..##..            ;      ####
 
     !byte %...#.#.#
     !byte %...#..#.
@@ -12532,6 +12533,8 @@ energyFieldString
     !byte $1f, 24, 9                    ; TAB(24, 9)
     !byte $2a                           ;
 
+    !byte 0,0,0                         ; [unused] for alignment
+
     !byte %....#.#.             ; ....#.#...#.....
     !byte %...#.##.             ; ...#.##..##.#...
     !byte %.......#             ; .......#.#.#....
@@ -12566,22 +12569,22 @@ energyFieldString
     !byte %#..#....
     !byte %#..##...
 
-    !byte %........
-    !byte %.....#.#
-    !byte %......##
-    !byte %..##...#
-    !byte %...###.#
-    !byte %......##
-    !byte %..######
-    !byte %......##
-    !byte %........
-    !byte %..#.....
-    !byte %.#......
-    !byte %.###.#..
-    !byte %##..##..
-    !byte %##.#....
-    !byte %###.##..
-    !byte %####.#..
+    !byte %........            ;
+    !byte %.....#.#            ;     # #  #
+    !byte %......##            ;      ## #
+    !byte %..##...#            ;  ##   # ### #
+    !byte %...###.#            ;   ### ###  ##
+    !byte %......##            ;      #### #
+    !byte %..######            ;  ######### ##
+    !byte %......##            ;      ###### #
+    !byte %........            ;  #########
+    !byte %..#.....            ; ##  #########
+    !byte %.#......            ;    # ######  #
+    !byte %.###.#..            ;  ##  # # # ##
+    !byte %##..##..            ;  #  #  # #  #
+    !byte %##.#....            ;    # ###  #
+    !byte %###.##..            ;   ## # ## ##
+    !byte %####.#..            ;        ##
 
     !byte %..######
     !byte %.##..###
@@ -12600,22 +12603,22 @@ energyFieldString
     !byte %##.##...
     !byte %##......
 
-    !byte %........
-    !byte %........
-    !byte %......#.
-    !byte %....#..#
-    !byte %.....#.#
-    !byte %......##
-    !byte %...#####
-    !byte %.....###
-    !byte %........
-    !byte %........
-    !byte %..#.....
-    !byte %.##.....
-    !byte %##..#...
-    !byte %##.#....
-    !byte %###.....
-    !byte %#####...
+    !byte %........            ;
+    !byte %........            ;
+    !byte %......#.            ;      #   #
+    !byte %....#..#            ;    #  # ##
+    !byte %.....#.#            ;     # ###  #
+    !byte %......##            ;      #### #
+    !byte %...#####            ;   ########
+    !byte %.....###            ;     ########
+    !byte %........            ;   ########
+    !byte %........            ;   # ########
+    !byte %..#.....            ;    ########
+    !byte %.##.....            ;   #  # # # #
+    !byte %##..#...            ;     # ## #
+    !byte %##.#....            ;    # # # ##
+    !byte %###.....            ;        ##
+    !byte %#####...            ;
 
     !byte %...#####
     !byte %...#.###
@@ -12634,22 +12637,22 @@ energyFieldString
     !byte %##......
     !byte %........
 
-    !byte %........
-    !byte %.....#.#
-    !byte %......##
-    !byte %..##...#
-    !byte %...###.#
-    !byte %......##
-    !byte %..######
-    !byte %......##
-    !byte %........
-    !byte %..#.....
-    !byte %.#......
-    !byte %.###.#..
-    !byte %##..##..
-    !byte %##.#....
-    !byte %###.##..
-    !byte %####.#..
+    !byte %........            ;
+    !byte %.....#.#            ;     # #  #
+    !byte %......##            ;      ## #
+    !byte %..##...#            ;  ##   # ### #
+    !byte %...###.#            ;   ### ###  ##
+    !byte %......##            ;      #### #
+    !byte %..######            ;  ######### ##
+    !byte %......##            ;      ###### #
+    !byte %........            ;  #########
+    !byte %..#.....            ; ##  #########
+    !byte %.#......            ;    # ######  #
+    !byte %.###.#..            ;  ##  # # # ##
+    !byte %##..##..            ;  #  #  # #  #
+    !byte %##.#....            ;    # ###  #
+    !byte %###.##..            ;   ## # ## ##
+    !byte %####.#..            ;        ##
 
     !byte %..######
     !byte %.##..###
@@ -12668,22 +12671,22 @@ energyFieldString
     !byte %##.##...
     !byte %##......
 
-    !byte %........
-    !byte %....##..
-    !byte %......#.
-    !byte %.......#
-    !byte %.....###
-    !byte %.##.####
-    !byte %...##..#
-    !byte %....#.#.
-    !byte %........
-    !byte %..##....
-    !byte %.#......
-    !byte %#.......
-    !byte %###.....
-    !byte %####.##.
-    !byte %#..##...
-    !byte %.#.#....
+    !byte %........            ;
+    !byte %....##..            ;    ##    ##
+    !byte %......#.            ;      #  #
+    !byte %.......#            ;       ##
+    !byte %.....###            ;     ######
+    !byte %.##.####            ; ## ######## ##
+    !byte %...##..#            ;   ##  ##  ##
+    !byte %....#.#.            ;    # #  # #
+    !byte %........            ;#####  ##  #####
+    !byte %..##....            ;   ####  ####
+    !byte %.#......            ;   ###    ###
+    !byte %#.......            ; #####    # ###
+    !byte %###.....            ;#  ## #### ##  #
+    !byte %####.##.            ;    ##  # ##
+    !byte %#..##...            ;     ######
+    !byte %.#.#....            ;       ##
 
     !byte %#####..#
     !byte %...####.
@@ -12702,22 +12705,22 @@ energyFieldString
     !byte %###.....
     !byte %#.......
 
-    !byte %........
-    !byte %........
-    !byte %....###.
-    !byte %.#.....#
-    !byte %..#..###
-    !byte %...#####
-    !byte %#...#..#
-    !byte %.####.#.
-    !byte %........
-    !byte %........
-    !byte %.###....
-    !byte %#.....#.
-    !byte %###..#..
-    !byte %#####...
-    !byte %#..#...#
-    !byte %.#.####.
+    !byte %........            ;
+    !byte %........            ;
+    !byte %....###.            ;    ###  ###
+    !byte %.#.....#            ; #     ##     #
+    !byte %..#..###            ;  #  ######  #
+    !byte %...#####            ;   ##########
+    !byte %#...#..#            ;#   #  ##  #   #
+    !byte %.####.#.            ; #### #  # ####
+    !byte %........            ;   ##  ##  ##
+    !byte %........            ;   ####  ####
+    !byte %.###....            ;######    ######
+    !byte %#.....#.            ;   # #    # #
+    !byte %###..#..            ;   ####### ##
+    !byte %#####...            ;    ##   ###
+    !byte %#..#...#            ;     ######
+    !byte %.#.####.            ;       ##
 
     !byte %...##..#
     !byte %...####.
@@ -12736,22 +12739,22 @@ energyFieldString
     !byte %###.....
     !byte %#.......
 
-    !byte %........
-    !byte %....##..
-    !byte %......#.
-    !byte %.......#
-    !byte %.....###
-    !byte %.#..####
-    !byte %..######
-    !byte %....###.
-    !byte %........
-    !byte %..##....
-    !byte %.#......
-    !byte %#.......
-    !byte %###.....
-    !byte %####..#.
-    !byte %######..
-    !byte %.###....
+    !byte %........            ;
+    !byte %....##..            ;    ##    ##
+    !byte %......#.            ;      #  #
+    !byte %.......#            ;       ##
+    !byte %.....###            ;     ######
+    !byte %.#..####            ; #  ########  #
+    !byte %..######            ;  ############
+    !byte %....###.            ;    ###  ###
+    !byte %........            ;## ##  ##  ## ##
+    !byte %..##....            ;  #####  #####
+    !byte %.#......            ;   ###    ###
+    !byte %#.......            ; ### #    # ###
+    !byte %###.....            ;#  ## ####### ##
+    !byte %####..#.            ;    ###   ##
+    !byte %######..            ;     ######
+    !byte %.###....            ;       ##
 
     !byte %##.##..#
     !byte %..#####.
@@ -12770,22 +12773,22 @@ energyFieldString
     !byte %###.....
     !byte %#.......
 
-    !byte %.....#..
-    !byte %.....#..
-    !byte %......#.
-    !byte %.......#
-    !byte %.....###
-    !byte %....####
-    !byte %.#######
-    !byte %....#.#.
-    !byte %..#.....
-    !byte %..#.....
-    !byte %.#......
-    !byte %#.......
-    !byte %###.....
-    !byte %####....
-    !byte %#######.
-    !byte %.#.#...#
+    !byte %.....#..            ;     #    #
+    !byte %.....#..            ;     #    #
+    !byte %......#.            ;      #  #
+    !byte %.......#            ;       ##
+    !byte %.....###            ;     ######
+    !byte %....####            ;    ########
+    !byte %.#######            ; ##############
+    !byte %....#.#.            ;    # #  # #   #
+    !byte %..#.....            ;    #  ##  ##
+    !byte %..#.....            ; ######  ######
+    !byte %.#......            ;#  ###    ###  #
+    !byte %#.......            ;   # #    # #
+    !byte %###.....            ;  ### #### ###
+    !byte %####....            ; #  ## #  ##  #
+    !byte %#######.            ; #   ######   #
+    !byte %.#.#...#            ;       ##
 
     !byte %....#..#
     !byte %.######.
@@ -12938,49 +12941,49 @@ meteorAndTailSprites
     !byte %.#.###.#
 
 ; ***************************************************************************************
-    ; Three bytes per guardian, specifying initial position and direction:
+    ; Three bytes per horizontal guardian, specifying initial position and direction:
     ;   X1, Y + top bit, X2
     ;   top bit indicates initial direction (set = left), initial bounce at X2
 guardianLevelData
-    ; level 1
+    ; level 1 - Central Cavern
     !byte $ff, $1a, $87, $3a
-    ; level 2
+    ; level 2 - The Cold Room
     !byte $ff, $47, $03, $01, $72, $0d, $2d
-    ; level 3
+    ; level 3 - The Menagerie
     !byte $ff, $3f, $03, $01, $4a, $0d, $01, $45, $83, $72
-    ; level 4
+    ; level 4 - Abandoned Uranium Workings
     !byte $ff, $01, $8d, $26, $15, $8d, $3a
-    ; level 5
+    ; level 5 - Eugene's Lair
     !byte $ff, $0c, $87, $2f, $2f, $03, $01
-    ; level 6
+    ; level 6 - Processing Plant
     !byte $ff, $14, $88, $32, $34, $88, $52, $19, $8d, $4e, $5d, $8d, $72
-    ; level 7
+    ; level 7 - The Vat
     !byte $ff, $38, $81, $72, $27, $08, $05, $41, $8d, $72
-    ; level 8
+    ; level 8 - Miner Willy meets the Kong Beast
     !byte $ff, $22, $0d, $01, $29, $ab, $3a, $45, $87, $52
-    ; level 9
+    ; level 9 - Wacky Amoebatrons
     !byte $ff, $31, $83, $46, $31, $aa, $46
-    ; level 10
+    ; level 10 - The Endorian Forest
     !byte $ff, $41, $85, $52, $20, $87, $36, $0d, $8d, $66, $36, $2a, $1c
-    ; level 11
+    ; level 11 - Attack of the Mutant Telephones
     !byte $ff, $14, $8d, $4a, $38, $83, $5b, $35, $a7, $49
-    ; level 12
+    ; level 12 - Return of the Alien Kong Beast
     !byte $ff, $26, $ab, $3a, $22, $0d, $02, $5e, $86, $6e
-    ; level 13
+    ; level 13 - Ore Refinery
     !byte $ff, $1a, $81, $6e, $6e, $24, $1a, $62, $07, $26, $5a, $2a, $1a
-    ; level 14
+    ; level 14 - Skylab Landing Bay
     !byte $ff
-    ; level 15
+    ; level 15 - The Bank
     !byte $ff, $40, $ad, $4b
-    ; level 16
+    ; level 16 - The Sixteenth Cavern
     !byte $ff, $65, $a5, $72, $4a, $0d, $02, $45, $87, $5e, $02, $8a, $1e
-    ; level 17
+    ; level 17 - The Warehouse
     !byte $ff, $10, $ad, $1f, $2c, $8d, $62
-    ; level 18
+    ; level 18 - Amoebatrons' Revenge
     !byte $ff, $2e, $a3, $46, $46, $06, $2e, $2e, $aa, $46, $42, $0d, $2e
-    ; level 19
+    ; level 19 - The Meteor Storm
     !byte $ff, $4a, $0b, $1e, $72, $0d, $5a, $1a, $0d, $02
-    ; level 20
+    ; level 20 - The Final Barrier
     !byte $ff, $1a, $83, $2e, $4a, $21, $30, $29, $29, $05
     !byte $ff
 
@@ -13044,18 +13047,18 @@ setTextWindowEnd
 ; ***************************************************************************************
 verticalGuardians
     !byte $00, $00, $00, $00, $00, $00, $00, $00    ; [UNUSED]
-    !byte $85, $0d, $cb, $0d, $94, $0d, $d9, $0d    ; level 9
+    !byte $85, $0d, $cb, $0d, $94, $0d, $d9, $0d    ; level 9 - Wacky Amoebatrons
     !byte $00, $00, $00, $00, $00, $00, $00, $00    ; [UNUSED]
-    !byte $83, $4d, $8c, $07, $95, $6d, $da, $0d    ; level 11
-    !byte $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff    ; level 12
-    !byte $85, $1d, $ff, $ff, $ff, $ff, $ff, $ff    ; level 13
-    !byte $c1, $09, $8b, $04, $d5, $07, $ff, $ff    ; level 14
-    !byte $89, $4d, $8f, $5d, $d5, $4d, $ff, $ff    ; level 15
-    !byte $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff    ; level 16
-    !byte $83, $8d, $4a, $c0, $13, $80, $db, $0c    ; level 17
-    !byte $c5, $1d, $8a, $1d, $d4, $1d, $99, $1d    ; level 18
-    !byte $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff    ; level 19
-    !byte $82, $06, $da, $4d, $ff, $ff, $ff, $ff    ; level 20
+    !byte $83, $4d, $8c, $07, $95, $6d, $da, $0d    ; level 11 - Attack of the Mutant Telephones
+    !byte $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff    ; level 12 - Return of the Alien Kong Beast
+    !byte $85, $1d, $ff, $ff, $ff, $ff, $ff, $ff    ; level 13 - Ore Refinery
+    !byte $c1, $09, $8b, $04, $d5, $07, $ff, $ff    ; level 14 - Skylab Landing Bay
+    !byte $89, $4d, $8f, $5d, $d5, $4d, $ff, $ff    ; level 15 - The Bank
+    !byte $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff    ; level 16 - The Sixteenth Cavern
+    !byte $83, $8d, $4a, $c0, $13, $80, $db, $0c    ; level 17 - The Warehouse
+    !byte $c5, $1d, $8a, $1d, $d4, $1d, $99, $1d    ; level 18 - Amoebatrons' Revenge
+    !byte $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff    ; level 19 - The Meteor Storm
+    !byte $82, $06, $da, $4d, $ff, $ff, $ff, $ff    ; level 20 - The Final Barrier
 
 ; ***************************************************************************************
 cheatCode

@@ -1539,7 +1539,7 @@ spriteEnd
 
 ; ***************************************************************************************
 main
-    jmp start
+    jmp initialize                  ;
 
 
 ; ***************************************************************************************
@@ -1719,7 +1719,6 @@ afterGetSourceByte
     cmp #16                             ;
     beq return3                         ;
     and #7                              ;
-    cmp #0                              ;
     bne +                               ;
 
     lda plotSourceSpriteAddressLow      ; }
@@ -1730,21 +1729,38 @@ afterGetSourceByte
     inc plotSourceSpriteAddressHigh     ; }
 
 +
-    inc plotYOffset                     ;
+    inc plotYOffset                     ; increment offset within character row
 
-    inc plotScreenAddressLow            ; increment screen address
+    ; increment screen address
+    inc plotScreenAddressLow            ;
     bne +                               ;
     inc plotScreenAddressHigh           ;
 +
 
-    inc plotSourceSpriteAddressLow      ; }
-    bne +                               ; } add 1 to the source sprite address
-    inc plotSourceSpriteAddressHigh     ; }
+    ; increment sprite address
+    inc plotSourceSpriteAddressLow      ;
+    bne +                               ;
+    inc plotSourceSpriteAddressHigh     ;
 +
+
+    ; check for end of character row
     lda plotYOffset                     ;
     cmp #8                              ;
     bne spriteDrawRow                   ;
-    beq spriteMoveToNextRow             ;
+
+    ; move to next character row on screen
+    lda #0                              ;
+    sta plotYOffset                     ;
+
+    lda plotScreenAddressLow            ; }
+    clc                                 ; }
+    adc #$78                            ; }
+    sta plotScreenAddressLow            ; }
+    lda plotScreenAddressHigh           ; } $0278 to (plotScreenAddress)
+    adc #2                              ; }
+    sta plotScreenAddressHigh           ; }
+
+    jmp spriteDrawRow                   ;
 
 ; ***************************************************************************************
 return3
@@ -1790,21 +1806,6 @@ getSpriteMode6Byte
     jmp afterGetSourceByte              ;
 
 ; ***************************************************************************************
-spriteMoveToNextRow
-    lda #0                              ;
-    sta plotYOffset                     ;
-
-    lda plotScreenAddressLow            ; }
-    clc                                 ; }
-    adc #$78                            ; }
-    sta plotScreenAddressLow            ; }
-    lda plotScreenAddressHigh           ; } $0278 to (plotScreenAddress)
-    adc #2                              ; }
-    sta plotScreenAddressHigh           ; }
-
-    jmp spriteDrawRow                   ;
-
-; ***************************************************************************************
 showCrumble
     ldy #7                              ; loop counter
 -
@@ -1820,12 +1821,10 @@ showCrumble
     sta (plotScreenAddressLow),y        ;
     tya                                 ;
     sec                                 ;
-    sbc #8                              ;
+    sbc #10                             ;
     tay                                 ;
-    dey                                 ;
-    dey                                 ;
-    cpy #0                              ;
     bne -                               ;
+
     lda #0                              ;
     ldy #1                              ;
     sta (plotScreenAddressLow),y        ;
@@ -1841,7 +1840,6 @@ updatePlayer
     sta willyDeltaX                     ;
     sta willyJustLandedOnConveyor       ;
     lda isJumping                       ;
-    cmp #0                              ;
     beq handleNotJumping                ;
     jmp handleJumping                   ;
 
@@ -1872,7 +1870,6 @@ handleNotJumping
     jsr readTwoCharactersFromScreen         ; read the two characters immediately lower on screen than the player
     lda playerPixelY                        ;
     and #7                                  ;
-    cmp #0                                  ;
     bne handleInAirMovement                 ; if (not on the ground) then branch
 
     ; Update crumble bars next
@@ -1949,11 +1946,9 @@ checkForConveyors
 handleInAirMovement
     lda screenCharacterA                ;
     jsr isConveyor                      ;
-    cmp #0                              ;
     bne onConveyor                      ;
     lda screenCharacterB                ;
     jsr isConveyor                      ;
-    cmp #0                              ;
     bne onConveyor                      ;
     lda #0                              ;
     sta willyIsOnConveyor               ;
@@ -2011,10 +2006,8 @@ onGround
     bne switchToLookingLeft                 ; if (looking right) then branch
     lda #$ff                                ;
     sta willyDeltaX                         ;
-    lda newPlayerPixelX                     ;
-    sec                                     ; move left
-    sbc #1                                  ;
-    sta newPlayerPixelX                     ;
+
+    dec newPlayerPixelX                     ; move left
     jmp checkForUpdatePlayerOnConveyor      ; adjust for conveyor
 
 ; ***************************************************************************************
@@ -2046,10 +2039,7 @@ checkForXKey
     lda #1                                  ;
     sta willyDeltaX                         ;
 
-    lda newPlayerPixelX                     ;
-    clc                                     ;
-    adc #1                                  ; add one to player x
-    sta newPlayerPixelX                     ;
+    inc newPlayerPixelX                     ; add one to player x
 
     jmp checkForUpdatePlayerOnConveyor
 
@@ -2086,12 +2076,10 @@ checkForUpdatePlayerOnConveyor
     bne handleGoingOnConveyor               ;
     lda screenCharacterA                    ;
     jsr isConveyor                          ;
-    cmp #1                                  ;
-    beq +                                   ;
+    bne +                                   ;
     lda screenCharacterB                    ;
     jsr isConveyor                          ;
-    cmp #1                                  ;
-    bne handleGoingOnConveyor               ;
+    beq handleGoingOnConveyor               ;
 +
     lda willyDeltaX                         ;
     sta willyDirectionAgainstFlowOfConveyor ;
@@ -2128,55 +2116,55 @@ updateNewPlayerX
 ; ***************************************************************************************
 conveyorNotFalling
     lda willyDirectionAgainstFlowOfConveyor ;
-    cmp #$fe                        ;
-    bne conveyorHandling            ;
-    lda willyDeltaX                 ;
-    eor #$fe                        ;
-    cmp conveyorDirection           ;
-    bne conveyorHandling            ;
-    jmp updateNewPlayerX            ;
+    cmp #$fe                                ;
+    bne conveyorHandling                    ;
+    lda willyDeltaX                         ;
+    eor #$fe                                ;
+    cmp conveyorDirection                   ;
+    bne conveyorHandling                    ;
+    jmp updateNewPlayerX                    ;
 
 ; ***************************************************************************************
 conveyorHandling
-    lda willyDeltaX                 ;
-    cmp #0                          ;
-    beq movingWithConveyor          ;
-    lda willyDeltaX                 ;
-    cmp conveyorDirection           ;
-    bne +                           ;
+    lda willyDeltaX                         ;
+    cmp #0                                  ;
+    beq movingWithConveyor                  ;
+    lda willyDeltaX                         ;
+    cmp conveyorDirection                   ;
+    bne +                                   ;
 movingWithConveyor
-    lda #0                          ;
+    lda #0                                  ;
     sta willyDirectionAgainstFlowOfConveyor ;
 +
     lda willyDirectionAgainstFlowOfConveyor ;
-    cmp #0                          ;
-    bne +                           ;
-    lda willyIsOnConveyor           ;
-    cmp #1                          ;
-    bne +                           ;
-    jsr updateWillyOnConveyor       ;
+    cmp #0                                  ;
+    bne +                                   ;
+    lda willyIsOnConveyor                   ;
+    cmp #1                                  ;
+    bne +                                   ;
+    jsr updateWillyOnConveyor               ;
 +
-    lda willyDeltaX                 ;
-    sta jumpDirection               ;
-    cmp #0                          ;
-    beq checkForJump                ;
-    jsr checkIfBlockedLeftOrRight   ;
+    lda willyDeltaX                         ;
+    sta jumpDirection                       ;
+    cmp #0                                  ;
+    beq checkForJump                        ;
+    jsr checkIfBlockedLeftOrRight           ;
 checkForJump
-    ldy #$ff                        ;
-    ldx #$b6                        ;
-    lda #$81                        ;
-    jsr OSBYTE                      ; check for RETURN key pressed
-    cpy #$ff                        ;
-    bne cancelJump                  ; if (return not pressed) then branch (no jump)
+    ldy #$ff                                ;
+    ldx #$b6                                ;
+    lda #$81                                ;
+    jsr OSBYTE                              ; check for RETURN key pressed
+    cpy #$ff                                ;
+    bne cancelJump                          ; if (return not pressed) then branch (no jump)
 
     ; handle jump
-    lda willyJustLandedOnConveyor   ;
-    cmp #0                          ;
-    bne cancelJump                  ;
-    lda willyFalling                ;
-    cmp #0                          ;
-    bne cancelJump                  ;
-    jmp checkForWallOnJump          ;
+    lda willyJustLandedOnConveyor           ;
+    cmp #0                                  ;
+    bne cancelJump                          ;
+    lda willyFalling                        ;
+    cmp #0                                  ;
+    bne cancelJump                          ;
+    jmp checkForWallOnJump                  ;
 
 ; ***************************************************************************************
 cancelJump
@@ -2342,11 +2330,6 @@ updatePlayerWithAnimation
     sta plotSourceSpriteAddressLow      ;
     lda willyGraphicsPage               ; sprite address = willy looking right or left
     sta plotSourceSpriteAddressHigh     ;
-
-    lda #$00                            ;
-    sta $79                             ; }
-    lda #$0d                            ; } $0d00 (?)
-    sta $7a                             ; }
 
     lda newPlayerPixelX                 ;
     and #3                              ;
@@ -2634,6 +2617,7 @@ checkUpdateConveyor
     bne updateConveyor              ;
     lda #1                          ;
     sta willyFalling                ;
+notFoundConveyor
     rts                             ;
 
 ; ***************************************************************************************
@@ -2655,14 +2639,11 @@ updateConveyor
 
     lda screenCharacterA            ;
     jsr isConveyor                  ;
-    cmp #1                          ;
-    beq foundConveyor               ;
+    bne foundConveyor               ;
 
     lda screenCharacterB            ;
     jsr isConveyor                  ;
-    cmp #1                          ;
-    beq foundConveyor               ;
-    rts                             ;
+    beq notFoundConveyor            ;
 
 ; ***************************************************************************************
 foundConveyor
@@ -2992,54 +2973,37 @@ readOrWriteCachedBackground
     sty $72                         ;
     sta $70                         ;
     txa                             ;
-    and #$fc                        ;
+    and #$fc                        ; X cell * 4
     sta $71                         ;
+
     tya                             ;
     lsr                             ;
     lsr                             ;
     lsr                             ;
-    sta $72                         ;
-    lda #<logicalScreenStart        ; }
-    sta readOrWriteScreen + 1       ; } start of screen address
-    lda #>logicalScreenStart        ; }
-    sta readOrWriteScreen + 2       ; }
+    sta $72                         ; Y cell
 
-    ldx #0                          ; loop counter
--
-    lda readOrWriteScreen + 1       ; }
-    clc                             ; }
-    adc $71                         ; }
-    sta readOrWriteScreen + 1       ; } add $71 to to screen address
-    lda readOrWriteScreen + 2       ; } multiplication by repeated addition
-    adc #0                          ; }
-    sta readOrWriteScreen + 2       ; }
-    inx                             ;
-    cpx #4                          ; loop four times
-    bne -                           ;
+    ; read screen row address
+    tax                             ;
+    lda screenRowAddressLow,x       ;
+    sta readOrWriteScreen + 1       ;
+    lda screenRowAddressHigh,x      ;
+    sta readOrWriteScreen + 2       ;
 
-    ; $72 is the character row we want, we add $0280 for each row in a loop
-    ldx #0                          ; loop counter
--
-    cpx $72                         ;
-    beq readOrWriteCachedBackgroundInternal ;
-    lda readOrWriteScreen + 1       ; }
-    clc                             ; } multiplication by repeated addition
-    adc #$80                        ; }
-    sta readOrWriteScreen + 1       ; } Add $0280 to screen address
-    lda readOrWriteScreen + 2       ; }
-    adc #2                          ; }
-    sta readOrWriteScreen + 2       ; }
-    inx                             ;
-    jmp -                           ;
+    ; add 8 * cell X to screen address
+    lda #0                          ;
+    sta tempHigh                    ;
+    lda $71                         ;
+    asl                             ;
+    rol tempHigh                    ;
+    asl                             ;
+    rol tempHigh                    ;
+    clc                             ;
+    adc readOrWriteScreen + 1       ;
+    sta readOrWriteScreen + 1       ;
+    lda readOrWriteScreen + 2       ;
+    adc tempHigh                    ;
+    sta readOrWriteScreen + 2       ;
 
-; ***************************************************************************************
-;
-; On Entry:
-;   $70 = 0   means read from cache and write to screen
-;   $70 = 1   means read from screen and write to cache
-;
-; ***************************************************************************************
-readOrWriteCachedBackgroundInternal
     ; set up for reading from the screen and writing to the background cache
     lda #<readScreenWriteCache              ; }
     sta readWriteBackgroundCacheLoop + 1    ; } address of the routine to call to copy a byte
@@ -3081,17 +3045,14 @@ readOrWriteCachedBackgroundInternal
     beq copyCache                   ;
 
     lda willyChangedDirection       ;
-    cmp #0                          ; [redundant]
     bne copyCache                   ;
 
     lda $70                         ;
-    cmp #0                          ; [redundant]
     bne copyCache                   ;
 
     lda playerPixelX                ;
     and #3                          ;
     eor willyAnimationEOR           ;
-    cmp #0                          ;
     bne copyCache                   ;
     lda willyAnimationEOR           ;
     cmp #3                          ;
@@ -3230,11 +3191,6 @@ setEugineSprite
     sta plotSourceSpriteAddressLow      ; } address verticalGuardianMODE1Address
     lda #>verticalGuardianMODE1Address  ; }
     sta plotSourceSpriteAddressHigh     ; }
-
-    lda #0                              ; }
-    sta $79                             ; }
-    lda #$2f                            ; } $2f00 (?)
-    sta $7a                             ; }
     rts                                 ;
 
 ; ***************************************************************************************
@@ -3355,72 +3311,72 @@ updateOneVerticalGuardian
 
 ; ***************************************************************************************
 fastGuardian
-    lda #4                      ; set fast speed
+    lda #4                          ; set fast speed
 +
-    sta currentGuardianSpeed    ;
-    lda currentGuardianColour   ;
-    and #3                      ;
-    tax                         ;
-    lda guardianColourMasks,x   ;
-    sta spriteColourMask        ; set sprite colour
-    lda currentGuardianExtent1  ;
-    and #$80                    ;
-    cmp #$80                    ;
-    bne updateGuardian          ;
-    jmp drawSkylabCrashing      ;
+    sta currentGuardianSpeed        ;
+    lda currentGuardianColour       ;
+    and #3                          ;
+    tax                             ;
+    lda guardianColourMasks,x       ;
+    sta spriteColourMask            ; set sprite colour
+    lda currentGuardianExtent1      ;
+    and #$80                        ;
+    cmp #$80                        ;
+    bne updateGuardian              ;
+    jmp drawSkylabCrashing          ;
 
 ; ***************************************************************************************
 updateGuardian
-    lda currentLevel            ;
-    cmp #19                     ;
-    bne +                       ; if (not level 19 - The Meteor Storm) then branch
-    lda spriteColourMask        ;
-    cmp #$ff                    ;
-    bne +                       ; if (not colour 3) then branch
-    lda #$f0                    ; make the meteors in the Meteor Storm colour 2
-    sta spriteColourMask        ;
+    lda currentLevel                ;
+    cmp #19                         ;
+    bne +                           ; if (not level 19 - The Meteor Storm) then branch
+    lda spriteColourMask            ;
+    cmp #$ff                        ;
+    bne +                           ; if (not colour 3) then branch
+    lda #$f0                        ; make the meteors in the Meteor Storm colour 2
+    sta spriteColourMask            ;
 +
-    lda currentGuardianX        ;
-    and #$3f                    ;
-    asl                         ;
-    asl                         ;
-    clc                         ;
-    adc #$10                    ;
-    tax                         ;
-    lda currentGuardianY        ;
-    clc                         ;
-    adc #8                      ;
-    tay                         ;
+    lda currentGuardianX            ;
+    and #$3f                        ;
+    asl                             ;
+    asl                             ;
+    clc                             ;
+    adc #$10                        ;
+    tax                             ;
+    lda currentGuardianY            ;
+    clc                             ;
+    adc #8                          ;
+    tay                             ;
 verticalGuardiansPlotType = * + 1
-    lda #5                      ;
-    jsr plot                    ; draw vertical guardian (mode 5)
-    lda currentGuardianX        ; }
-    and #$80                    ; } check current direction
-    cmp #$80                    ; }
-    beq moveGuardianDown        ; if (down) then branch
+    lda #5                          ;
+    jsr plot                        ; draw vertical guardian (mode 5)
+    lda currentGuardianX            ; }
+    and #$80                        ; } check current direction
+    cmp #$80                        ; }
+    beq moveGuardianDown            ; if (down) then branch
 
     ; move guardian up
-    lda currentGuardianY        ;
-    sec                         ;
-    sbc currentGuardianSpeed    ;
-    sta currentGuardianY        ;
-    jmp drawVerticalGuardian    ;
+    lda currentGuardianY            ;
+    sec                             ;
+    sbc currentGuardianSpeed        ;
+    sta currentGuardianY            ;
+    jmp drawVerticalGuardian        ;
 
 ; ***************************************************************************************
 moveGuardianDown
-    lda currentGuardianY        ;
-    clc                         ;
-    adc currentGuardianSpeed    ;
-    sta currentGuardianY        ;
+    lda currentGuardianY            ;
+    clc                             ;
+    adc currentGuardianSpeed        ;
+    sta currentGuardianY            ;
 
 drawVerticalGuardian
-    lda currentGuardianX        ;
-    and #$3f                    ;
-    asl                         ;
-    asl                         ;
-    clc                         ;
-    adc #$10                    ;
-    tax                         ; X = (guardianX * 4) + 16
+    lda currentGuardianX            ;
+    and #$3f                        ;
+    asl                             ;
+    asl                             ;
+    clc                             ;
+    adc #$10                        ;
+    tax                             ; X = (guardianX * 4) + 16
     lda currentGuardianY            ;
     clc                             ;
     adc #8                          ;
@@ -3430,14 +3386,14 @@ drawVerticalGuardian
     lda tempGuardianSpriteAddrHigh  ;
     sta plotSourceSpriteAddressHigh ;
 drawGuardianPlotType = * + 1
-    lda #4                      ;
-    jsr plot                    ; draw vertical guardian (mode 4)
+    lda #4                          ;
+    jsr plot                        ; draw vertical guardian (mode 4)
 
-    lda currentGuardianY        ;
-    cmp currentGuardianExtent1  ;
-    beq bounceCurrentGuardian   ;
-    cmp currentGuardianExtent2  ;
-    beq bounceCurrentGuardian   ;
+    lda currentGuardianY            ;
+    cmp currentGuardianExtent1      ;
+    beq bounceCurrentGuardian       ;
+    cmp currentGuardianExtent2      ;
+    beq bounceCurrentGuardian       ;
 
 updateCurrentGuardian
     ldx currentGuardianIndex            ;
@@ -4140,20 +4096,11 @@ copyGuardiansWithAddress
     ldx #0                              ; loop counter
 -
     jsr readGuardianByte                ;
-    sta softCharacterDefinitions,x      ;
-    inx                                 ; copy from guardian sprites to $0c00-$0c7f
+    sta softCharacterDefinitions,x      ; copy from guardian sprites to $0c00-$0c7f
+    jsr reverseBits                     ;
+    sta $0c80,x                         ; copy reflected guardians to $0c80-$0cff
+    inx                                 ;
     cpx #$80                            ;
-    bne -                               ;
-
-    ldy #0                              ; loop counter
--
-    lda softCharacterDefinitions,y      ;
-    sty tempY                           ;
-    jsr reverseBitsInByte               ;
-    ldy tempY                           ; copy reflected guardians to $0c80-$0cff
-    sta $0c80,y                         ;
-    iny                                 ;
-    cpy #$80                            ;
     bne -                               ;
 
     ; find guardian data for current level
@@ -4214,10 +4161,6 @@ storeByteToD80
     rts                                 ;
 
 ; ***************************************************************************************
-;
-; Note: this only copies 255 bytes, rather than 256 bytes
-;
-; ***************************************************************************************
 swapPagesC00AndGuardiansPage
     ldx #0                              ;
 swapPagesLoop
@@ -4228,71 +4171,39 @@ swapPagesLoop
     tya                                 ;
     sta guardianSpriteCache,x           ;
     inx                                 ;
-    cpx #$ff                            ;
-    bne swapPagesLoop                   ; copy 255 bytes in this loop
+    bne swapPagesLoop                   ; copy 256 bytes in this loop
     rts                                 ;
-
-; ***************************************************************************************
-;
-; See also "reverseBits" for another copy of this routine and a smaller, faster implementation in comments
-;
-; ***************************************************************************************
-reverseBitsInByte
-    sta tempReversingByte               ;
-    ldy #0                              ; loop counter
-    ldx #0                              ;
-reverseLoop
-    lda tempReversingByte               ;
-    clc                                 ;
-    rol                                 ;
-    sta tempReversingByte               ;
-    bcs reverseBitCarrySet              ;
-    txa                                 ;
-    clc                                 ;
-backToReversingLoop
-    ror                                 ;
-    tax                                 ;
-    iny                                 ;
-    cpy #8                              ;
-    bne reverseLoop                     ;
-    rts                                 ;
-
-; ***************************************************************************************
-reverseBitCarrySet
-    txa                             ;
-    sec                             ;
-    jmp backToReversingLoop         ;
 
 ; ***************************************************************************************
 drawIfNotOverExit
-    sta rememberCharacterToDraw     ;
-    lda vduTextCursorYPosition      ;
-    clc                             ;
-    adc #2                          ;
-    cmp exitPositionY               ;
-    bne testNextYPosition           ;
+    sta rememberCharacterToDraw         ;
+    lda vduTextCursorYPosition          ;
+    clc                                 ;
+    adc #2                              ;
+    cmp exitPositionY                   ;
+    bne testNextYPosition               ;
 textXPosition
-    lda vduTextCursorXPosition      ;
-    cmp exitPositionX               ;
-    beq moveForward                 ;
-    sec                             ;
-    sbc #1                          ;
-    cmp exitPositionX               ;
-    bne +                           ;
+    lda vduTextCursorXPosition          ;
+    cmp exitPositionX                   ;
+    beq moveForward                     ;
+    sec                                 ;
+    sbc #1                              ;
+    cmp exitPositionX                   ;
+    bne +                               ;
 moveForward
-    lda #9                          ; move forward
-    jmp OSWRCH                      ;
+    lda #9                              ; move forward
+    jmp OSWRCH                          ;
 
 testNextYPosition
-    sec                             ;
-    sbc #1                          ;
-    cmp exitPositionY               ;
-    bne +                           ;
-    jmp textXPosition               ;
+    sec                                 ;
+    sbc #1                              ;
+    cmp exitPositionY                   ;
+    bne +                               ;
+    jmp textXPosition                   ;
 
 +
-    lda rememberCharacterToDraw     ;
-    jmp OSWRCH                      ;
+    lda rememberCharacterToDraw         ;
+    jmp OSWRCH                          ;
 
 ; ***************************************************************************************
 updateLevel19Special
@@ -4667,6 +4578,7 @@ drawFixedString
 ; ***************************************************************************************
 updatePlayerAirAndDrawConveyor
     jsr updateAirAndCheckExit       ;
+
     lda currentLevel                ;
     cmp #18                         ;
     beq return10                    ;
@@ -4883,18 +4795,19 @@ setPalette
     txa                             ;
     jsr OSWRCH                      ; VDU X
     tya                             ;
-    ldy #0                          ;
+    ldy #4                          ;
 -
     jsr OSWRCH                      ; VDU Y
-    iny                             ;
-    cpy #4                          ;
+    dey                             ;
     bne -                           ; loop four times
     rts                             ;
 
+; ***************************************************************************************
 readByteOffsetX
     lda $2c00,x                     ; read byte [high byte of address overwritten before use]
     rts                             ;
 
+; ***************************************************************************************
 initLevel
     jsr clearScreen                 ;
     lda #>levelDefinitions          ; } read data from $6c00 upwards
@@ -4976,8 +4889,8 @@ foundLevelData
     sta levelColours2               ; store it
 
     ; set palette to black
-    ldx #0                          ;
     lda #0                          ;
+    ldx #0                          ;
 -
     jsr setPalette                  ;
     inx                             ;
@@ -5257,45 +5170,17 @@ getExitSourceByte
 ;
 ; Reverse the order of all bits in A
 ;
-; [ This is not the most efficient way of doing it
-;   e.g. use this from https://sites.google.com/site/h2obsession/programming/6502
-; reverseBits
-;     sta byteToReverse               ;
-;     lda #1                          ;
-; -
-;     lsr byteToReverse               ;
-;     rol                             ;
-;     bcc -                           ;
-;     rts                             ;
-; ]
-
+;  from https://sites.google.com/site/h2obsession/programming/6502
+;
 ; ***************************************************************************************
 reverseBits
     sta byteToReverse               ;
-
-    ldy #0                          ;
-    ldx #0                          ;
-reverseBitsLoop
-    lda byteToReverse               ;
-    clc                             ;
+    lda #1                          ;
+-
+    lsr byteToReverse               ;
     rol                             ;
-    sta byteToReverse               ;
-    bcs bitSet                      ;
-    txa                             ;
-    clc                             ;
-
-continueReverseBits
-    ror                             ;
-    tax                             ;
-    iny                             ;
-    cpy #8                          ;
-    bne reverseBitsLoop             ;
+    bcc -                           ;
     rts                             ;
-
-bitSet
-    txa                             ;
-    sec                             ;
-    jmp continueReverseBits         ;
 
 ; ***************************************************************************************
 drawExit
@@ -5572,10 +5457,6 @@ drawSideWallsAndFloor
     rts                                 ;
 
 ; ***************************************************************************************
-start
-    jmp miner4EntryPoint                ;
-
-; ***************************************************************************************
 ;
 ; called on vsync to update the audio
 ;
@@ -5588,7 +5469,10 @@ mainEventRoutine
     tya                             ;
     pha                             ;
 
+    ; update music
     jsr checkForChannel3Update      ;
+
+    ; update sound effects
     lda channel2Frequency           ;
     cmp #$ff                        ;
     beq silenceChannel2             ;
@@ -5686,14 +5570,8 @@ playAttractLoop
     lda #2                          ;
     sta lives                       ; start with 2 remaining lives (3 lives total)
 
-    ; clear the score (6 digits in 3 BCD bytes)
-    lda #0                          ;
-    ldx #0                          ;
--
-    sta score,x                     ;
-    inx                             ;
-    cpx #3                          ;
-    bne -                           ;
+    ; clear the score
+    jsr zeroScore                   ;
 
 attractLoop
     lda currentLevel                ;
@@ -5942,27 +5820,6 @@ swapLogoWithC00
     bne -                           ;
     rts                             ;
 
-
-; ***************************************************************************************
-;
-; start up
-;
-; ***************************************************************************************
-startUp
-    ; output 8 line feeds
-    ldx #8                                      ;
-    lda #10                                     ;
--
-    jsr OSWRCH                                  ;
-    dex                                         ;
-    bne -                                       ;
-
-    ; wait for key press
-    lda #$81                                    ;
-    ldx #$ff                                    ;
-    ldy #$00                                    ;
-    jsr OSBYTE                                  ;
-    jmp continue                                ;
 
 triggerSwitch
     lda #1                          ;
@@ -6493,6 +6350,12 @@ readOrWriteAddrHigh = readOrWriteByte + 2
 
 ; ***************************************************************************************
 initialize
+    ; *FX 13,4 (disable vsync event)
+    lda #13                         ;
+    ldx #4                          ;
+    ldy #0                          ;
+    jsr OSBYTE                      ;
+
     ; install event vector code at $3000
     lda #<mainEventRoutine          ;
     sta vectorEVNTV                 ;
@@ -6547,20 +6410,6 @@ waitForRETURN
     cpy #$ff                    ;
     beq waitForRETURN           ;
     rts                         ;
-
-; ***************************************************************************************
-continue
-    jmp initialize                  ;
-
-; ***************************************************************************************
-miner4EntryPoint
-    ; *FX 13,4 (disable vsync event)
-    lda #13                         ;
-    ldx #4                          ;
-    ldy #0                          ;
-    jsr OSBYTE                      ;
-
-    jmp startUp                     ;
 
 ; ***************************************************************************************
 
@@ -13362,12 +13211,6 @@ currentGuardianColour
 currentGuardianXPosition
     !byte $ea                       ;
 drawGuardianLoopCounter
-    !byte $ea                       ;
-
-; ***************************************************************************************
-tempReversingByte
-    !byte $ea                       ;
-tempY
     !byte $ea                       ;
 
 ; ***************************************************************************************

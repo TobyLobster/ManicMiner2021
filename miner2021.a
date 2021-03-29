@@ -5,7 +5,9 @@
 charSPACE                       = $20       ;
 
 ; OS memory locations
-vduWriteCursorScreenAddressLow  = $D8       ; } address of the top of the cell
+vduTextColourByteOR             = $D2       ; } bytes to implement current foreground
+vduTextColourByteEOR            = $D3       ; } and background text colours
+vduWriteCursorScreenAddressLow  = $D8       ; address of the top of the cell
 fsBlockNumberHigh               = $03c7     ;
 fsBlockFlagByte                 = $03ca     ;
 
@@ -14,7 +16,8 @@ timeClockB                      = $0297     ; 5 byte clock as read by TIME
 countdownIntervalTimer          = $029C     ; 5 byte countdown interval timer (causes an EVENT when it reaches zero)
 vduTextCursorXPosition          = $0318     ;
 vduTextCursorYPosition          = $0319     ;
-vduBackgroundTextColour         = $0358     ; } byte value to colour the whole
+vduForegroundTextColour         = $0357     ; } Current colours. Stored as the byte value
+vduBackgroundTextColour         = $0358     ; } to colour the whole byte the given colour
 softCharacterDefinitions        = $0c00     ;
 
 logicalScreenStart              = $3000     ;
@@ -1857,19 +1860,9 @@ handleNotJumping
     cpx #5                                  ; }
     bne -                                   ; }
 
-    lda #31                                 ; }
-    jsr OSWRCH                              ; }
-    lda playerPixelX                        ; }
-    lsr                                     ; }
-    lsr                                     ; }
-    jsr OSWRCH                              ; } TAB(playerX/4, playerY/8+2)
-    lda playerPixelY                        ; }
-    lsr                                     ; }
-    lsr                                     ; }
-    lsr                                     ; }
-    clc                                     ; }
-    adc #2                                  ; }
-    jsr OSWRCH                              ; }
+    ldx playerPixelX                        ; }
+    ldy playerPixelY                        ; } TAB(playerX/4, playerY/8+2)
+    jsr setTextPosFromPixelPos              ; }
 
     jsr readTwoCharactersFromScreen         ; read the two characters immediately lower on screen than the player
     lda playerPixelY                        ;
@@ -2060,19 +2053,9 @@ switchToLookingRight
     sta willyDeltaX                         ;
 
 checkForUpdatePlayerOnConveyor
-    lda #31                                 ; }
-    jsr OSWRCH                              ; }
-    lda playerPixelX                        ; }
-    lsr                                     ; }
-    lsr                                     ; }
-    jsr OSWRCH                              ; } TAB(playerX/4, playerY/8+2)
-    lda playerPixelY                        ; }
-    lsr                                     ; }
-    lsr                                     ; }
-    lsr                                     ; }
-    clc                                     ; }
-    adc #2                                  ; }
-    jsr OSWRCH                              ; }
+    ldx playerPixelX                        ; }
+    ldy playerPixelY                        ; }
+    jsr setTextPosFromPixelPos              ; }
 
     jsr readTwoCharactersFromScreen         ; read the two characters immediately lower on screen than the player
     lda willyIsOnConveyor                   ;
@@ -2357,12 +2340,9 @@ opcodeForJsrPlot
     jsr plot                            ; draw player (mode 1)
     jsr checkForLandingOnSpike          ;
 
-    lda #31                             ;
-    jsr OSWRCH                          ; TAB(34,23)
-    lda #34                             ;
-    jsr OSWRCH                          ;
-    lda #23                             ;
-    jsr OSWRCH                          ;
+    ldx #34                             ;
+    ldy #23                             ;
+    jsr setTextPos                      ; TAB(34,23)
 
     jsr checkSpikeKeySwitch             ;
     lda #9                              ; forward space
@@ -2446,12 +2426,9 @@ checkForSpikeKeySwitchCollisions
 ;
 ; ***************************************************************************************
 checkForLandingOnSpike
-    lda #31                     ;
-    jsr OSWRCH                  ;
-    lda #$22                    ; TAB(34, 23)
-    jsr OSWRCH                  ;
-    lda #$17                    ;
-    jsr OSWRCH                  ;
+    ldx #34                             ;
+    ldy #23                             ;
+    jsr setTextPos                      ; TAB(34,23)
 
 -
     jsr readCharacter           ;
@@ -2544,12 +2521,9 @@ twiceLoop
     sta drawRegularKong             ;
 
 tabToOldCursorPositionAndReturn
-    lda #31                         ;
-    jsr OSWRCH                      ;
-    lda textCursorX                 ; TAB(X, Y)
-    jsr OSWRCH                      ;
-    lda textCursorY                 ;
-    jmp OSWRCH                      ;
+    ldx textCursorX                 ;
+    ldy textCursorY                 ;
+    jmp setTextPos                  ; TAB(textCursorX,textCursorY)
 
 ; ***************************************************************************************
 isSupporting
@@ -2615,19 +2589,10 @@ notFoundConveyor
 
 ; ***************************************************************************************
 updateConveyor
-    lda #31                         ; }
-    jsr OSWRCH                      ; }
-    lda playerPixelX                ; }
-    lsr                             ; }
-    lsr                             ; }
-    jsr OSWRCH                      ; } TAB(playerX/4, playerY/8 + 2)
-    lda playerPixelY                ; }
-    lsr                             ; }
-    lsr                             ; }
-    lsr                             ; }
-    clc                             ; }
-    adc #2                          ; }
-    jsr OSWRCH                      ; }
+    ldx playerPixelX                ;
+    ldy playerPixelY                ;
+    jmp setTextPosFromPixelPos      ; TAB(playerX/4, playerY/8 + 2)
+
     jsr readTwoCharactersFromScreen ; read the two characters immediately lower on screen than the player
 
     lda screenCharacterA            ;
@@ -3561,23 +3526,23 @@ setSkylabSprite6
 
 
 ; ***************************************************************************************
-copyEugeneIntoMODE1Format
+copyVerticalGuardianIntoMODE1Format
     ldy #0                              ; loop counter
     lda #<verticalGuardianMODE1Address  ; }
     sta storeByteY + 1                  ; }
 !if (<verticalGuardianMODE1Address) != 0 {
     !error "vertical guardian address should be on a page boundary"
 }
-    sty copyEugeneByteCounter           ; }
+    sty tempX                           ; }
     lda #>verticalGuardianMODE1Address  ; }
     sta storeByteY + 2                  ; }
 
 -
-    ldx copyEugeneByteCounter       ;
+    ldx tempX                       ;
 specialSpriteSourceAddress = * + 1
     lda eugeneSprite,x              ;
     sta copyEugeneSourceByte        ; store source byte
-    stx copyEugeneByteCounter       ; [redundant]
+    stx tempX                       ; [redundant]
     and #$f0                        ; extract top nybble
     sta copyEugeneTempByte          ; save it
     lsr                             ;
@@ -3607,9 +3572,9 @@ specialSpriteSourceAddress = * + 1
 
     lda copyEugeneTempByte          ;
     jsr storeByteY                  ; store right hand side byte of Eugene
-    ldx copyEugeneByteCounter       ;
+    ldx tempX                       ;
     inx                             ; increment source counter
-    stx copyEugeneByteCounter       ;
+    stx tempX                       ;
     tya                             ; }
     sec                             ; }
     sbc #7                          ; } Y -= 7
@@ -3621,7 +3586,7 @@ specialSpriteSourceAddress = * + 1
     clc                             ;
     adc #$10                        ; add 16 to destination byte
     sta storeByteY + 1              ;
-    ldx copyEugeneByteCounter       ;
+    ldx tempX                       ;
     cpx #$80                        ; check if we are done
     bne -                           ; if (not done) then branch (loop back)
     rts                             ;
@@ -3634,7 +3599,7 @@ levelWithKongBeast
 
 ; ***************************************************************************************
 levelWithAmoebatrons
-    lda #9                          ;
+    lda #8                          ;
     sta copyWhichSprite             ; copy Amoebatrons
     jmp continueCopySprites         ;
 
@@ -3693,7 +3658,7 @@ return4
 
 ; ***************************************************************************************
 foundSprite
-    jsr copyEugeneIntoMODE1Format       ;
+    jsr copyVerticalGuardianIntoMODE1Format ;
     lda currentLevel                    ;
     cmp #9                              ; Levels 9, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20
     beq handleVerticalGuardians         ; have vertical guardians
@@ -3791,10 +3756,8 @@ updateLevel19Guardians
 animateKeysUpdateHorizontalGuardiansAndLevel19EnergyFields
     jsr colourCycleKeys             ;
 
-    lda #17                         ;
-    jsr OSWRCH                      ;
     lda #3                          ; COLOUR 3
-    jsr OSWRCH                      ;
+    jsr setTextColour               ;
 
     lda currentLevel                ;
     cmp #19                         ;
@@ -3841,14 +3804,11 @@ drawGuardiansLoop
 
     inc drawGuardianLoopCounter     ;
 
-    lda #17                         ;
-    jsr OSWRCH                      ; COLOUR
-
     lda drawGuardianLoopCounter     ;
     and #3                          ;
     tax                             ;
     lda guardianColourTable,x       ;
-    jsr OSWRCH                      ; set colour
+    jsr setTextColour               ;
 
     lda drawGuardianLoopCounter     ;
     clc                             ;
@@ -3999,9 +3959,8 @@ positionCursorAtGuardian
     jsr OSWRCH                      ;
     lda zpGuardianPositionX         ;
     and #$fc                        ;
-    clc                             ;
-    ror                             ;
-    ror                             ; TAB($8a/4 + 5, ($8b AND $0f) + 1)
+    lsr                             ;
+    lsr                             ; TAB($8a/4 + 5, ($8b AND $0f) + 1)
     clc                             ;
     adc #5                          ;
     jsr OSWRCH                      ;
@@ -4240,10 +4199,8 @@ updateLevel19Special
     jsr swapMeteorSpritesWith0C00       ;
     inc meteorYCoordinate               ; meteor moves down
 
-    lda #17                             ;
-    jsr OSWRCH                          ;
     lda #3                              ; COLOUR 3
-    jsr OSWRCH                          ;
+    jsr setTextColour                   ;
 
     lda #31                             ;
     jsr OSWRCH                          ;
@@ -4551,12 +4508,9 @@ nonLevel10
     sta conveyorLength              ;
 
 drawFixedString
-    lda #31                         ;
-    jsr OSWRCH                      ;
-    lda #4                          ; TAB(4,19)
-    jsr OSWRCH                      ;
-    lda #19                         ;
-    jsr OSWRCH                      ;
+    ldx #4                          ;
+    ldy #19                         ;
+    jsr setTextPos                  ; TAB(4,19)
 
     ; draw fixed text below play area
     ldy #0                          ;
@@ -4570,6 +4524,73 @@ drawFixedString
     rts                             ;
 
 ; ***************************************************************************************
+; On Entry:
+;       A = colour (add 128 to set background colour)
+setTextColour
+    pha                                                 ;
+    lda #17                                             ;
+    jsr OSWRCH                                          ;
+    pla                                                 ;
+    jmp OSWRCH                                          ;
+
+; ***************************************************************************************
+setTextPosFromPixelPos
+    lda #31                                 ; }
+    jsr OSWRCH                              ; }
+    txa                                     ; }
+    lsr                                     ; }
+    lsr                                     ; }
+    jsr OSWRCH                              ; } TAB(X/4, Y/8+2)
+    tya                                     ; }
+    lsr                                     ; }
+    lsr                                     ; }
+    lsr                                     ; }
+    clc                                     ; }
+    adc #2                                  ; }
+    jsr OSWRCH                              ; }
+
+;fourColourMODEParameterTable
+;    !byte %00000000                                     ;
+;    !byte %00001111                                     ;
+;    !byte %11110000                                     ;
+;    !byte %11111111                                     ;
+
+; ***************************************************************************************
+setTextPos
+    lda #31                                             ;
+    jsr OSWRCH                                          ;
+    txa                                                 ;
+    jsr OSWRCH                                          ;
+    tya                                                 ;
+    jmp OSWRCH                                          ;
+
+;    sta tempA
+;    stx tempX                                           ;
+;    sty tempY                                           ;
+;    ldy #0                                              ;
+;    tax                                                 ;
+;    bpl +                                               ; check top bit
+;    iny                                                 ;
+;+
+;    and #3                                              ; ensure colour is at most 'number of logical colours less 1'
+;    tax                                                 ; X is the offset into the tables of colours.
+;    lda fourColourMODEParameterTable,X                  ; get plot options from table
+;    sta vduForegroundTextColour,Y                       ; store current colour:
+;                                                        ;
+;                                                        ;       Y=0 means text foreground
+;                                                        ;       Y=1 means text background
+;                                                        ;
+;    lda vduForegroundTextColour                         ; foreground text colour
+;    eor #$FF                                            ; invert
+;    sta vduTextColourByteEOR                            ; text colour byte to EOR-ed into memory
+;    eor vduBackgroundTextColour                         ; background text colour
+;    sta vduTextColourByteOR                             ; text colour byte to OR-ed into memory
+;    ldx tempX                                           ;
+;    ldy tempY                                           ;
+;    lda tempA                                           ;
+;    rts                                                 ;
+
+; ***************************************************************************************
 drawConveyor
     lda currentLevel                ;
     cmp #18                         ;
@@ -4580,10 +4601,8 @@ drawConveyor
     cmp #$ff                        ;
     beq return10                    ;
 
-    lda #17                         ; }
-    jsr OSWRCH                      ; }
     lda #2                          ; } COLOUR 2
-    jsr OSWRCH                      ; }
+    jsr setTextColour               ; }
 
     lda conveyorX                   ;
     and #$80                        ;
@@ -5207,10 +5226,8 @@ setRoomColours
     jsr OSWRCH                      ;
     jsr drawInitialAirMeter         ;
 
-    lda #17                         ;
-    jsr OSWRCH                      ; COLOUR 2
-    lda #2                          ;
-    jsr OSWRCH                      ;
+    lda #2                          ; COLOUR 2
+    jsr setTextColour               ;
 
     jsr updateAirAndCheckExit       ;
     jsr drawConveyor                ;
@@ -5323,10 +5340,8 @@ setColourAndDrawLevel7Platform
     lda levelFeatureIndex               ;
     cmp #1                              ;
     bne setColourAndDrawPlatform        ;
-    lda #17                             ; }
-    jsr OSWRCH                          ; } COLOUR 2
-    lda #2                              ; }
-    jsr OSWRCH                          ; }
+    lda #2                              ; COLOUR 2
+    jsr setTextColour                   ;
     jmp drawPlatform                    ;
 
 ; ***************************************************************************************
@@ -5335,10 +5350,8 @@ setColourAndDrawLevel14Platform
     cmp #0                              ;
     bne setColourAndDrawPlatform        ;
 
-    lda #17                             ;
-    jsr OSWRCH                          ;
     lda #1                              ; COLOUR 1
-    jsr OSWRCH                          ;
+    jsr setTextColour                   ;
 
     lda #31                             ;
     jsr OSWRCH                          ;
@@ -5367,11 +5380,9 @@ commandDrawHorizontalStrip
     beq setColourAndDrawLevel14Platform ;
 
 setColourAndDrawPlatform
-    lda #17                             ;
-    jsr OSWRCH                          ;
     ldx levelFeatureIndex               ;
     lda levelColourArray,x              ;
-    jsr OSWRCH                          ; set colour
+    jsr setTextColour                   ;
 
 drawPlatform
     lda #31                             ;
@@ -5699,10 +5710,8 @@ showTitleScreen
     jsr clearScreen                 ;
     jsr zeroScore                   ;
 
-    lda #17                         ; VDU 17,3 (COLOUR 3)
-    jsr OSWRCH                      ;
     lda #3                          ;
-    jsr OSWRCH                      ;
+    jsr setTextColour               ;
 
     jsr pauseMusic                  ;
 
@@ -5767,10 +5776,8 @@ plotLoop
 
 ; ***************************************************************************************
 finishPlot
-    lda #17                         ;
-    jsr OSWRCH                      ;
     lda #128                        ;
-    jsr OSWRCH                      ;
+    jsr setTextColour               ;
 
     jmp showTitleScreenMessageAndWaitForRETURN  ;
 
@@ -5891,10 +5898,8 @@ drawExtraSpikes
 
 ; ***************************************************************************************
 drawSpecialSpikes
-    lda #17                             ; }
-    jsr OSWRCH                          ; }
-    lda #3                              ; } COLOUR 3
-    jsr OSWRCH                          ; }
+    lda #3                              ; COLOUR 3
+    jsr setTextColour                   ;
 
     lda #31                             ; }
     jsr OSWRCH                          ; }
@@ -5984,10 +5989,8 @@ decodeNextSingleItem
     adc #1                              ;
     jsr OSWRCH                          ; Y pos
 
-    lda #17                             ;
-    jsr OSWRCH                          ;
     lda #2                              ; COLOUR 2
-    jsr OSWRCH                          ;
+    jsr setTextColour                   ;
 
     lda singleItemSprite                ;
     cmp #$ee                            ;
@@ -6006,18 +6009,14 @@ drawSingleItem
 
 ; ***************************************************************************************
 handleKey
-    lda #17                         ;
-    jsr OSWRCH                      ;
     lda #3                          ; COLOUR 3
-    jsr OSWRCH                      ;
+    jsr setTextColour               ;
     jmp recordKey                   ;
 
 ; ***************************************************************************************
 handleColour1SingleItem
-    lda #17                         ;
-    jsr OSWRCH                      ;
     lda #1                          ; COLOUR 1
-    jsr OSWRCH                      ;
+    jsr setTextColour               ;
     jmp drawSingleItem              ;
 
 ; ***************************************************************************************
@@ -6145,14 +6144,12 @@ return12
     rts                             ;
 
 animateKey
-    lda #17                         ;
-    jsr OSWRCH                      ; COLOUR
     lda keyColourCounter            ;
     and #3                          ;
     cmp #0                          ;
     beq handleColour0               ; COLOUR 1,2,3
 setKeyColour
-    jsr OSWRCH                      ;
+    jsr setTextColour               ;
     lda #$90                        ; draw key
     jsr OSWRCH                      ;
     jmp postAnimateKey              ;
@@ -6188,10 +6185,8 @@ drawRoomName
     cpx #$20                        ;
     bne -                           ;
 
-    lda #17                         ;
-    jsr OSWRCH                      ;
     lda #3                          ; COLOUR 3
-    jsr OSWRCH                      ;
+    jsr setTextColour               ;
 
     ; scan for next control character
     ldx #0                          ; loop counter
@@ -6508,10 +6503,8 @@ showLevel
     lda #5                                  ;
     sta keysLeft                            ;
 
-    lda #17                                 ; }
-    jsr OSWRCH                              ; } COLOUR 2
-    lda #2                                  ; }
-    jsr OSWRCH                              ; }
+    lda #2                                  ; COLOUR 2
+    jsr setTextColour                       ;
 
     lda currentLevel                        ;
     jsr initLevel                           ;
@@ -6781,15 +6774,13 @@ updateFlashingExit
     rts                             ;
 
 flashExit
-    lda #17                         ;
-    jsr OSWRCH                      ; VDU 17 (COLOUR)
     lda flashingExitCounter         ;
     and #4                          ;
     cmp #4                          ;
     beq setColour3AndShowExit       ;
     lda #2                          ; COLOUR 2
 setColourAndShowExit
-    jsr OSWRCH                      ;
+    jsr setTextColour               ;
 
     lda #31                         ; }
     jsr OSWRCH                      ; }
@@ -6856,10 +6847,8 @@ drawInitialAirMeter
     lda #$67                        ;
     sta airRemaining                ; ?
 
-    lda #17                         ; }
-    jsr OSWRCH                      ; }
-    lda #3                          ; } COLOUR 3
-    jsr OSWRCH                      ; }
+    lda #3                          ; COLOUR 3
+    jsr setTextColour               ;
 
     jsr showScoreAndResetVerticalGuardians  ;
     jsr decodeSingleItemData                ;
@@ -7121,10 +7110,8 @@ kongIsLow
     jmp plot                        ; erase Kong falling (mode 2)
 
 setColour2AndShowExit
-    lda #17                         ; VDU 17 (COLOUR)
-    jsr OSWRCH                      ;
     lda #2                          ; COLOUR 2
-    jmp setColourAndShowExit        ;
+    jmp setTextColour               ;
 
 isKongLow
     lda kongYCoordinate             ;
@@ -7168,10 +7155,8 @@ printScoreAndLives
     lda #19                         ; }
     jsr OSWRCH                      ; }
 
-    lda #17                         ; }
-    jsr OSWRCH                      ; }
-    lda #3                          ; } COLOUR 3
-    jsr OSWRCH                      ; }
+    lda #3                          ; COLOUR 3
+    jsr setTextColour               ;
 
     ; print three pairs of numbers for the score
     ldx #2                          ;
@@ -7413,6 +7398,75 @@ setupPatternLoop
     bpl setupPatternLoop                                ; until 8 bytes copied
     rts                                                 ;
 
+; ***************************************************************************************
+animateLevel19EnergyFields
+    lda currentLevel                    ;
+    cmp #19                             ;
+    beq level19EnergyFields             ;
+    rts                                 ;
+
+level19EnergyFields
+    inc energyFieldTimer                ;
+    jsr swapEnergyFieldSpritesWith0C00  ;
+    lda energyFieldTimer                ;
+    and #$10                            ;
+    cmp #0                              ;
+    beq toggleEnergyField               ;
+    lda #0                              ;
+    sta energyFieldSpriteOffset         ;
+    lda energyFieldTimer                ;
+    and #1                              ;
+    cmp #0                              ;
+    beq setEnergyFieldColour            ;
+    lda #2                              ;
+    sta energyFieldSpriteOffset         ;
+setEnergyFieldColour
+    lda #2                              ; COLOUR 2
+    jsr setTextColour                   ;
+    ldx #0                              ;
+-
+    lda energyFieldString,x             ;
+    cmp #$2a                            ;
+    beq drawEnergyField                 ;
+continueEnergyFieldString
+    jsr OSWRCH                          ;
+    inx                                 ;
+    cpx #16                             ;
+    bne -                               ; loop for length of message
+    jmp swapEnergyFieldSpritesWith0C00  ;
+
+drawEnergyField
+    lda #$e0                            ;
+    clc                                 ;
+    adc energyFieldSpriteOffset         ;
+    tay                                 ;
+    iny                                 ;
+    jsr OSWRCH                          ;
+    lda #$0a                            ;
+    jsr OSWRCH                          ;
+    lda #8                              ;
+    jsr OSWRCH                          ;
+    tya                                 ;
+    jmp continueEnergyFieldString       ;
+
+toggleEnergyField
+    lda #4                              ;
+    sta energyFieldSpriteOffset         ;
+    lda energyFieldTimer                ;
+    and #$0f                            ;
+    cmp #0                              ;
+    beq setEnergyFieldColour            ;
+    jmp swapEnergyFieldSpritesWith0C00  ;
+
+energyFieldString
+    !byte $1f, 15, 5                    ; TAB(15, 5)
+    !byte $2a                           ;
+    !byte $1f, 15, 9                    ; TAB(15, 9)
+    !byte $2a                           ;
+    !byte $1f, 24, 5                    ;
+    !byte $2a                           ;
+    !byte $1f, 24, 9                    ; TAB(24, 9)
+    !byte $2a                           ;
 
 
 free2 = $3280 - *
@@ -12395,80 +12449,6 @@ kongBeastSprite
     !byte %###.....
     !byte %##......
 
-; ***************************************************************************************
-animateLevel19EnergyFields
-    lda currentLevel                    ;
-    cmp #19                             ;
-    beq level19EnergyFields             ;
-    rts                                 ;
-
-level19EnergyFields
-    inc energyFieldTimer                ;
-    jsr swapEnergyFieldSpritesWith0C00  ;
-    lda energyFieldTimer                ;
-    and #$10                            ;
-    cmp #0                              ;
-    beq toggleEnergyField               ;
-    lda #0                              ;
-    sta energyFieldSpriteOffset         ;
-    lda energyFieldTimer                ;
-    and #1                              ;
-    cmp #0                              ;
-    beq setEnergyFieldColour            ;
-    lda #2                              ;
-    sta energyFieldSpriteOffset         ;
-setEnergyFieldColour
-    lda #17                             ;
-    jsr OSWRCH                          ; COLOUR 2
-    lda #2                              ;
-    jsr OSWRCH                          ;
-    ldx #0                              ;
--
-    lda energyFieldString,x             ;
-    cmp #$2a                            ;
-    beq drawEnergyField                 ;
-continueEnergyFieldString
-    jsr OSWRCH                          ;
-    inx                                 ;
-    cpx #16                             ;
-    bne -                               ; loop for length of message
-    jmp swapEnergyFieldSpritesWith0C00  ;
-
-drawEnergyField
-    lda #$e0                            ;
-    clc                                 ;
-    adc energyFieldSpriteOffset         ;
-    tay                                 ;
-    iny                                 ;
-    jsr OSWRCH                          ;
-    lda #$0a                            ;
-    jsr OSWRCH                          ;
-    lda #8                              ;
-    jsr OSWRCH                          ;
-    tya                                 ;
-    jmp continueEnergyFieldString       ;
-
-toggleEnergyField
-    lda #4                              ;
-    sta energyFieldSpriteOffset         ;
-    lda energyFieldTimer                ;
-    and #$0f                            ;
-    cmp #0                              ;
-    beq setEnergyFieldColour            ;
-    jmp swapEnergyFieldSpritesWith0C00  ;
-
-energyFieldString
-    !byte $1f, 15, 5                    ; TAB(15, 5)
-    !byte $2a                           ;
-    !byte $1f, 15, 9                    ; TAB(15, 9)
-    !byte $2a                           ;
-    !byte $1f, 24, 5                    ;
-    !byte $2a                           ;
-    !byte $1f, 24, 9                    ; TAB(24, 9)
-    !byte $2a                           ;
-
-    !byte 0,0,0                         ; [unused] for alignment
-
     !byte %....#.#.             ; ....#.#...#.....
     !byte %...#.##.             ; ...#.##..##.#...
     !byte %.......#             ; .......#.#.#....
@@ -12776,6 +12756,40 @@ energyFieldSprites
     !byte %.##..##.
     !byte %########
 
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+
 meteorAndTailSprites
     !byte %........
     !byte %........
@@ -12853,7 +12867,7 @@ meteorAndTailSprites
 verticalGuardiansSpritesArray
     ; vertical guardians for the later levels
     ; Level     11,  12,  13,  14,  15,  16,  17,  18,  19,  20
-    !byte $ea, $03, $00, $04, $05, $06, $00, $07, $0a, $08, $04
+    !byte $ea, $03, $00, $04, $05, $06, $00, $07, $09, $08, $04
 
 ; ***************************************************************************************
     ; vertical movements at each stage of a jump
@@ -13291,8 +13305,6 @@ copyEugeneSourceByte
 copyEugeneTempByte
 copyWhichSprite
     !byte $ea                       ;
-copyEugeneByteCounter
-    !byte $ea                       ;
 
 ; ***************************************************************************************
 currentGuardianColour
@@ -13329,7 +13341,11 @@ conveyorLength
 conveyorSpriteOffset
     !byte $ea                       ;
 
+tempA
+    !byte $ea                       ;
 tempX
+    !byte $ea                       ;
+tempY
     !byte $ea                       ;
 
 byteToReverse

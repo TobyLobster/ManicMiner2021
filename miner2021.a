@@ -57,6 +57,8 @@ levelColours                    = $81       ;
 levelColours2                   = $82       ;
 characterAddrLow                = $83       ;
 characterAddrHigh               = $84       ;
+screenLow                       = $85       ;
+screenHigh                      = $86       ;
 zpGuardianPositionX             = $8a       ;
 zpGuardianPositionY             = $8b       ;
 zpGuardianLimit1                = $8c       ;
@@ -2957,41 +2959,49 @@ readOrWriteCachedBackground
     rol tempHigh                    ; }
     clc                             ;
     adc screenRowAddressLow,x       ; }
-    sta readOrWriteScreen + 1       ; }
+    sta screenLow                   ; }
     lda screenRowAddressHigh,x      ; } add screen row address
     adc tempHigh                    ; }
-    sta readOrWriteScreen + 2       ; }
+    sta screenHigh                  ; }
 
-
-
-    ; set up for reading from the screen and writing to the background cache
-    lda #<readScreenWriteCache              ; }
-    sta readWriteBackgroundCacheLoop + 1    ; } address of the routine to call to copy a byte
-    lda #>readScreenWriteCache              ; }
-    sta readWriteBackgroundCacheLoop + 2    ; }
-
+    ; set up for reading from the screen and writing to the background cache:
+    ;   lda logicalScreenStart,x            ; screen address
+    ;   sta backgroundCache,y               ; off-the-visible-screen storage area
     lda #$bd                                ; store opcode for LDA abs,X
-    sta readOrWriteScreen                   ;
+    sta readFromMemory                      ;
+    lda screenLow                           ;
+    sta readFromMemory + 1                  ;
+    lda screenHigh                          ;
+    sta readFromMemory + 2                  ;
 
     lda #$99                                ; store opcode for STA abs,Y
-    sta readOrWriteCache                    ;
+    sta writeToMemory                       ;
+    lda #<backgroundCache                   ;
+    sta writeToMemory + 1                   ;
+    lda #>backgroundCache                   ;
+    sta writeToMemory + 2                   ;
 
     ; test which direction we want to read/write
     lda $70                                 ;
-    cmp #1                                  ;
-    beq +                                   ;
+    bne +                                   ;
 
-    ; set up for reading from the background cache and writing to the screen
-    lda #<readCacheWriteScreen              ; }
-    sta readWriteBackgroundCacheLoop + 1    ; } address of the routine to call to copy a byte
-    lda #>readCacheWriteScreen              ; }
-    sta readWriteBackgroundCacheLoop + 2    ; }
+    ; set up for reading from the background cache and writing to the screen:
+    ;   lda backgroundCache,y               ; off-the-visible-screen storage area
+    ;   sta logicalScreenStart,x            ; screen address
 
-    lda #$9d                        ; } store opcode for STA abs,X
-    sta readOrWriteScreen           ; }
+    lda #$b9                                ; } store opcode for LDA abs,Y
+    sta readFromMemory                      ; }
+    lda #<backgroundCache                   ;
+    sta readFromMemory + 1                  ;
+    lda #>backgroundCache                   ;
+    sta readFromMemory + 2                  ;
 
-    lda #$b9                        ; } store opcode for LDA abs,Y
-    sta readOrWriteCache            ; }
+    lda #$9d                                ; } store opcode for STA abs,X
+    sta writeToMemory                       ; }
+    lda screenLow                           ;
+    sta writeToMemory + 1                   ;
+    lda screenHigh                          ;
+    sta writeToMemory + 2                   ;
 
 +
     lda #32                         ;
@@ -3035,7 +3045,10 @@ copyCache
     ldy #0                              ; outer loop counter (number of rows * 32)
     stx cacheGotoNextRow + 1            ; copy two by two characters worth
 readWriteBackgroundCacheLoop
-    jsr $ffff                           ;
+readFromMemory
+    lda $ffff,x                         ;
+writeToMemory
+    sta $ffff,y                         ;
     inx                                 ;
     iny                                 ;
 cacheLoopXLimit = * + 1
@@ -3056,39 +3069,33 @@ cacheLoopXLimit = * + 1
 cacheGotoNextRow
     ldx #0                              ;
 
-    lda readOrWriteScreen + 1           ; }
+    ; test which direction we want to read/write
+    lda $70                                 ;
+    bne +                                   ;
+
+    lda writeToMemory + 1               ; }
     clc                                 ; }
     adc #$80                            ; }
-    sta readOrWriteScreen + 1           ; } add $0280 to screen address (goto next row)
-    lda readOrWriteScreen + 2           ; }
+    sta writeToMemory + 1               ; } add $0280 to screen address (goto next row)
+    lda writeToMemory + 2               ; }
     adc #$02                            ; }
-    sta readOrWriteScreen + 2           ; }
+    sta writeToMemory + 2               ; }
+    jmp checkForEndOfLoop               ;
++
+    lda readFromMemory + 1              ; }
+    clc                                 ; }
+    adc #$80                            ; }
+    sta readFromMemory + 1              ; } add $0280 to screen address (goto next row)
+    lda readFromMemory + 2              ; }
+    adc #$02                            ; }
+    sta readFromMemory + 2              ; }
 
+checkForEndOfLoop
     cpy #95                             ;
     bcc readWriteBackgroundCacheLoop    ; if (Y < 95) then branch (loop back)
     lda #0                              ;
     sta switchTriggered                 ;
     rts                                 ;
-
-; ***************************************************************************************
-readOrWriteScreen
-    lda logicalScreenStart,x            ; screen address
-    rts                                 ;
-
-; ***************************************************************************************
-readOrWriteCache
-    lda backgroundCache,y               ; off-the-visible-screen storage area
-    rts                                 ;
-
-; ***************************************************************************************
-readCacheWriteScreen
-    jsr readOrWriteCache                ; read cache
-    jmp readOrWriteScreen               ; write to screen
-
-; ***************************************************************************************
-readScreenWriteCache
-    jsr readOrWriteScreen               ; read screen
-    jmp readOrWriteCache                ; write cache
 
 ; ***************************************************************************************
 updateVerticalGuardians

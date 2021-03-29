@@ -59,6 +59,8 @@ characterAddrLow                = $83       ;
 characterAddrHigh               = $84       ;
 screenLow                       = $85       ;
 screenHigh                      = $86       ;
+cellPlotSourceSpriteAddressLow  = $87       ;
+cellPlotSourceSpriteAddressHigh = $88       ;
 zpGuardianPositionX             = $8a       ;
 zpGuardianPositionY             = $8b       ;
 zpGuardianLimit1                = $8c       ;
@@ -1637,22 +1639,12 @@ plotGetScreenAddress
     txa                                 ;
     and #$fc                            ;
     lsr                                 ;
-    sta plotX                           ; plotX = (X pixel / 4) * 2
+    sta plotX                           ; plotX = (X pixel / 4) / 2
     tya                                 ;
     lsr                                 ;
     lsr                                 ;
     lsr                                 ;
     sta plotY                           ; plotY = (Y pixel / 8)
-
-    ; based on the current mode, store the address of routine to get the next byte to write
-    ldx plotMode                        ;
-    lda getLowByteAddress - 1,x         ;
-    sta getSourceByte + 1               ;
-    lda getHighByteAddress - 1,x        ;
-    sta getSourceByte + 2               ;
-
-    lda #0                              ;
-    sta spriteRowCounter                ;
 
     ; get the row address
     ldx plotY                           ;
@@ -1715,6 +1707,17 @@ plot
     sty plotY                           ;
 
     jsr plotGetScreenAddress            ;
+
+    ; based on the current mode, store the address of routine to get the next byte to write
+    ldx plotMode                        ;
+    lda getLowByteAddress - 1,x         ;
+    sta getSourceByte + 1               ;
+    lda getHighByteAddress - 1,x        ;
+    sta getSourceByte + 2               ;
+
+    lda #0                              ;
+    sta spriteRowCounter                ;
+
 spriteDrawRow
     ldy #0                              ;
 getSourceByte
@@ -2302,8 +2305,23 @@ updateNewPlayerY
     rts                             ;
 
 ; ***************************************************************************************
-updateConveyorsAndPlayer
+getPlayerSourceSpriteAddress
+    lda #0                              ; }
+    sta plotSourceSpriteAddressLow      ; }
+    lda newPlayerPixelX                 ; }
+    and #3                              ; }
+    eor willyAnimationEOR               ; }
+    lsr                                 ; }
+    ror plotSourceSpriteAddressLow      ; } sprite address = willy looking right or left
+    lsr                                 ; }
+    ror plotSourceSpriteAddressLow      ; }
+    clc                                 ; }
+    adc willyGraphicsPage               ; }
+    sta plotSourceSpriteAddressHigh     ; }
+    rts                                 ;
 
+; ***************************************************************************************
+updateConveyorsAndPlayer
     ldx playerPixelX                    ; }
     ldy playerPixelY                    ; }
     lda #0                              ; }
@@ -2318,28 +2336,12 @@ updateConveyorsAndPlayer
     lda #1                              ;
     sta hasDrawnConveyors               ;
     jsr updateAirAndCheckExit           ;
+    ; fall through...
 
 ; ***************************************************************************************
 updatePlayerWithAnimation
-    lda #0                              ; sprite address = willy looking right or left
-    sta plotSourceSpriteAddressLow      ;
+    jsr getPlayerSourceSpriteAddress    ;
 
-    lda newPlayerPixelX                 ;
-    and #3                              ;
-    eor willyAnimationEOR               ;
-    sta $75                             ;
-
-    ; plotSourceSpriteAddress = willyGraphics(left or right address) + 64 * animation_index
-    lsr                                 ;
-    ror plotSourceSpriteAddressLow      ;
-    lsr                                 ;
-    ror plotSourceSpriteAddressLow      ;
-    clc                                 ;
-    adc willyGraphicsPage               ;
-    sta plotSourceSpriteAddressHigh     ;
-
-; ***************************************************************************************
-drawPlayerAndCheckForSingleItems
     ldx newPlayerPixelX                 ;
     ldy newPlayerPixelY                 ;
     lda #1                              ;
@@ -3935,7 +3937,7 @@ moveGuardianLeft
     beq setAnimIndexBasedOnX        ;
 
     ; draw f1+temp, f0+temp
-    ;      f+temp9, f8+temp
+    ;      f9+temp, f8+temp
     lda #$f1                        ;
     clc                             ;
     adc zpGuardianAnimIndex         ;
@@ -3984,24 +3986,16 @@ positionCursorAtGuardian
 eraseLeftOfGuardian
     lda #8                          ;
     jsr OSWRCH                      ;
-    lda #$20                        ;
-    jsr drawIfNotOverExit           ;
-    lda #$0a                        ;
-    jsr OSWRCH                      ;
-    lda #8                          ;
-    jsr OSWRCH                      ;
-    lda #$20                        ;
-    jsr drawIfNotOverExit           ;
-    rts
+    jmp +
 
 ; ***************************************************************************************
 eraseRightOfGuardian
     lda #9                          ;
     jsr OSWRCH                      ;
     jsr OSWRCH                      ; move forward two characters
-
++
     lda #$20                        ;
-    jsr drawIfNotOverExit           ;
+    jsr eraseIfNotOverExit          ;
 
     lda #$0a                        ; down
     jsr OSWRCH                      ;
@@ -4009,7 +4003,7 @@ eraseRightOfGuardian
     jsr OSWRCH                      ;
 
     lda #$20                        ;
-    jsr drawIfNotOverExit           ;
+    jsr eraseIfNotOverExit          ;
     rts                             ;
 
 ; ***************************************************************************************
@@ -4138,34 +4132,74 @@ swapPagesLoop
     rts                                 ;
 
 ; ***************************************************************************************
-drawIfNotOverExit
-    sta rememberCharacterToDraw         ;
+isOverExit
     lda vduTextCursorYPosition          ;
     clc                                 ;
     adc #2                              ;
     cmp exitPositionY                   ;
-    bne testNextYPosition               ;
+    beq textXPosition                   ; if (matches Y, then test X)
+    sec                                 ;
+    sbc #1                              ;
+    cmp exitPositionY                   ;
+    bne return13                        ; if (not over exit) return with Z=0
 textXPosition
     lda vduTextCursorXPosition          ;
     cmp exitPositionX                   ;
-    beq moveForward                     ;
+    beq return13                        ; if (over exit) return with Z=1
     sec                                 ;
     sbc #1                              ;
-    cmp exitPositionX                   ;
-    bne +                               ;
+    cmp exitPositionX                   ; if (over exit) return with Z=1
+return13
+    rts                                 ;
+
+; ***************************************************************************************
+drawIfNotOverExit
+    sta rememberCharacterToDraw         ;
+    jsr isOverExit                      ;
+    beq moveForward                     ;
+;    lda rememberCharacterToDraw         ;
+;    jmp OSWRCH                          ;
+    lda vduTextCursorXPosition          ;
+    asl                                 ;
+    asl                                 ;
+    tax                                 ;
+    stx plotX                           ;
+
+    lda vduTextCursorYPosition          ;
+    asl                                 ;
+    asl                                 ;
+    asl                                 ;
+    tay                                 ;
+    sty plotY                           ;
+
+    jsr plotGetScreenAddress            ;
+    lda #$ff                            ;
+    sta plotColourMask                  ; plot colour 3 (TODO: set appropriate colour)
+
+    lda rememberCharacterToDraw         ;
+    and #$1f                            ;
+    asl                                 ;
+    asl                                 ;
+    asl                                 ;
+    clc                                 ;
+    adc #<softCharacterDefinitions      ;
+    sta cellPlotSourceSpriteAddressLow  ;
+    lda #>softCharacterDefinitions      ;
+    sta cellPlotSourceSpriteAddressHigh ;
+    jsr cellPlot                        ;
+
 moveForward
     lda #9                              ; move forward
     jmp OSWRCH                          ;
 
-testNextYPosition
-    sec                                 ;
-    sbc #1                              ;
-    cmp exitPositionY                   ;
-    bne +                               ;
-    jmp textXPosition                   ;
-
-+
-    lda rememberCharacterToDraw         ;
+; ***************************************************************************************
+eraseIfNotOverExit
+    jsr isOverExit                      ;
+    beq moveForward2                    ;
+    lda #charSPACE                      ;
+    jmp OSWRCH                          ;
+moveForward2
+    lda #9                              ; move forward
     jmp OSWRCH                          ;
 
 ; ***************************************************************************************
@@ -4606,20 +4640,16 @@ toFullColour
 ; ***************************************************************************************
 ;
 ; On Entry:
-;   plotSourceSpriteAddress is address of sprite
+;   cellPlotSourceSpriteAddress is address of sprite
 ;   plotScreenAddressLow    is screen address (use plotGetScreenAddress to get address)
-;   plotColourMask
+;   plotColourMask          is $00 for colour 0, $0f for colour 1, $f0 for colour 2, and $ff for colour 3
+;
+; ***************************************************************************************
 cellPlot
     stx tempX                           ;
     ldy #7                              ;
 -
-    lda (plotSourceSpriteAddressLow),y  ;
-    and #$0f                            ;
-    tax                                 ;
-    lda toFullColour,x                  ;
-    and plotColourMask                  ;
-    sta (plotScreenAddressLow),y        ;
-    lda (plotSourceSpriteAddressLow),y  ;
+    lda (cellPlotSourceSpriteAddressLow),y  ;
     and #$f0                            ;
     sta tempCellPlotA                   ;
     lsr                                 ;
@@ -4629,6 +4659,14 @@ cellPlot
 tempCellPlotA = * + 1
     adc #$ff                            ;
     and plotColourMask                  ;
+    sta (plotScreenAddressLow),y        ; left side
+
+
+    lda (cellPlotSourceSpriteAddressLow),y  ;
+    and #$0f                            ;
+    tax                                 ;
+    lda toFullColour,x                  ;
+    and plotColourMask                  ;
     sta tempA                           ;
     tya                                 ;
     tax                                 ;
@@ -4636,7 +4674,8 @@ tempCellPlotA = * + 1
     adc #8                              ;
     tay                                 ;
     lda tempA                           ;
-    sta (plotScreenAddressLow),y        ;
+    sta (plotScreenAddressLow),y        ; right side
+
     txa                                 ;
     tay                                 ;
     dey                                 ;
@@ -4671,10 +4710,10 @@ drawConveyor
     asl                                 ;
     asl                                 ;
     clc                                 ;
-    adc #88                             ;
-    sta plotSourceSpriteAddressLow      ;
+    adc #$58                            ;
+    sta cellPlotSourceSpriteAddressLow  ;
     lda #$0c                            ;
-    sta plotSourceSpriteAddressHigh     ;
+    sta cellPlotSourceSpriteAddressHigh ;
 
     lda conveyorX                       ;
     and #$7f                            ; remove top bit (direction)
@@ -7622,14 +7661,7 @@ footDescendingLoop
 
 ; ***************************************************************************************
 drawPlayerAndCheckForCollisions
-    lda plotSourceSpriteAddressLow      ; }
-    sec                                 ; }
-    sbc #39                             ; }
-    sta plotSourceSpriteAddressLow      ; } subtract 39 from sprite address
-    lda plotSourceSpriteAddressHigh     ; }
-    sbc #0                              ; }
-    sta plotSourceSpriteAddressHigh     ; }
-
+    jsr getPlayerSourceSpriteAddress    ;
     ldx newPlayerPixelX                 ;
     ldy newPlayerPixelY                 ;
     lda #1                              ;

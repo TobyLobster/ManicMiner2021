@@ -4582,7 +4582,6 @@ updatePlayerAirAndDrawConveyor
     cmp #18                         ;
     beq return10                    ;
 
-
     inc conveyorSpriteOffset        ;
     lda conveyorLength              ;
     cmp #$ff                        ;
@@ -5745,31 +5744,20 @@ plotLoop
     cmp #$fe                        ;
     beq gcol                        ;
     sta plotType                    ; PLOT type
-    jsr getNextByte                 ; Y coordinate low (top 2 bits) and X low (top two bits)
-    tay                             ;
-    lsr                             ;
-    lsr                             ;
-    lsr                             ;
-    lsr                             ;
-    lsr                             ;
-    lsr                             ;
+    lda #0                          ;
     sta plotXHigh                   ;
-    tya                             ;
+    sta plotYHigh                   ;
+    jsr getNextByte                 ; Y coordinate low (top 2 bits) and X low (top two bits)
     asl                             ;
+    rol plotXHigh                   ;
     asl                             ;
+    rol plotXHigh                   ;
     sta plotXLow                    ;
     jsr getNextByte                 ;
-    tay                             ;
-    lsr                             ;
-    lsr                             ;
-    lsr                             ;
-    lsr                             ;
-    lsr                             ;
-    lsr                             ;
-    sta plotYHigh                   ;
-    tya                             ;
     asl                             ;
+    rol plotYHigh                   ;
     asl                             ;
+    rol plotYHigh                   ;
     sta plotYLow                    ;
 
     ; PLOT
@@ -5782,8 +5770,8 @@ plotLoop
     bne -                           ;
     jmp plotLoop                    ;
 
+; ***************************************************************************************
 finishPlot
-
     lda #17                         ;
     jsr OSWRCH                      ;
     lda #128                        ;
@@ -5791,6 +5779,7 @@ finishPlot
 
     jmp showTitleScreenMessageAndWaitForRETURN  ;
 
+; ***************************************************************************************
 gcol
     lda #18                         ;
     jsr OSWRCH                      ;
@@ -5800,6 +5789,7 @@ gcol
     jsr OSWRCH                      ;
     jmp plotLoop                    ;
 
+; ***************************************************************************************
 getNextByte
     inx                             ;
     lda penroseTriangle,x           ;
@@ -7326,19 +7316,13 @@ guardianSpriteCache
 characterFromScreen
     !byte 0, 0, 0, 0, 0, 0, 0, 0
 
-
-; ***************************************************************************************
-readCharacter
-    jsr newReadCharacter        ; test against new method
-    rts                         ;
-
 ; ***************************************************************************************
 ;
-; like OSBYTE 135, this reads a character from the screen and returns it's ASCII code in X
+; Like OSBYTE 135, this reads a character from the screen and returns it's ASCII code in X
 ; but this is tweaked to only check SPACE and the used defined characters 128-160
 ;
 ; ***************************************************************************************
-newReadCharacter
+readCharacter
     JSR readCharacterDefinitionMaskFromScreen           ; read from screen, making a one bit
                                                         ; mask of 8 bytes to match against
                                                         ; each character, in workspaceA-H
@@ -7393,28 +7377,19 @@ gotoNextCharacter
     rts                                                 ;
 
 ; ***************************************************************************************
-tempLoopCounter
-    !byte 0
-tempByte
-    !byte 0
-tempMask
-    !byte 0
-
-; ***************************************************************************************
 ;
 ; Read character from screen pixels
 ;
 ; Reads 8x8 cell of pixels from the screen. This will be compared against each of the
-; character definitions to determine which character is on screen. This is for the
-; cursor editing mode feature.
+; character definitions to determine which character is on screen.
 ;
 ; ***************************************************************************************
 readCharacterDefinitionMaskFromScreen
     ldy #7                                              ; Y=7
 setupPatternLoop
-    sty tempLoopCounter                                 ; .vduTempStoreDA=Y (loop counter)
+    sty tempLoopCounter                                 ; tempLoopCounter=Y (loop counter)
     lda #1                                              ; A=1
-    sta tempByte                                        ; .vduTempStoreDB=A
+    sta tempByte                                        ; tempByte=A
 --
     lda #$88                                            ; A=left colour mask
     sta tempMask                                        ; store in tempMask
@@ -12805,31 +12780,6 @@ energyFieldSprites
     !byte %.##..##.
     !byte %########
 
-
-; ***************************************************************************************
-verticalGuardiansSpritesArray
-    ; vertical guardians for the later levels
-    ; Level     11,  12,  13,  14,  15,  16,  17,  18,  19,  20
-    !byte $ea, $03, $00, $04, $05, $06, $00, $07, $0a, $08, $04
-
-; ***************************************************************************************
-    ; vertical movements at each stage of a jump
-jumpMovementArray
-    !byte $04, $04, $03, $03, $02, $02, $01, $00, $00, $00, $ff, $fe, $fe, $fd, $fd, $fc, $fc
-
-
-; ***************************************************************************************
-guardianColourTable
-    !byte $03, $02, $01, $03        ;
-
-guardianSetForEachLevel
-    ; level 1,   2,   3,   4,   5,   6,   7,  8,    9,  10,  11,  12,  13,  14,  15,  16,  17,  18,  19,  20
-    !byte $01, $02, $03, $04, $05, $06, $07, $08, $09, $0a, $0b, $08, $0c, $00, $0d, $0e, $0f, $09, $10, $01
-
-meteorPositions
-    !byte $64, $1b, $28, $a9, $16, $1d, $02, $58, $65, $57, $27, $d9, $aa, $1c, $15, $63
-
-; ***************************************************************************************
 meteorAndTailSprites
     !byte %........
     !byte %........
@@ -12902,6 +12852,29 @@ meteorAndTailSprites
     !byte %......#.
     !byte %..#...#.
     !byte %.#.###.#
+
+; ***************************************************************************************
+verticalGuardiansSpritesArray
+    ; vertical guardians for the later levels
+    ; Level     11,  12,  13,  14,  15,  16,  17,  18,  19,  20
+    !byte $ea, $03, $00, $04, $05, $06, $00, $07, $0a, $08, $04
+
+; ***************************************************************************************
+    ; vertical movements at each stage of a jump
+jumpMovementArray
+    !byte $04, $04, $03, $03, $02, $02, $01, $00, $00, $00, $ff, $fe, $fe, $fd, $fd, $fc, $fc
+
+; ***************************************************************************************
+guardianColourTable
+    !byte $03, $02, $01, $03        ;
+
+guardianSetForEachLevel
+    ; level 1,   2,   3,   4,   5,   6,   7,  8,    9,  10,  11,  12,  13,  14,  15,  16,  17,  18,  19,  20
+    !byte $01, $02, $03, $04, $05, $06, $07, $08, $09, $0a, $0b, $08, $0c, $00, $0d, $0e, $0f, $09, $10, $01
+
+meteorPositions
+    !byte $64, $1b, $28, $a9, $16, $1d, $02, $58, $65, $57, $27, $d9, $aa, $1c, $15, $63
+
 
 ; ***************************************************************************************
     ; Three bytes per horizontal guardian, specifying initial position and direction:
@@ -13429,10 +13402,19 @@ keyCounter
 flashingExitCounter
     !byte $ea                       ;
 
+; reading a character from the screen
+tempLoopCounter
+    !byte 0
+tempByte
+    !byte 0
+tempMask
+    !byte 0
+
 tempScreenAddressLow
     !byte $00                       ;
 tempScreenAddressHigh
     !byte $05                       ;
+
 }
 free4 = $8000 - tempScreenAddressHigh
 allFree = free1 + free2 + free3 + free4

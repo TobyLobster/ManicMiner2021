@@ -160,7 +160,7 @@ mode1Message
     !byte 22, 1                             ; MODE 1
 ;    !byte 23, 0, 6, $ff                     ; hide display
 ;    !byte 23, 0, 7, 30, $ff                 ; move display down
-;    !byte 23, 1, 0, $ff                     ; cursor off
+    !byte 23, 1, 0, $ff                     ; cursor off
 mode1MessageEnd
 
 loadMinerCommand

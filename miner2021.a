@@ -2186,7 +2186,8 @@ cancelJump
 
 ; ***************************************************************************************
 +
-    jsr updatePlayerAirAndDrawConveyor  ;
+    jsr updateAirAndCheckExit       ;
+    jsr drawConveyor                ;
     jmp updatePlayerWithAnimation   ;
 
 ; ***************************************************************************************
@@ -2318,41 +2319,34 @@ updateConveyorsAndPlayer
     lda #0                              ; }
     jsr readOrWriteCachedBackground     ; } draw old background from cache
 
-    jsr updatePlayerAirAndDrawConveyor  ; animate conveyors
-
-    lda #1                              ;
-    sta hasDrawnConveyors               ;
+    jsr drawConveyor                    ; animate conveyors
 
     ldx newPlayerPixelX                 ; }
     ldy newPlayerPixelY                 ; }
     lda #1                              ; }
     jsr readOrWriteCachedBackground     ; } cache new background
+    lda #1                              ;
+    sta hasDrawnConveyors               ;
+    jsr updateAirAndCheckExit           ;
 
 ; ***************************************************************************************
 updatePlayerWithAnimation
-    lda #0                              ;
+    lda #0                              ; sprite address = willy looking right or left
     sta plotSourceSpriteAddressLow      ;
-    lda willyGraphicsPage               ; sprite address = willy looking right or left
-    sta plotSourceSpriteAddressHigh     ;
 
     lda newPlayerPixelX                 ;
     and #3                              ;
     eor willyAnimationEOR               ;
     sta $75                             ;
 
-    ldx #0                              ; loop counter
--
-    cpx $75                             ; }
-    beq drawPlayerAndCheckForSingleItems ; }
-    lda plotSourceSpriteAddressLow      ; }
-    clc                                 ; } add $40 to ($77,$78) for ($75) times
-    adc #$40                            ; } multiplication by repeated addition
-    sta plotSourceSpriteAddressLow      ; }
-    lda plotSourceSpriteAddressHigh     ; }
-    adc #0                              ; }
-    sta plotSourceSpriteAddressHigh     ; }
-    inx                                 ;
-    jmp -                               ;
+    ; plotSourceSpriteAddress = willyGraphics(left or right address) + 64 * animation_index
+    lsr                                 ;
+    ror plotSourceSpriteAddressLow      ;
+    lsr                                 ;
+    ror plotSourceSpriteAddressLow      ;
+    clc                                 ;
+    adc willyGraphicsPage               ;
+    sta plotSourceSpriteAddressHigh     ;
 
 ; ***************************************************************************************
 drawPlayerAndCheckForSingleItems
@@ -2360,7 +2354,7 @@ drawPlayerAndCheckForSingleItems
     ldy newPlayerPixelY                 ;
     lda #1                              ;
 opcodeForJsrPlot
-    jsr plot                            ; draw player (mode 0)
+    jsr plot                            ; draw player (mode 1)
     jsr checkForLandingOnSpike          ;
 
     lda #31                             ;
@@ -2765,7 +2759,8 @@ updatePlayerWhenSupported
     lda #0                          ;
     sta isJumping                   ;
     sta jumpPhase                   ;
-    jsr updatePlayerAirAndDrawConveyor  ;
+    jsr updateAirAndCheckExit       ;
+    jsr drawConveyor                ;
     jsr checkUpdateConveyor         ;
     jmp updatePlayer                ;
 
@@ -4575,9 +4570,7 @@ drawFixedString
     rts                             ;
 
 ; ***************************************************************************************
-updatePlayerAirAndDrawConveyor
-    jsr updateAirAndCheckExit       ;
-
+drawConveyor
     lda currentLevel                ;
     cmp #18                         ;
     beq return10                    ;
@@ -5219,7 +5212,8 @@ setRoomColours
     lda #2                          ;
     jsr OSWRCH                      ;
 
-    jsr updatePlayerAirAndDrawConveyor  ;
+    jsr updateAirAndCheckExit       ;
+    jsr drawConveyor                ;
     jsr drawExit                    ;
 
     ldx #0                          ;
@@ -5577,7 +5571,8 @@ attractLoop
     lda #0                          ;
     sta attractModeTimer            ;
 showALevelLoop
-    jsr updatePlayerAirAndDrawConveyor                               ;
+    jsr updateAirAndCheckExit       ;
+    jsr drawConveyor                ;
     jsr animateKeysUpdateHorizontalGuardiansAndLevel19EnergyFields   ;
     jsr updateVerticalGuardians     ;
 
@@ -7525,7 +7520,7 @@ drawPlayerAndCheckForCollisions
     ldx newPlayerPixelX                 ;
     ldy newPlayerPixelY                 ;
     lda #1                              ;
-    jsr plot                            ; draw player (mode 6)
+    jsr plot                            ; draw player (mode 1)
     jsr checkForDeath                   ;
     jsr checkForSwitchFlipped           ;
     jsr collideWithVerticalGuardians    ;
@@ -7829,7 +7824,8 @@ updateAirEtc
     ; land (or die if fallen too far)
     lda #$ff                            ;
     sta willyIsOnGround                 ;
-    jsr updatePlayerAirAndDrawConveyor  ;
+    jsr updateAirAndCheckExit           ;
+    jsr drawConveyor                    ;
     lda playerPixelY                    ;
     sec                                 ;
     sbc willyHighestPointReachedOnCurrentJump   ;

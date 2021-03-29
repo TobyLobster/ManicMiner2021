@@ -1623,32 +1623,7 @@ tempHigh
     !byte 0
 
 ; ***************************************************************************************
-;
-; plot
-;
-;   e.g. used to plot the player, and the leg/foot, vertical guardians
-;
-; On Entry:
-;       plotSourceSpriteAddressLow/High = source sprite address
-;
-;       A = mode:
-;           Mode            Operation                                   Description
-;           1               source (AND mask) OR screen                 additive with mask
-;           2               0                                           erase
-;           3               source AND mask                             colour mask applied to source
-;           4               if (screen not 255) then (source AND mask)  preserve solid colour 3
-;           5               if (screen not 255) then 0                  zero except solid colour 3
-;           6               (source AND $F0) EOR screen                 tint source to colour 2, eor with screen
-;
-;       X = x pixel coordinate
-;       Y = y pixel coordinate
-;
-; ***************************************************************************************
-plot
-    sta plotMode                        ;
-    stx plotX                           ;
-    sty plotY                           ;
-
+plotGetScreenAddress
     txa                                 ;
     and #3                              ;
     sta plotXOffset                     ; plotXOffset = offset within byte of X coordinate
@@ -1708,6 +1683,36 @@ plot
     bcc +
     inc plotScreenAddressHigh           ; }
 +
+    rts                                 ;
+
+; ***************************************************************************************
+;
+; plot
+;
+;   e.g. used to plot the player, and the leg/foot, vertical guardians
+;
+; On Entry:
+;       plotSourceSpriteAddressLow/High = source sprite address
+;
+;       A = mode:
+;           Mode            Operation                                   Description
+;           1               source (AND mask) OR screen                 additive with mask
+;           2               0                                           erase
+;           3               source AND mask                             colour mask applied to source
+;           4               if (screen not 255) then (source AND mask)  preserve solid colour 3
+;           5               if (screen not 255) then 0                  zero except solid colour 3
+;           6               (source AND $F0) EOR screen                 tint source to colour 2, eor with screen
+;
+;       X = x pixel coordinate
+;       Y = y pixel coordinate
+;
+; ***************************************************************************************
+plot
+    sta plotMode                        ;
+    stx plotX                           ;
+    sty plotY                           ;
+
+    jsr plotGetScreenAddress            ;
 spriteDrawRow
     ldy #0                              ;
 getSourceByte
@@ -2941,27 +2946,23 @@ readOrWriteCachedBackground
     lsr                             ;
     sta $72                         ; Y cell
 
-    ; read screen row address
-    tax                             ;
-    lda screenRowAddressLow,x       ;
-    sta readOrWriteScreen + 1       ;
-    lda screenRowAddressHigh,x      ;
-    sta readOrWriteScreen + 2       ;
-
-    ; add 8 * cell X to screen address
+    ; read screen row address and add 16 * cell X to screen address
+    tax                             ; row
     lda #0                          ;
     sta tempHigh                    ;
-    lda $71                         ;
-    asl                             ;
-    rol tempHigh                    ;
-    asl                             ;
-    rol tempHigh                    ;
+    lda $71                         ; }
+    asl                             ; } X cell * 4 again
+    rol tempHigh                    ; }
+    asl                             ; }
+    rol tempHigh                    ; }
     clc                             ;
-    adc readOrWriteScreen + 1       ;
-    sta readOrWriteScreen + 1       ;
-    lda readOrWriteScreen + 2       ;
-    adc tempHigh                    ;
-    sta readOrWriteScreen + 2       ;
+    adc screenRowAddressLow,x       ; }
+    sta readOrWriteScreen + 1       ; }
+    lda screenRowAddressHigh,x      ; } add screen row address
+    adc tempHigh                    ; }
+    sta readOrWriteScreen + 2       ; }
+
+
 
     ; set up for reading from the screen and writing to the background cache
     lda #<readScreenWriteCache              ; }
@@ -4549,12 +4550,6 @@ setTextPosFromPixelPos
     adc #2                                  ; }
     jsr OSWRCH                              ; }
 
-;fourColourMODEParameterTable
-;    !byte %00000000                                     ;
-;    !byte %00001111                                     ;
-;    !byte %11110000                                     ;
-;    !byte %11111111                                     ;
-
 ; ***************************************************************************************
 setTextPos
     lda #31                                             ;
@@ -4589,6 +4584,57 @@ setTextPos
 ;    ldy tempY                                           ;
 ;    lda tempA                                           ;
 ;    rts                                                 ;
+;
+;fourColourMODEParameterTable
+;    !byte %00000000                                     ;
+;    !byte %00001111                                     ;
+;    !byte %11110000                                     ;
+;    !byte %11111111                                     ;
+
+toFullColour
+    !byte $00, $11, $22, $33, $44, $55, $66, $77, $88, $99, $aa, $bb, $cc, $dd, $ee, $ff
+
+; ***************************************************************************************
+;
+; On Entry:
+;   plotSourceSpriteAddress is address of sprite
+;   plotScreenAddressLow    is screen address (use plotGetScreenAddress to get address)
+;   plotColourMask
+cellPlot
+    stx tempX                           ;
+    ldy #7                              ;
+-
+    lda (plotSourceSpriteAddressLow),y  ;
+    and #$0f                            ;
+    tax                                 ;
+    lda toFullColour,x                  ;
+    and plotColourMask                  ;
+    sta (plotScreenAddressLow),y        ;
+    lda (plotSourceSpriteAddressLow),y  ;
+    and #$f0                            ;
+    sta tempCellPlotA                   ;
+    lsr                                 ;
+    lsr                                 ;
+    lsr                                 ;
+    lsr                                 ;
+tempCellPlotA = * + 1
+    adc #$ff                            ;
+    and plotColourMask                  ;
+    sta tempA                           ;
+    tya                                 ;
+    tax                                 ;
+    clc                                 ;
+    adc #8                              ;
+    tay                                 ;
+    lda tempA                           ;
+    sta (plotScreenAddressLow),y        ;
+    txa                                 ;
+    tay                                 ;
+    dey                                 ;
+    bpl -                               ;
+    ldx tempX                           ;
+return10
+    rts                                 ;
 
 ; ***************************************************************************************
 drawConveyor
@@ -4606,40 +4652,54 @@ drawConveyor
 
     lda conveyorX                   ;
     and #$80                        ;
-    cmp #$80                        ;
-    beq reverseConveyorDirection    ;
+    beq +                           ;
+    lda #3                          ;
++
+    eor conveyorSpriteOffset        ;
 
-    lda conveyorSpriteOffset        ;
-continueDrawingConveyors
-    tax                             ;
+    and #3                              ;
+    asl                                 ;
+    asl                                 ;
+    asl                                 ;
+    clc                                 ;
+    adc #88                             ;
+    sta plotSourceSpriteAddressLow      ;
+    lda #$0c                            ;
+    sta plotSourceSpriteAddressHigh     ;
 
-    lda #31                         ;
-    jsr OSWRCH                      ;
-    lda conveyorX                   ;
-    and #$7f                        ; remove top bit (direction)
-    jsr OSWRCH                      ; TAB(conveyorX, conveyorY)
-    lda conveyorY                   ;
-    jsr OSWRCH                      ;
+    lda conveyorX                       ;
+    and #$7f                            ; remove top bit (direction)
+    asl                                 ;
+    asl                                 ;
+    tax                                 ;
+    stx plotX                           ;
 
-    ldy #0                          ;
-    txa                             ;
-    and #3                          ;
-    clc                             ;
-    adc #$eb                        ; sprite to draw for conveyor
+    lda conveyorY                       ;
+    asl                                 ;
+    asl                                 ;
+    asl                                 ;
+    tay                                 ;
+    sty plotY                           ;
 
--
-    jsr OSWRCH                      ;
-    iny                             ;
-    cpy conveyorLength              ;
-    bne -                           ;
-return10
-    rts                             ;
+    jsr plotGetScreenAddress            ;
+    lda #$f0                            ;
+    sta plotColourMask                  ; plot colour 2
 
-; ***************************************************************************************
-reverseConveyorDirection
-    lda conveyorSpriteOffset        ;
-    eor #3                          ;
-    jmp continueDrawingConveyors    ;
+    ldx conveyorLength                  ;
+--
+    jsr cellPlot                        ;
+    iny                                 ;
+    lda plotScreenAddressLow            ;
+    clc                                 ;
+    adc #16                             ;
+    sta plotScreenAddressLow            ;
+    bcc +                               ;
+    inc plotScreenAddressHigh           ;
++
+    dex                                 ;
+    bne --                              ;
+    rts                                 ;
+
 
 ; ***************************************************************************************
 showScoreLivesAndLevel
@@ -6397,17 +6457,7 @@ startGame
     jsr updateMusicState                    ; pause / resume music
 
 playCurrentLevel
-    lda tempScreenAddressLow                ; }
-    sta plotScreenAddressLow                ; } restore screen plotting address
-    lda tempScreenAddressHigh               ; } [not needed?]
-    sta plotScreenAddressHigh               ; }
-
     jsr updatePlayer                        ;
-
-    lda plotScreenAddressLow                ; }
-    sta tempScreenAddressLow                ; } save screen plotting address
-    lda plotScreenAddressHigh               ; } [not needed?]
-    sta tempScreenAddressHigh               ; }
 
     jsr animateKeysUpdateHorizontalGuardiansAndLevel19EnergyFields  ;
     jsr drawPlayerAndCheckForCollisions                             ;
@@ -13421,6 +13471,8 @@ tempByte
     !byte 0
 tempMask
     !byte 0
+plotColourMask
+    !byte 0                         ;
 
 tempScreenAddressLow
     !byte $00                       ;

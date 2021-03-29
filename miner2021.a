@@ -5,6 +5,7 @@
 charSPACE                       = $20       ;
 
 ; OS memory locations
+vduWriteCursorScreenAddressLow  = $D8       ; } address of the top of the cell
 fsBlockNumberHigh               = $03c7     ;
 fsBlockFlagByte                 = $03ca     ;
 
@@ -13,6 +14,7 @@ timeClockB                      = $0297     ; 5 byte clock as read by TIME
 countdownIntervalTimer          = $029C     ; 5 byte countdown interval timer (causes an EVENT when it reaches zero)
 vduTextCursorXPosition          = $0318     ;
 vduTextCursorYPosition          = $0319     ;
+vduBackgroundTextColour         = $0358     ; } byte value to colour the whole
 softCharacterDefinitions        = $0c00     ;
 
 logicalScreenStart              = $3000     ;
@@ -50,6 +52,8 @@ levelFeatureIndex               = $79       ;
 currentLevel                    = $80       ;
 levelColours                    = $81       ;
 levelColours2                   = $82       ;
+characterAddrLow                = $83       ;
+characterAddrHigh               = $84       ;
 zpGuardianPositionX             = $8a       ;
 zpGuardianPositionY             = $8b       ;
 zpGuardianLimit1                = $8c       ;
@@ -346,7 +350,7 @@ hasDrawnConveyors
 !if * > $0800 {
     !error "space is wrong, ", *
 }
-
+free1 = $0800-*
 * = $0800
 ; ***************************************************************************************
 ; $0800
@@ -2396,29 +2400,25 @@ opcodeForJsrPlot
 
 ; ***************************************************************************************
 readTwoCharactersFromScreen
-    lda #135                ;
-    jsr OSBYTE              ; read character at cursor position
+    jsr readCharacter       ; read character at cursor position
     stx screenCharacterA    ; store result
 
     lda #9                  ;
     jsr OSWRCH              ; move forward one space
 
-    lda #135                ;
-    jsr OSBYTE              ; read character at cursor position
+    jsr readCharacter       ; read character at cursor position
     stx screenCharacterB    ; store result
     rts
 
 ; ***************************************************************************************
 readTwoCharactersVertically
-    lda #135                ;
-    jsr OSBYTE              ; read character at text cursor position
+    jsr readCharacter       ; read character at text cursor position
     stx screenCharacterA    ; store result
 
     lda #$0a                ;
     jsr OSWRCH              ; move text cursor down one cell
 
-    lda #135                ;
-    jsr OSBYTE              ; read character at text cursor position
+    jsr readCharacter       ; read character at text cursor position
     stx screenCharacterB    ; store result
     rts                     ;
 
@@ -2460,8 +2460,7 @@ checkForLandingOnSpike
     jsr OSWRCH                  ;
 
 -
-    lda #135                    ;
-    jsr OSBYTE                  ; read character at cursor position
+    jsr readCharacter           ;
     cpx #0                      ;
     beq drawSpaces              ;
     cpx #$9b                    ;
@@ -6137,8 +6136,7 @@ cycleKeyLoop
     inx                             ;
     stx tempKeyIndex                ;
 
-    lda #135                        ;
-    jsr OSBYTE                      ; read character from screen
+    jsr readCharacter               ; read character at text cursor position
 
     cpx #$90                        ;
     beq animateKey                  ; if (key present) then branch (animate key)
@@ -7325,6 +7323,129 @@ death
 guardianSpriteCache
     * = * + 256
 
+characterFromScreen
+    !byte 0, 0, 0, 0, 0, 0, 0, 0
+
+
+; ***************************************************************************************
+readCharacter
+    jsr newReadCharacter        ; test against new method
+    rts                         ;
+
+; ***************************************************************************************
+;
+; like OSBYTE 135, this reads a character from the screen and returns it's ASCII code in X
+; but this is tweaked to only check SPACE and the used defined characters 128-160
+;
+; ***************************************************************************************
+newReadCharacter
+    JSR readCharacterDefinitionMaskFromScreen           ; read from screen, making a one bit
+                                                        ; mask of 8 bytes to match against
+                                                        ; each character, in workspaceA-H
+
+    ; check for a SPACE character first
+    ldy #7                                              ; Y=7
+--
+    lda characterFromScreen,Y                           ; get byte in workspaceA-H copy
+    cmp #0                                              ; check against character definition
+    bne checkUserDefinedCharacters                      ; if (not the same) then branch (to skip to next character)
+    dey                                                 ; Y--
+    bpl --                                              ; if (still non-negative) then branch (back to loop eight times, to check each row of the character)
+    ldx #charSPACE                                      ;
+    rts                                                 ;
+
+checkUserDefinedCharacters
+    ldx #0                                              ; Start with the space character (loop counter)
+    stx characterAddrLow                                ;
+    lda #$0c                                            ;
+    sta characterAddrHigh                               ;
+readCharLoop
+    ldy #7                                              ; Y=7
+--
+    lda characterFromScreen,Y                           ; get byte in workspaceA-H copy
+    cmp (characterAddrLow),Y                            ; check against character definition
+    bne gotoNextCharacter                               ; if (not the same) then branch (to skip to next character)
+    dey                                                 ; Y--
+    bpl --                                              ; if (still non-negative) then branch (back to loop eight times, to check each row of the character)
+finishUp
+    txa                                                 ; At this point the character matches
+    clc                                                 ;
+    adc #128                                            ;
+    tax                                                 ;
+
+;    cpx #$89                                            ;
+;    bne +                                               ; hack for underscore
+;    ldx #$5f                                            ;
+;+
+    rts                                                 ;
+
+gotoNextCharacter
+    inx                                                 ; no match on this character so increment to next character
+    lda characterAddrLow                                ; }
+    clc                                                 ; } Add 8 to address of character definition to move on to the next character
+    adc #8                                              ; } Affects low byte only as we check one page of characters at a time
+    sta characterAddrLow                                ; }
+    bne readCharLoop                                    ; if (we have not reached the end of the page) then branch (back to check the character)
+
+    cpx #32                                             ; check for end of page
+    bne readCharLoop                                    ; if (not done with all characters) then branch (loop back)
+    ldx #0                                              ; nothing found
+    rts                                                 ;
+
+; ***************************************************************************************
+tempLoopCounter
+    !byte 0
+tempByte
+    !byte 0
+tempMask
+    !byte 0
+
+; ***************************************************************************************
+;
+; Read character from screen pixels
+;
+; Reads 8x8 cell of pixels from the screen. This will be compared against each of the
+; character definitions to determine which character is on screen. This is for the
+; cursor editing mode feature.
+;
+; ***************************************************************************************
+readCharacterDefinitionMaskFromScreen
+    ldy #7                                              ; Y=7
+setupPatternLoop
+    sty tempLoopCounter                                 ; .vduTempStoreDA=Y (loop counter)
+    lda #1                                              ; A=1
+    sta tempByte                                        ; .vduTempStoreDB=A
+--
+    lda #$88                                            ; A=left colour mask
+    sta tempMask                                        ; store in tempMask
+    lda (vduWriteCursorScreenAddressLow),Y              ; get a byte from current text character
+    eor vduBackgroundTextColour                         ; EOR with text background colour
+    clc                                                 ; clear carry
+-
+    bit tempMask                                        ; and check bits of colour mask
+    beq +                                               ; if (result = 0) then branch (this becomes a zero bit in our mask)
+    sec                                                 ; set carry. This becomes a one bit in our mask
++
+    rol tempByte                                        ; Rotate left and add the carry in the low bit
+    bcs +                                               ; if (carry now set; bit 7 originally set) then branch (because we are done:
+                                                        ;               the initial value of 1 has rotated through the 8 bits and into the carry)
+    lsr tempMask                                        ; shift mask right one place for the next pixel
+    bcc -                                               ; if (carry clear; nothing shifted off the left) then branch (loop back)
+    tya                                                 ; }
+    adc #7                                              ; } Y = Y + 8 (Carry is set, so adding 7 + carry = 8)
+    tay                                                 ; }
+    bcc --                                              ; if (no overflow from the add) then branch (loop back, move on to the next cell to read from)
++
+    ldy tempLoopCounter                                 ; read modified values into Y and A
+    lda tempByte                                        ;
+    sta characterFromScreen,Y                           ; store copy
+    dey                                                 ; and do it again
+    bpl setupPatternLoop                                ; until 8 bytes copied
+    rts                                                 ;
+
+
+
+free2 = $3280 - *
     * = $3280                       ; start of visible screen
 !pseudopc $6200 {
 
@@ -8636,7 +8757,8 @@ levelDefinitions
         !byte (.x * 16) + .y
         !byte .threadLength
     }
-
+beforeBackgroundCache
+free3 = $6ba0 - *
     ; ***********************************************************************************
 * = $6ba0
 backgroundCache
@@ -13312,3 +13434,5 @@ tempScreenAddressLow
 tempScreenAddressHigh
     !byte $05                       ;
 }
+free4 = $8000 - tempScreenAddressHigh
+allFree = free1 + free2 + free3 + free4

@@ -67,6 +67,8 @@ collisionFudgeFactor            = $5a       ;
 
 altScreenAddressLow             = $00       ;
 altScreenAddressHigh            = $01       ;
+cachedCellX                     = $02       ;
+cachedCellY                     = $03       ;
 levelDataOffset                 = $70       ;
 
 plotMode                        = $70       ;
@@ -161,9 +163,6 @@ willyLeft0
     !byte $88, $cc, $ee, $66, $00, $88, $cc, $cc, $00, $00, $00, $00, $00, $00, $00, $00
 }
 minerWillyEnd
-
-
-
 
 
 ; ***************************************************************************************
@@ -332,14 +331,6 @@ manicMinerGraphic
     !byte %........
 
 ; ***************************************************************************************
-footSprite
-    ; the foot graphic
-    !byte $33, $22, $33, $22, $33, $00, $00, $11, $55, $aa, $55, $aa, $ff, $99, $99, $ff
-    !byte $44, $cc, $44, $cc, $cc, $00, $00, $88, $00, $00, $00, $00, $00, $00, $00, $00
-    !byte $11, $11, $22, $22, $55, $44, $44, $ff, $00, $11, $22, $00, $99, $44, $44, $ff
-    !byte $88, $88, $44, $bb, $22, $44, $00, $ff, $00, $00, $00, $88, $44, $22, $22, $ff
-
-; ***************************************************************************************
 guardianPositions
     !byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
 guardianPositionsCopy
@@ -401,11 +392,13 @@ free1 = $0800-*
     !byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
     !byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
 
-    ; OS printer buffer [UNUSED]
-    !byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-    !byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-    !byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-    !byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+    ; OS printer buffer
+footSprite
+    !byte $33, $22, $33, $22, $33, $00, $00, $11, $55, $aa, $55, $aa, $ff, $99, $99, $ff
+    !byte $44, $cc, $44, $cc, $cc, $00, $00, $88, $00, $00, $00, $00, $00, $00, $00, $00
+    !byte $11, $11, $22, $22, $55, $44, $44, $ff, $00, $11, $22, $00, $99, $44, $44, $ff
+    !byte $88, $88, $44, $bb, $22, $44, $00, $ff, $00, $00, $00, $88, $44, $22, $22, $ff
+
 
     ; OS Envelope definitions
     !byte $01, $78, $00, $00, $1e, $00, $00, $7e, $ff, $00, $ff, $7e, $5a, $00, $00, $00
@@ -2552,26 +2545,56 @@ drawSpaces
     jmp backIntoSpaceLoop       ;
 
 ; ***************************************************************************************
+deathJumper
+    jmp death                       ;
+
+; ***************************************************************************************
+cacheOffsetX
+    !byte 0, 1, 0, 1, 0, 1
+cacheOffsetY
+    !byte 0, 0, 1, 1, 2, 2
+
+; ***************************************************************************************
 keyCollisionFound
+    lda vduTextCursorXPosition  ;
+    sec                         ;
+    sbc #34                     ;
+    tax                         ; get cell offset within cache
+
+    lda cachedCellX             ;
+    clc                         ;
+    adc cacheOffsetX,x          ;
+    sta textCursorX             ;
+
+    lda cachedCellY             ;
+    clc                         ;
+    adc cacheOffsetY,x          ;
+    sta textCursorY             ;
+
     lda #charSPACE              ;
     jsr OSWRCH                  ;
 
     dec keysLeft                ;
 
-    lda #8                      ;
-    jsr OSWRCH                  ;
-    lda vduTextCursorXPosition  ;
-    sta textCursorX             ;
-    lda vduTextCursorYPosition  ;
-    sta textCursorY             ;
+    ; Mark key as got
+    ldx #0                      ;
+-
+    lda keyXPositions,x         ;
+    cmp textCursorX             ;
+    bne +                       ;
+    lda keyYPositions,x         ;
+    cmp textCursorY             ;
+    bne +                       ;
+    lda #255                    ;
+    sta keyGot,x                ;
++
+    inx                         ;
+    cpx keyPositionCounter      ;
+    bcc -                       ;
 
     lda #99                     ;
-    jsr addToScore              ;
-    jmp tabToOldCursorPositionAndReturn ;
-
-; ***************************************************************************************
-deathJumper
-    jmp death                       ;
+    jmp addToScore              ;
+;    jmp tabToOldCursorPositionAndReturn ;
 
 switchCollisionFound
     lda vduTextCursorXPosition      ; }
@@ -3032,19 +3055,22 @@ readOrWriteCachedBackground
     sta $70                         ;
     txa                             ;
     and #$fc                        ; X cell * 4
-    sta $71                         ;
+    sta tempX                       ;
+    lsr                             ;
+    lsr                             ;
+    sta cachedCellX                 ;
 
     tya                             ;
     lsr                             ;
     lsr                             ;
     lsr                             ;
-    sta $72                         ; Y cell
+    sta cachedCellY                 ; Y cell
 
     ; read screen row address and add 16 * cell X to screen address
     tax                             ; row
     lda #0                          ;
     sta tempHigh                    ;
-    lda $71                         ; }
+    lda tempX                       ; }
     asl                             ; } X cell * 4 again
     rol tempHigh                    ; }
     asl                             ; }
@@ -5160,12 +5186,11 @@ storeAddressLow = * + 1
     ; We transform abcdefgh -> fgh00bcd, but in practice bcd = 000 so -> fgh00000
     lda $84                         ;
     and #$7f                        ;
-    clc                             ;
-    rol                             ;
-    rol                             ;
-    rol                             ;
-    rol                             ;
-    rol                             ;
+    asl                             ;
+    asl                             ;
+    asl                             ;
+    asl                             ;
+    asl                             ;
     tax                             ;
 
     ; copy conveyor sprite from $0ba0+X to $0c58 for 32 bytes
@@ -5197,10 +5222,9 @@ storeAddressLow = * + 1
     ; $85 holds the key sprite
     lda $85                         ;
     and #$0f                        ; get lower nybble
-    clc                             ;
-    rol                             ;
-    rol                             ;
-    rol                             ; multiply by eight
+    asl                             ;
+    asl                             ;
+    asl                             ; multiply by eight
     tax                             ;
 
     ; copy key sprite from $0ab0+X to $0c80 for 8 bytes
@@ -5226,8 +5250,6 @@ getExitSprite
     ;
     lda $86                         ;
     and #$c0                        ; get top two bits
-    clc                             ; [redundant]
-    cmp #0                          ;
     beq getExit8x8                  ; if (neither bit set) then branch
     cmp #$80                        ;
     beq getExit8x16                 ; if (only top bit set) then branch
@@ -5289,52 +5311,37 @@ getExit8x16
     clc                             ;
     adc #<exitSprites1x2            ;
     sta getExitSourceByte + 1       ;
-    lda getExitSourceByte + 2       ;
-    adc #0                          ;
-    sta getExitSourceByte + 2       ; address of sprite set
+    bcc +                           ;
+    inc getExitSourceByte + 2       ;
++
 
     ; copy 16 bytes
     ldy #0                          ; loop counter
 getExitSourceByte
     lda exitSprites1x2              ;
     sta $0c88,y                     ;
-    lda getExitSourceByte + 1       ; }
-    clc                             ; }
-    adc #1                          ; }
-    sta getExitSourceByte + 1       ; } increment source address
-    lda getExitSourceByte + 2       ; }
-    adc #0                          ; }
-    sta getExitSourceByte + 2       ; }
+    inc getExitSourceByte + 1       ; }
+    bcc +                           ; } increment source address
+    inc getExitSourceByte + 2       ; }
++
     iny                             ;
     cpy #16                         ;
     bne getExitSourceByte           ;
 
-    ; copy 8x8 sprite
-    ldx #0                          ;
+    ; reverse the left hand side of the exit to get the right hand side
+    ldx #7                          ;
 -
     lda $0c90,x                     ;
     sta $0c98,x                     ;
-    inx                             ;
-    cpx #8                          ;
-    bne -                           ;
-
-    ; reverse the left hand side of the exit to get the right hand side
-    ldx #0                          ;
--
-    lda $0c88,x                     ;
-    stx tempX                       ;
     jsr reverseBits                 ;
-    ldx tempX                       ;
+    sta $0ca0,x                     ;
+
+    lda $0c88,x                     ;
+    jsr reverseBits                 ;
     sta $0c90,x                     ;
 
-    lda $0c98,x                     ;
-    stx tempX                       ; [redundant]
-    jsr reverseBits                 ;
-    ldx tempX                       ;
-    sta $0ca0,x                     ;
-    inx                             ;
-    cpx #8                          ;
-    bne -                           ;
+    dex                             ;
+    bpl -                           ;
     rts                             ;
 
 ; ***************************************************************************************
@@ -6299,7 +6306,7 @@ drawSpider
 ; ***************************************************************************************
 recordKey
     lda keyPositionCounter          ;
-    cmp #keyPositionsEnd - keyPositions ; only store five keys (don't go beyond the end of the buffer)
+    cmp #5                          ; only store five keys (don't go beyond the end of the buffer)
     bcc +                           ;
     jmp drawSingleItem              ;
 
@@ -6308,70 +6315,66 @@ recordKey
     clc                             ;
     adc singleItemOffsetX           ;
     ldy keyPositionCounter          ;
-    sta keyPositions,y              ; store key position x
-    iny                             ;
+    sta keyXPositions,y             ; store key position x
     lda singleItemY                 ;
     clc                             ;
     adc #1                          ;
-    sta keyPositions,y              ; store key position y
-    inc keyPositionCounter          ;
+    sta keyYPositions,y             ; store key position y
     inc keyPositionCounter          ;
     jmp drawSingleItem              ;
 
 ; ***************************************************************************************
 colourCycleKeys
-    lda #0                          ;
-    tax                             ;
+    ldy #0                          ; # attempts to animate a key
 cycleKeyLoop
-    inc keyColourCounter            ;
-    lda #31                         ;
-    jsr OSWRCH                      ;
-    lda keyPositions,x              ;
-    jsr OSWRCH                      ;
-    inx                             ;
-    lda keyPositions,x              ;
-    jsr OSWRCH                      ;
-    inx                             ;
-    stx tempKeyIndex                ;
-
-    jsr readCharacter               ; read character at text cursor position
-
-    cpx #$90                        ;
-    beq animateKey                  ; if (key present) then branch (animate key)
-postAnimateKey
-    ldx tempKeyIndex                ;
-    txa                             ;
-    cmp keyPositionCounter          ;
-    bcs return12                    ;
-    lda keyPositionCounter          ;
-    lsr                             ;
-    and #1                          ;
-    cmp #0                          ;
-    beq +                           ;
-    jmp cycleKeyLoop                ;
+    ldx currentKeyIndex             ; }
+    inx                             ; }
+    cpx keyPositionCounter          ; } cycle between zero and the number of keys
+    bcc +                           ; }
+    ldx #0                          ; }
+    stx currentKeyIndex             ; }
 
 +
-    inc keyColourCounter            ;
-    jmp cycleKeyLoop                ;
+    stx currentKeyIndex             ;
 
+    ; cycle around colours 0,1,2
+    inc keyColourCounter            ;
+    lda keyColourCounter            ;
+    cmp #3                          ;
+    bcc +                           ;
+    lda #0                          ;
+    sta keyColourCounter            ;
++
+
+    lda keyGot,x                    ;
+    bne keyAlreadyTaken             ; if (not got) then animate it
+
+    ; tab into to position
+    lda #31                         ;
+    jsr OSWRCH                      ;
+    lda keyXPositions,x             ;
+    jsr OSWRCH                      ;
+    lda keyYPositions,x             ;
+    jsr OSWRCH                      ;
+    jmp animateKey                  ;
+
+keyAlreadyTaken
+    iny                             ; increment number of attempts
+    cpy keyPositionCounter          ;
+    bcc cycleKeyLoop                ;
 return12
     rts                             ;
 
 animateKey
     lda keyColourCounter            ;
-    and #3                          ;
-    cmp #0                          ;
-    beq handleColour0               ; COLOUR 1,2,3
-setKeyColour
+    clc
+    adc #1
+setColourAndShow
     jsr setTextColour               ;
     lda #$90                        ; draw key
-    jsr OSWRCH                      ;
-    jmp postAnimateKey              ;
+    jmp OSWRCH                      ;
 
-handleColour0
-    lda #3                          ; COLOUR 3
-    jmp setKeyColour                ;
-
+; ***************************************************************************************
 readRoomNameCharacter
     lda $ffff,x                     ;
     rts                             ;
@@ -6383,12 +6386,9 @@ drawRoomName
     sta readRoomNameCharacter + 2   ;
     lda #0                          ;
     sta roomNumberReached           ;
-    lda #31                         ;
-    jsr OSWRCH                      ;
-    lda #4                          ; TAB(4,17)
-    jsr OSWRCH                      ;
-    lda #17                         ;
-    jsr OSWRCH                      ;
+    ldx #4                          ; TAB(4,17)
+    ldy #17                         ;
+    jsr setTextPos                  ;
 
     ; print 32 spaces
     lda #charSPACE                  ;
@@ -6544,10 +6544,18 @@ copySpikeSprites
     cpy #8                          ;
     bne -                           ;
 
+    ; clear array of 'key got' flags
+    ldx #4                          ;
+    lda #0                          ;
+-
+    sta keyGot,x                    ;
+    dex                             ;
+    bpl -                           ;
+
+
     lda keyPositionCounter          ;
-    cmp #4                          ;
-    beq +                           ;
-    lsr                             ;
+    cmp #2                          ;
+    beq +                           ; special case for handling one key only
     sta keysLeft                    ;
     rts                             ;
 
@@ -6984,7 +6992,6 @@ startGameJumper2
 updateAirAndCheckExit
     jsr updateAir                   ;
     lda keysLeft                    ;
-    cmp #0                          ;
     beq checkExit                   ;
     rts                             ;
 
@@ -7609,14 +7616,8 @@ readCharLoop
     bpl --                                              ; if (still non-negative) then branch (back to loop eight times, to check each row of the character)
 finishUp
     txa                                                 ; At this point the character matches
-    clc                                                 ;
-    adc #128                                            ;
+    ora #$80                                            ;
     tax                                                 ;
-
-;    cpx #$89                                            ;
-;    bne +                                               ; hack for underscore
-;    ldx #$5f                                            ;
-;+
     rts                                                 ;
 
 gotoNextCharacter
@@ -13669,15 +13670,20 @@ singleItemType
 singleItemSpriteOffset
     !byte $ea                       ;
 
-keyPositions
-    !byte $ea, $ea, $ea, $ea, $ea, $ea, $ea, $ea, $ea, $ea
-keyPositionsEnd
+keyXPositions
+    !byte $ea, $ea, $ea, $ea, $ea
+keyYPositions
+    !byte $ea, $ea, $ea, $ea, $ea
+keyGot
+    !byte $00, $00, $00, $00, $00
+
+
 keyPositionCounter
     !byte $0f                       ;
-tempKeyIndex
-    !byte $16                       ;
+currentKeyIndex
+    !byte $00                       ;
 keyColourCounter
-    !byte $ea                       ;
+    !byte $00                       ;
 
 musicEnabled
     !byte $ea                       ;

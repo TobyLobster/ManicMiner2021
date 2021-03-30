@@ -14,6 +14,11 @@ start
     ldx #$ff                                ;
     txs                                     ; Reset stack
 
+    lda #144                                ;
+    ldx #254                                ; Set non-interlaced
+    ldy #1                                  ;
+    jsr OSBYTE                              ;
+
     ; Switch to MODE 1
     ldx #0                                  ;
 moreMessageLoop
@@ -42,6 +47,7 @@ outputMessageLoop
     ldy #>copyDownBlock                     ;
     jsr copyDown                            ;
 
+    ; relocate the 'higher than the screen' code up to $6200
     ldx #<copyUpBlock                       ;
     ldy #>copyUpBlock                       ;
     jsr copyUp                              ;

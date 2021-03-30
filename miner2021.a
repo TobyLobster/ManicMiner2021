@@ -8,6 +8,10 @@ charSPACE                       = $20       ;
 vduTextColourByteOR             = $D2       ; } bytes to implement current foreground
 vduTextColourByteEOR            = $D3       ; } and background text colours
 vduWriteCursorScreenAddressLow  = $D8       ; address of the top of the cell
+interruptAccumulator            = $FC       ; RESERVED for INTERRUPTS
+irqv1                           = $204      ;
+irqv2                           = $206      ;
+
 fsBlockNumberHigh               = $03c7     ;
 fsBlockFlagByte                 = $03ca     ;
 
@@ -26,6 +30,28 @@ blankAreaOfScreen               = $34d0     ; empty screen area to the right of 
 screenEndAddress                = $6200     ; end of visible screen
 backgroundCache                 = $6ba0     ; six cells copied from the screen before the player is drawn
 
+videoULAPaletteRegister             = $FE21     ; Video ULA palette register
+
+; System timer 1
+systemVIATimer1CounterLow           = $FE44     ;
+systemVIATimer1CounterHigh          = $FE45     ;
+systemVIATimer1LatchLow             = $FE46     ;
+systemVIATimer1LatchHigh            = $FE47     ;
+
+systemVIAAuxiliaryControlRegister   = $FE4B     ;
+systemVIAInterruptFlagRegister      = $FE4D     ;
+systemVIAInterruptEnableRegister    = $FE4E     ;
+
+; User timer 1
+userVIATimer1CounterLow             = $FE64     ;
+userVIATimer1CounterHigh            = $FE65     ;
+userVIATimer1LatchLow               = $FE66     ;
+userVIATimer1LatchHigh              = $FE67     ;
+
+userVIAAuxiliaryControlRegister     = $FE6B     ;
+userVIAInterruptFlagRegister        = $FE6D     ;
+userVIAInterruptEnableRegister      = $FE6E     ;
+
 OSWRCH                          = $ffee     ;
 OSWORD                          = $fff1     ;
 OSBYTE                          = $fff4     ;
@@ -39,6 +65,8 @@ meteorTailAnimationOffset       = $3f       ;
 energyFieldSpriteOffset         = $3f       ;
 collisionFudgeFactor            = $5a       ;
 
+altScreenAddressLow             = $00       ;
+altScreenAddressHigh            = $01       ;
 levelDataOffset                 = $70       ;
 
 plotMode                        = $70       ;
@@ -61,12 +89,12 @@ screenLow                       = $85       ;
 screenHigh                      = $86       ;
 cellPlotSourceSpriteAddressLow  = $87       ;
 cellPlotSourceSpriteAddressHigh = $88       ;
+rasterArea                      = $89       ;
 zpGuardianPositionX             = $8a       ;
 zpGuardianPositionY             = $8b       ;
 zpGuardianLimit1                = $8c       ;
 zpGuardianLimit2                = $8d       ;
 zpGuardianAnimIndex             = $8e       ;
-switchTriggered                 = $9f       ;
 
 verticalGuardianMODE1Address    = $0400     ;
 verticalGuardianMODE1Address1   = $0440     ;
@@ -2297,17 +2325,17 @@ onCellFloor
 
 ; ***************************************************************************************
 +
-    jmp updateConveyorsAndPlayer        ;
+    jmp updateConveyorAndPlayer         ;
 
 ; ***************************************************************************************
 updateNewPlayerY
     lda playerPixelY                ;
     cmp playerHeightOnTakeOff       ;
-    bne updateConveyorsAndPlayer    ; if (player height not the same as when last on ground) then branch (move player)
+    bne updateConveyorAndPlayer     ; if (player height not the same as when last on ground) then branch (move player)
 
     lda jumpPhase                   ;
     cmp #0                          ;
-    bne updateConveyorsAndPlayer    ; if (jumping) then branch (move player)
+    bne updateConveyorAndPlayer     ; if (jumping) then branch (move player)
 
     lda newPlayerPixelY             ;
     sta playerPixelY                ;
@@ -2330,13 +2358,62 @@ getPlayerSourceSpriteAddress
     rts                                 ;
 
 ; ***************************************************************************************
-updateConveyorsAndPlayer
+;
+; On Entry: A = Y coordinate to check
+; On Exit: X = index into danger area arrays
+;          Carry set if in a danger area
+;
+; ***************************************************************************************
+getDangerArea
+    clc                                     ;
+    sbc #8                                  ;
+    ldx #255                                ;
+-
+    inx                                     ;
+    sec                                     ; division by repeated subtraction
+    sbc #24                                 ;
+    bcs -                                   ;
+    rts                                     ;
+
+; ***************************************************************************************
+;
+; On Entry:
+;   A = Y pixel coordinate of sprite to draw
+; On Exit:
+;   Z set if in danger zone
+;
+; ***************************************************************************************
+isInDangerArea
+    jsr getDangerArea                   ;
+    ldy #7                              ;
+-
+    lda dangerAreas,X                   ;
+    cmp rasterArea                      ;
+    beq +                               ;
+    inx                                 ;
+    dey                                 ;
+    bpl -                               ;
++
+    rts                                 ;
+
+; ***************************************************************************************
+updateConveyorAndPlayer
+
+    ; if in danger area, wait
+-
+    lda playerPixelY                    ;
+    jsr isInDangerArea                  ;
+    beq -
+
+;    lda #2                              ;
+;    jsr debugChangePalette              ;
+
     ldx playerPixelX                    ; }
     ldy playerPixelY                    ; }
     lda #0                              ; }
     jsr readOrWriteCachedBackground     ; } draw old background from cache
 
-    jsr drawConveyor                    ; animate conveyors
+    jsr drawConveyor                    ; animate conveyor
 
     ldx newPlayerPixelX                 ; }
     ldy newPlayerPixelY                 ; }
@@ -2344,7 +2421,6 @@ updateConveyorsAndPlayer
     jsr readOrWriteCachedBackground     ; } cache new background
     lda #1                              ;
     sta hasDrawnConveyors               ;
-    jsr updateAirAndCheckExit           ;
     ; fall through...
 
 ; ***************************************************************************************
@@ -2356,6 +2432,11 @@ updatePlayerWithAnimation
     lda #1                              ;
 opcodeForJsrPlot
     jsr plot                            ; draw player (mode 1)
+
+;    lda #7
+;    jsr debugChangePalette
+
+    jsr updateAirAndCheckExit           ;
     jsr checkForLandingOnSpike          ;
 
     ldx #34                             ;
@@ -2493,7 +2574,7 @@ deathJumper
     jmp death                       ;
 
 switchCollisionFound
-    jsr triggerSwitch               ; }
+    lda vduTextCursorXPosition      ; }
     sta textCursorX                 ; } record current position
     lda vduTextCursorYPosition      ; }
     sta textCursorY                 ; }
@@ -3017,46 +3098,10 @@ readOrWriteCachedBackground
     sta writeToMemory + 2                   ;
 
 nextBit
-    lda #32                         ;
-    sta cacheLoopXLimit             ; copy two character columns by default
-
-    lda willyIsOnConveyor           ;
-    cmp #1                          ;
-    beq copyCache                   ;
-    lda switchTriggered             ;
-    cmp #1                          ;
-    beq copyCache                   ;
-
-    lda willyChangedDirection       ;
-    bne copyCache                   ;
-
-    lda $70                         ;
-    bne copyCache                   ;
-
-    lda playerPixelX                ;
-    and #3                          ;
-    eor willyAnimationEOR           ;
-    bne copyCache                   ;
-    lda willyAnimationEOR           ;
-    cmp #3                          ;
-    beq copyCache1x1                ;
-    lda #16                         ;
-    sta cacheLoopXLimit             ; copy one character column
-    jmp copyCache                   ;
-
-; ***************************************************************************************
-copyCache1x1
-    ldx #16                             ;
-    ldy #16                             ;
-    lda #16                             ;
-    sta cacheGotoNextRow + 1            ; copy 1x1 characters
-    jmp readWriteBackgroundCacheLoop    ;
-
 ; ***************************************************************************************
 copyCache
     ldx #0                              ; inner loop counter (within one row)
     ldy #0                              ; outer loop counter (number of rows * 32)
-    stx cacheGotoNextRow + 1            ; copy two by two characters worth
 readWriteBackgroundCacheLoop
 readFromMemory
     lda $ffff,x                         ;
@@ -3064,22 +3109,10 @@ writeToMemory
     sta $ffff,y                         ;
     inx                                 ;
     iny                                 ;
-cacheLoopXLimit = * + 1
     cpx #32                             ;
     bne readWriteBackgroundCacheLoop    ;
-    lda cacheGotoNextRow + 1            ;
-    cmp #16                             ;
-    beq +                               ;
-    lda cacheLoopXLimit                 ;
-    cmp #32                             ;
-    beq cacheGotoNextRow                ; if (copying two columns) then branch
-+
-    tya                                 ; }
-    clc                                 ; }
-    adc #16                             ; } Y += 16
-    tay                                 ; }
 
-cacheGotoNextRow
+    ; go to next row
     ldx #0                              ;
 
     ; test which direction we want to read/write
@@ -3106,8 +3139,6 @@ cacheGotoNextRow
 checkForEndOfLoop
     cpy #95                             ;
     bcc readWriteBackgroundCacheLoop    ; if (Y < 95) then branch (loop back)
-    lda #0                              ;
-    sta switchTriggered                 ;
     rts                                 ;
 
 ; ***************************************************************************************
@@ -4653,7 +4684,6 @@ toFullColour
 ;
 ; ***************************************************************************************
 cellPlot
-    stx tempX                           ;
     ldy #7                              ;
 -
     lda (cellPlotSourceSpriteAddressLow),y  ;
@@ -4687,7 +4717,6 @@ tempCellPlotA = * + 1
     tay                                 ;
     dey                                 ;
     bpl -                               ;
-    ldx tempX                           ;
 return10
     rts                                 ;
 
@@ -4740,19 +4769,36 @@ drawConveyor
     lda #$f0                            ;
     sta plotColourMask                  ; plot colour 2
 
+    jsr cellPlot                        ; plot first conveyor
     ldx conveyorLength                  ;
+
 --
-    jsr cellPlot                        ;
-    iny                                 ;
+    dex                                 ;
+    beq doneConveying                   ;
+
     lda plotScreenAddressLow            ;
     clc                                 ;
     adc #16                             ;
+    sta altScreenAddressLow             ;
+
+    lda plotScreenAddressHigh           ;
+    adc #0
+    sta altScreenAddressHigh            ;
+
+    ldy #15                             ;
+-
+    lda (plotScreenAddressLow),y        ;
+    sta (altScreenAddressLow),y         ;
+    dey
+    bpl -                              ;
+
+    lda altScreenAddressLow             ;
     sta plotScreenAddressLow            ;
-    bcc +                               ;
-    inc plotScreenAddressHigh           ;
-+
-    dex                                 ;
-    bne --                              ;
+    lda altScreenAddressHigh            ;
+    sta plotScreenAddressHigh           ;
+
+    jmp --                              ;
+doneConveying
     rts                                 ;
 
 
@@ -5579,49 +5625,108 @@ drawSideWallsAndFloor
 ; called on vsync to update the audio
 ;
 ; ***************************************************************************************
-mainEventRoutine
-    pha                             ;
-    php                             ;
-    txa                             ;
-    pha                             ; save registers
-    tya                             ;
-    pha                             ;
+mainInterruptRoutine
+    txa                                 ; Remember X and Y registers
+    pha                                 ;
+    tya                                 ;
+    pha                                 ;
 
+    lda userVIAInterruptFlagRegister    ; What kind of interrupt?
+    and #%11000000                      ; }
+    cmp #%11000000                      ; } is it the User VIA Timer 1?
+    beq +
+
+    ; unknown interrupt - pass through
+    pla                                 ; Restore X and Y registers
+    tay                                 ;
+    pla                                 ;
+    tax                                 ;
+
+    lda interruptAccumulator            ;
+oldIrq1RoutineLow = * + 1
+oldIrq1RoutineHigh = * + 2
+    jmp $ffff                           ;
+
++
+    ; handle system VIA Timer 1
+;    ldy rasterArea                               ;
+;    CPY #12                                     ;
+;    BNE +                                       ;
+;    LDX #.headerPalette - .startOfPalettes + 3  ; }
+;    JSR .definePaletteAX                        ; } Set palette for header
+
+;+
+;    CPY #0                                      ;
+;    BNE +                                       ;
+;    LDX #.playAreaPalette - .startOfPalettes + 3; } Set palette for play area
+;    JSR .definePaletteAX                        ; }
+
+;+
+;    CPY #6                                      ;
+;    BNE +                                       ;
+
+;    LDX #8                                      ; loop counter for delay
+;-
+;    DEX                                         ; delay so we set the palette at the right time
+;    BNE -                                       ;
+;    LDX #.footerPalette  - .startOfPalettes + 3 ; } Set palette for footer
+;    JSR .definePaletteAX                        ; }
+;+
+
+    lda #$40                            ; clear User VIA timer 1 interrupt
+    sta userVIAInterruptFlagRegister    ;
+
+;    lda rasterArea                      ;
+;    jsr debugChangePalette              ;
+
+    inc rasterArea                      ;
+    lda rasterArea                      ;
+
+    cmp #2                              ;
+    beq updateSound                     ;
+
+    cmp #13                             ;
+    bne handledInterrupt                ;
+    lda #0                              ;
+    sta rasterArea                      ;
+    beq handledInterrupt                ; ALWAYS branch
+
+updateSound
     ; update music
-    jsr checkForChannel3Update      ;
+    jsr updateMusic                     ;
 
     ; update sound effects
-    lda channel2Frequency           ;
-    cmp #$ff                        ;
-    beq silenceChannel2             ;
-    lda vsyncCounter                ;
-    cmp #$ff                        ;
-    beq silenceChannel2             ;
-    lda #$b0                        ;
-    jsr soundDirect                 ; Set channel 2 maximum volume
-    lda #$a0                        ;
-    jsr soundDirect                 ; Set channel 2 frequency first byte
-    lda channel2Frequency           ;
-    jsr soundDirect                 ; Set channel 2 frequency second byte
-    lda #$ff                        ;
-    sta channel2Frequency           ;
+    lda channel2Frequency               ;
+    cmp #$ff                            ;
+    beq silenceChannel2                 ;
+    lda vsyncCounter                    ;
+    cmp #$ff                            ;
+    beq silenceChannel2                 ;
+    lda #$b0                            ;
+    jsr soundDirect                     ; Set channel 2 maximum volume
+    lda #$a0                            ;
+    jsr soundDirect                     ; Set channel 2 frequency first byte
+    lda channel2Frequency               ;
+    jsr soundDirect                     ; Set channel 2 frequency second byte
+    lda #$ff                            ;
+    sta channel2Frequency               ;
 
-exitEvent
-    pla                             ;
-    tay                             ;
-    pla                             ;
-    tax                             ; restore registers
-    plp                             ;
-    pla                             ;
-    rts                             ;
+handledInterrupt
+    pla                                 ; Restore X and Y registers
+    tay                                 ;
+    pla                                 ;
+    tax                                 ;
+    lda interruptAccumulator            ;
+    rti                                 ;
 
 silenceChannel2
     lda #$bf                        ;
     jsr soundDirect                 ; set zero volume on channel 2
-    jmp exitEvent                   ;
+    jmp handledInterrupt            ;
 
-checkForChannel3Update
-    inc vsyncCounter                ;
+; ***************************************************************************************
+updateMusic
+    inc vsyncCounter                ; This first instruction MUST be an INC - this is self modifying code
     lda vsyncCounter                ;
     cmp #1                          ; 1 = duration of note
     beq quietChannel3               ;
@@ -5656,6 +5761,7 @@ quietChannel3
 ; ***************************************************************************************
 ; send a byte to the sound chip (as seen in the advanced user guide)
 soundDirect
+    php                             ; remember if interrupts are enabled
     sei                             ;
     pha                             ; remember A
 
@@ -5677,7 +5783,7 @@ soundDirect
     ldy #8                          ; Set sound chip write pin high
     jsr OSBYTE                      ;
 
-    cli                             ; Enable interrupts
+    plp                             ; Restore interrupt enabled as needed
     rts                             ;
 
 ; ***************************************************************************************
@@ -5924,13 +6030,6 @@ swapLogoWithC00
     sta softCharacterDefinitions,x  ;
     inx                             ;
     bne -                           ;
-    rts                             ;
-
-
-triggerSwitch
-    lda #1                          ;
-    sta switchTriggered             ;
-    lda vduTextCursorXPosition      ;
     rts                             ;
 
 ; ***************************************************************************************
@@ -6322,17 +6421,33 @@ foundControlCharacter
     cmp roomNumberReached           ; }
     bne -                           ; } if (room not reached) then branch back
 
+    ; tab to room title area
+    stx tempX                       ;
+    ldx #4                          ; TAB (4, 17)
+    ldy #17                         ;
+    jsr setTextPos                  ;
+    lda #131                        ; COLOUR 131
+    jsr setTextColour               ;
+    lda #0                          ; COLOUR 0
+    jsr setTextColour               ;
+    ldx #31                         ;
+    lda #charSPACE                  ;
+-
+    JSR OSWRCH                      ;
+    dex                             ;
+    bpl -                           ;
+
     ; tab to correct position
-    lda #31                         ;
-    jsr OSWRCH                      ;
-    jsr readRoomNameCharacter       ; TAB(31, 4+char, 17)
-    clc                             ;
-    adc #4                          ;
-    jsr OSWRCH                      ;
-    lda #17                         ;
-    jsr OSWRCH                      ;
+    ldx tempX                       ;
+    jsr readRoomNameCharacter       ; }
+    clc                             ; }
+    adc #4                          ; }
+    tax                             ; } TAB(31, 4+char, 17)
+    ldy #17                         ; }
+    jsr setTextPos                  ; }
 
     ; print room title
+    ldx tempX                       ;
 -
     inx                             ;
     jsr readRoomNameCharacter       ; read next character
@@ -6340,37 +6455,43 @@ foundControlCharacter
     bcc +                           ; if (control character) then branch
     jsr OSWRCH                      ;
     jmp -
++
+    lda #128                        ; COLOUR 128
+    jsr setTextColour               ;
+    lda #3                          ; COLOUR 3
+    jsr setTextColour               ;
+
 
     ; EOR each byte with $ff in the range $5ac0-$5cc0 (inverting the room title)
-+
-    lda #$00                        ;
-    sta readOrWriteAddrLow          ;
-    lda #$5a                        ; store $5a00 as screen address to read / write to
-    sta readOrWriteAddrHigh         ;
-    ldy #$c0                        ;
-eorLoop
-    lda #$b9                        ; } set to read a byte (store $B9 = opcode for LDA abs,Y)
-    sta readOrWriteByte             ; }
-    jsr readOrWriteByte             ; read byte
-    eor #$ff                        ; eor with 255
-    tax                             ; remember A
-    lda #$99                        ; } set to write a byte (store $99 = opcode for STA abs,Y)
-    sta readOrWriteByte             ; }
-    txa                             ; recall A
-    jsr readOrWriteByte             ; write byte
-    iny                             ;
-    cpy #$c0                        ;
-    beq +                           ;
-    cpy #0                          ;
-    bne eorLoop                     ; if (not done) then loop back
-    inc readOrWriteAddrHigh         ;
-    jmp eorLoop                     ;
+;+
+;    lda #$00                        ;
+;    sta readOrWriteAddrLow          ;
+;    lda #$5a                        ; store $5a00 as screen address to read / write to
+;    sta readOrWriteAddrHigh         ;
+;    ldy #$c0                        ;
+;eorLoop
+;    lda #$b9                        ; } set to read a byte (store $B9 = opcode for LDA abs,Y)
+;    sta readOrWriteByte             ; }
+;    jsr readOrWriteByte             ; read byte
+;    eor #$ff                        ; eor with 255
+;    tax                             ; remember A
+;    lda #$99                        ; } set to write a byte (store $99 = opcode for STA abs,Y)
+;    sta readOrWriteByte             ; }
+;    txa                             ; recall A
+;    jsr readOrWriteByte             ; write byte
+;    iny                             ;
+;    cpy #$c0                        ;
+;    beq +                           ;
+;    cpy #0                          ;
+;    bne eorLoop                     ; if (not done) then loop back
+;    inc readOrWriteAddrHigh         ;
+;    jmp eorLoop                     ;
 
-+
-    lda readOrWriteAddrHigh         ;
-    cmp #$5c                        ;
-    bne eorLoop                     ;
-
+;+
+;    lda readOrWriteAddrHigh         ;
+;    cmp #$5c                        ;
+;    bne eorLoop                     ;
+;
     lda #$47                        ;
     sta $8e                         ;
     lda #$58                        ; ($8e,$8f) = $5847 (on screen)
@@ -6442,18 +6563,67 @@ readOrWriteAddrHigh = readOrWriteByte + 2
     rts                             ;
 
 ; ***************************************************************************************
-initialize
-    ; *FX 13,4 (disable vsync event)
-    lda #13                         ;
-    ldx #4                          ;
-    ldy #0                          ;
-    jsr OSBYTE                      ;
+; This is the number of timer ticks per frame (num PAL scanlines * 62us/line)
+; This timing is only true of non-interlaced modes.
+; We have to subtract 2 because the latch reload costs 2us.
+; This is not documented anywhere!
+FramePeriod     = 312*62-2
 
-    ; install event vector code at $3000
-    lda #<mainEventRoutine          ;
-    sta vectorEVNTV                 ;
-    lda #>mainEventRoutine          ;
-    sta vectorEVNTV + 1             ;
+; Calculate here the timer value to interrupt at the desired line
+TimerValue      = 71*62 + 25
+
+; This is the delay between interrupts (three character rows)
+ShortTimerValue = 24*62 + 46
+
+; ***************************************************************************************
+initialize
+    ; install irq code
+    sei
+    lda #$7F                                ; }
+    sta userVIAInterruptEnableRegister      ; } Disable all interrupts
+
+    lda irqv1                               ;
+    sta oldIrq1RoutineLow                   ;
+    lda irqv1 + 1                           ;
+    sta oldIrq1RoutineHigh                  ;
+
+    lda #<mainInterruptRoutine              ;
+    sta irqv1                               ;
+    lda #>mainInterruptRoutine              ;
+    sta irqv1 + 1                           ;
+
+    lda #$c0                                ; }
+    sta userVIAInterruptEnableRegister      ; } Enable User VIA timer 1
+
+    ; set User VIA T1 in free run mode (i.e. repeating)
+    lda #$c0                                ; }
+    sta userVIAAuxiliaryControlRegister     ; } Start User VIA T1 in free run mode
+
+
+    ; write User VIA T1 low now (the timer will not be written until you write the high byte)
+    lda #<TimerValue                        ;
+    sta userVIATimer1CounterLow             ;
+    ; get high byte ready so we can write it as quickly as possible at the right moment
+    ldx #>TimerValue                        ;
+
+    ; wait for VSync without having to catch it from its IRQ
+    lda #2                                  ;
+    sta systemVIAInterruptFlagRegister      ; clear VSync flag
+-
+    bit systemVIAInterruptFlagRegister      ;
+    beq -                                   ; poll VSync flag
+
+    stx userVIATimer1CounterHigh            ; start User VIA Timer 1 counting
+    sta userVIAInterruptFlagRegister        ; clear VSync flag
+
+    ; set timer to fire every frame (set latch)
+    lda #<ShortTimerValue                   ;
+    sta userVIATimer1LatchLow               ;
+    lda #>ShortTimerValue                   ;
+    sta userVIATimer1LatchHigh              ;
+    lda #0                                  ;
+    sta rasterArea                          ;
+    cli                                     ;
 
     ; print VDU stream
     ldx #0                          ;
@@ -6466,12 +6636,6 @@ backFrom8Zeros
     inx                             ;
     cpx #crtcSetupEnd - crtcSetup   ;
     bne -                           ;
-
-    ; *FX 14,4 enable vsync event
-    lda #14                         ;
-    ldx #4                          ;
-    ldy #0                          ;
-    jsr OSBYTE                      ;
 
     ; *FX 229,1 - ESCAPE generates ASCII code
     lda #229                        ;
@@ -6507,7 +6671,7 @@ waitForRETURN
 ; ***************************************************************************************
 
 startGame
-    lda #18                                  ; set level 1 - Central Cavern
+    lda #1                                  ; set level 1 - Central Cavern
     jsr showLevel                           ;
     jsr updateMusicState                    ; pause / resume music
 
@@ -6525,7 +6689,7 @@ playCurrentLevel
     sta tempScreenAddressHigh               ; }
 
     jsr animateKeysUpdateHorizontalGuardiansAndLevel19EnergyFields  ;
-    jsr drawPlayerAndCheckForCollisions                             ;
+    jsr checkForCollisions                                          ;
     jsr updateVerticalGuardiansAndJumpAndFallSounds                 ;
 
     ; read special keys (for sound on/off, pause, quit)
@@ -6629,12 +6793,12 @@ showLevel
 
 resumeMusic
     lda #$ee                                ; opcode for 'INC abs'
-    sta checkForChannel3Update              ; store INC opcode in the code that updates music
+    sta updateMusic                         ; store INC opcode in the code that updates music
     rts                                     ;
 
 pauseMusic
     lda #$60                                ; opcode for 'RTS'
-    sta checkForChannel3Update              ; store RTS opcode in the code that updates music
+    sta updateMusic                         ; store RTS opcode in the code that updates music
     lda #$9f                                ;
     jmp soundDirect                         ; silence sound channel 3
 
@@ -6960,7 +7124,7 @@ addScoreAsAirDrains
 ; ***************************************************************************************
 drawInitialAirMeter
     lda #$67                        ;
-    sta airRemaining                ; ?
+    sta airRemaining                ;
 
     lda #3                          ; COLOUR 3
     jsr setTextColour               ;
@@ -7334,9 +7498,6 @@ keyTaken
     ldy #$01                        ; } SOUND
     jsr playSoundAXY                ; }
 
-    lda #1                          ;
-    sta switchTriggered             ; getting a key triggers the switch?
-
     lda #$49                        ;
     jsr incrementScore              ; add 50 to score
     lda #$49                        ;
@@ -7513,65 +7674,13 @@ setupPatternLoop
     bpl setupPatternLoop                                ; until 8 bytes copied
     rts                                                 ;
 
-; ***************************************************************************************
-animateLevel19EnergyFields
-    lda currentLevel                    ;
-    cmp #19                             ;
-    beq level19EnergyFields             ;
-    rts                                 ;
 
-level19EnergyFields
-    inc energyFieldTimer                ;
-    jsr swapEnergyFieldSpritesWith0C00  ;
-    lda energyFieldTimer                ;
-    and #$10                            ;
-    cmp #0                              ;
-    beq toggleEnergyField               ;
-    lda #0                              ;
-    sta energyFieldSpriteOffset         ;
-    lda energyFieldTimer                ;
-    and #1                              ;
-    cmp #0                              ;
-    beq setEnergyFieldColour            ;
-    lda #2                              ;
-    sta energyFieldSpriteOffset         ;
-setEnergyFieldColour
-    lda #2                              ; COLOUR 2
-    jsr setTextColour                   ;
-    ldx #0                              ;
--
-    lda energyFieldString,x             ;
-    cmp #$2a                            ;
-    beq drawEnergyField                 ;
-continueEnergyFieldString
-    jsr OSWRCH                          ;
-    inx                                 ;
-    cpx #16                             ;
-    bne -                               ; loop for length of message
-    jmp swapEnergyFieldSpritesWith0C00  ;
-
-drawEnergyField
-    lda #$e0                            ;
-    clc                                 ;
-    adc energyFieldSpriteOffset         ;
-    tay                                 ;
-    iny                                 ;
-    jsr OSWRCH                          ;
-    lda #$0a                            ;
-    jsr OSWRCH                          ;
-    lda #8                              ;
-    jsr OSWRCH                          ;
-    tya                                 ;
-    jmp continueEnergyFieldString       ;
-
-toggleEnergyField
-    lda #4                              ;
-    sta energyFieldSpriteOffset         ;
-    lda energyFieldTimer                ;
-    and #$0f                            ;
-    cmp #0                              ;
-    beq setEnergyFieldColour            ;
-    jmp swapEnergyFieldSpritesWith0C00  ;
+!if (* > $3280 ) {
+    !error "Code too big by ", * - $3280, " bytes"
+}
+free2 = $3280 - *
+    * = $3280                       ; start of visible screen
+!pseudopc $6200 {
 
 energyFieldString
     !byte $1f, 15, 5                    ; TAB(15, 5)
@@ -7582,11 +7691,6 @@ energyFieldString
     !byte $2a                           ;
     !byte $1f, 24, 9                    ; TAB(24, 9)
     !byte $2a                           ;
-
-
-free2 = $3280 - *
-    * = $3280                       ; start of visible screen
-!pseudopc $6200 {
 
 ; ***************************************************************************************
 gameOver
@@ -7677,12 +7781,13 @@ footDescendingLoop
 
 
 ; ***************************************************************************************
-drawPlayerAndCheckForCollisions
-    jsr getPlayerSourceSpriteAddress    ;
-    ldx newPlayerPixelX                 ;
-    ldy newPlayerPixelY                 ;
-    lda #1                              ;
-    jsr plot                            ; draw player (mode 1)
+checkForCollisions
+    ; not needed!?
+    ;jsr getPlayerSourceSpriteAddress    ;
+    ;ldx newPlayerPixelX                 ;
+    ;ldy newPlayerPixelY                 ;
+    ;lda #1                              ;
+    ;jsr plot                            ; draw player (mode 1)
     jsr checkForDeath                   ;
     jsr checkForSwitchFlipped           ;
     jsr collideWithVerticalGuardians    ;
@@ -8855,6 +8960,102 @@ levelDefinitions
     ; terminator
     !byte $ff, $ff
 
+    ; A Penrose triangle as encoded PLOT statements
+penroseTriangle
+    !byte $FE, 1                        ; GCOL 0,1
+    !byte $04, $12, $AC-6               ; MOVE
+    !byte $04, $12, $B8-6               ; MOVE
+    !byte $55, $78, $79-6               ; TRI
+    !byte $55, $6C, $8B-6               ; TRI
+    !byte $55, $78, $D3-6               ; TRI
+    !byte $55, $6C, $CD-6               ; TRI
+    !byte $FE, 2                        ; GCOL 0,2
+    !byte $04, $78, $79-6               ; MOVE
+    !byte $04, $83, $7F-6               ; MOVE
+    !byte $55, $78, $D3-6               ; TRI
+    !byte $55, $83, $E4-6               ; TRI
+    !byte $55, $37, $B3-6               ; TRI
+    !byte $55, $2D, $B8-6               ; TRI
+    !byte $FE, 3                        ; GCOL 0,3
+    !byte $04, $6C, $CC-6               ; MOVE
+    !byte $05, $6C, $98-6               ; DRAW
+    !byte $05, $2C, $B8-6               ; DRAW
+    !byte $05, $83, $E4-6               ; DRAW
+    !byte $05, $77, $EA-6               ; DRAW
+    !byte $05, $12, $B8-6               ; DRAW
+    !byte $05, $12, $AC-6               ; DRAW
+    !byte $05, $78, $79-6               ; DRAW
+    !byte $05, $83, $7F-6               ; DRAW
+    !byte $05, $83, $E4-6               ; DRAW
+    !byte $04, $78, $79-6               ; MOVE
+    !byte $05, $78, $D3-6               ; DRAW
+    !byte $05, $37, $B3-6               ; DRAW
+    !byte $04, $6C, $99-6               ; MOVE
+    !byte $05, $6C, $8B-6               ; DRAW
+    !byte $05, $12, $B8-6               ; DRAW
+    !byte $FF                           ; TERMINATOR
+
+
+; ***************************************************************************************
+animateLevel19EnergyFields
+    lda currentLevel                    ;
+    cmp #19                             ;
+    beq level19EnergyFields             ;
+    rts                                 ;
+
+level19EnergyFields
+    inc energyFieldTimer                ;
+    jsr swapEnergyFieldSpritesWith0C00  ;
+    lda energyFieldTimer                ;
+    and #$10                            ;
+    cmp #0                              ;
+    beq toggleEnergyField               ;
+    lda #0                              ;
+    sta energyFieldSpriteOffset         ;
+    lda energyFieldTimer                ;
+    and #1                              ;
+    cmp #0                              ;
+    beq setEnergyFieldColour            ;
+    lda #2                              ;
+    sta energyFieldSpriteOffset         ;
+setEnergyFieldColour
+    lda #2                              ; COLOUR 2
+    jsr setTextColour                   ;
+    ldx #0                              ;
+-
+    lda energyFieldString,x             ;
+    cmp #$2a                            ;
+    beq drawEnergyField                 ;
+continueEnergyFieldString
+    jsr OSWRCH                          ;
+    inx                                 ;
+    cpx #16                             ;
+    bne -                               ; loop for length of message
+    jmp swapEnergyFieldSpritesWith0C00  ;
+
+drawEnergyField
+    lda #$e0                            ;
+    clc                                 ;
+    adc energyFieldSpriteOffset         ;
+    tay                                 ;
+    iny                                 ;
+    jsr OSWRCH                          ;
+    lda #$0a                            ;
+    jsr OSWRCH                          ;
+    lda #8                              ;
+    jsr OSWRCH                          ;
+    tya                                 ;
+    jmp continueEnergyFieldString       ;
+
+toggleEnergyField
+    lda #4                              ;
+    sta energyFieldSpriteOffset         ;
+    lda energyFieldTimer                ;
+    and #$0f                            ;
+    cmp #0                              ;
+    beq setEnergyFieldColour            ;
+    jmp swapEnergyFieldSpritesWith0C00  ;
+
     ; ***********************************************************************************
     !macro singleType .count, .spriteOffset {
         !if (.count < 2) {
@@ -9247,42 +9448,6 @@ levelSingleItemDefinitions
     +singleOffsetX15        ;
     +singleSpider 11, 8, 3  ; spider, length 3
     !byte $ff               ; terminator
-
-    ; A Penrose triangle as encoded PLOT statements
-penroseTriangle
-    !byte $FE, 1                        ; GCOL 0,1
-    !byte $04, $12, $AC-6               ; MOVE
-    !byte $04, $12, $B8-6               ; MOVE
-    !byte $55, $78, $79-6               ; TRI
-    !byte $55, $6C, $8B-6               ; TRI
-    !byte $55, $78, $D3-6               ; TRI
-    !byte $55, $6C, $CD-6               ; TRI
-    !byte $FE, 2                        ; GCOL 0,2
-    !byte $04, $78, $79-6               ; MOVE
-    !byte $04, $83, $7F-6               ; MOVE
-    !byte $55, $78, $D3-6               ; TRI
-    !byte $55, $83, $E4-6               ; TRI
-    !byte $55, $37, $B3-6               ; TRI
-    !byte $55, $2D, $B8-6               ; TRI
-    !byte $FE, 3                        ; GCOL 0,3
-    !byte $04, $6C, $CC-6               ; MOVE
-    !byte $05, $6C, $98-6               ; DRAW
-    !byte $05, $2C, $B8-6               ; DRAW
-    !byte $05, $83, $E4-6               ; DRAW
-    !byte $05, $77, $EA-6               ; DRAW
-    !byte $05, $12, $B8-6               ; DRAW
-    !byte $05, $12, $AC-6               ; DRAW
-    !byte $05, $78, $79-6               ; DRAW
-    !byte $05, $83, $7F-6               ; DRAW
-    !byte $05, $83, $E4-6               ; DRAW
-    !byte $04, $78, $79-6               ; MOVE
-    !byte $05, $78, $D3-6               ; DRAW
-    !byte $05, $37, $B3-6               ; DRAW
-    !byte $04, $6C, $99-6               ; MOVE
-    !byte $05, $6C, $8B-6               ; DRAW
-    !byte $05, $12, $B8-6               ; DRAW
-    !byte $FF                           ; TERMINATOR
-
 
     ; ***********************************************************************************
 guardianGraphics
@@ -13525,13 +13690,34 @@ flashingExitCounter
 
 ; reading a character from the screen
 tempLoopCounter
-    !byte 0
+    !byte 0                         ;
 tempByte
-    !byte 0
+    !byte 0                         ;
 tempMask
-    !byte 0
+    !byte 0                         ;
 plotColourMask
     !byte 0                         ;
+
+; ***************************************************************************************
+screenAreaMinY
+    !byte $18,$30,$48,$60,$78,$90,$A8,$C0
+dangerAreas
+    !byte  7, 8, 9, 10, 11, 12, 0, 1, 2, 3, 4, 5, 6, 7
+
+; ***************************************************************************************
+debugChangePalette
+    ORA paletteLookupTable                  ;
+    STA videoULAPaletteRegister             ; store actual colour in register
+    EOR #$10                                ;
+    STA videoULAPaletteRegister             ; store actual colour in register
+    EOR #$50                                ;
+    STA videoULAPaletteRegister             ; store actual colour in register
+    EOR #$10                                ;
+    STA videoULAPaletteRegister             ; store actual colour in register
+    RTS
+paletteLookupTable
+    !byte $00, $20, $80, $A0
+
 
 tempScreenAddressLow
     !byte $00                       ;

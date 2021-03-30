@@ -2007,7 +2007,7 @@ checkPlayerY
 updatePlayerFalling
     lda newPlayerPixelY                 ;
     clc                                 ;
-    adc #2                              ;
+    adc #4                              ;
     sta newPlayerPixelY                 ;
     jmp checkIfBlockedLeftOrRight       ;
 
@@ -3089,71 +3089,51 @@ readOrWriteCachedBackground
     ; set up for reading from the screen and writing to the background cache:
     ;   lda logicalScreenStart,x            ; screen address
     ;   sta backgroundCache,y               ; off-the-visible-screen storage area
-    lda #$bd                                ; store opcode for LDA abs,X
-    sta readFromMemory                      ;
     lda screenLow                           ;
     sta readFromMemory + 1                  ;
     lda screenHigh                          ;
     sta readFromMemory + 2                  ;
 
-    lda #$99                                ; store opcode for STA abs,Y
-    sta writeToMemory                       ;
     lda #<backgroundCache                   ;
     sta writeToMemory + 1                   ;
     lda #>backgroundCache                   ;
     sta writeToMemory + 2                   ;
-    jmp nextBit
+    jmp copyCache                           ;
 
 +
     ; set up for reading from the background cache and writing to the screen:
     ;   lda backgroundCache,y               ; off-the-visible-screen storage area
     ;   sta logicalScreenStart,x            ; screen address
 
-    lda #$b9                                ; } store opcode for LDA abs,Y
-    sta readFromMemory                      ; }
     lda #<backgroundCache                   ;
     sta readFromMemory + 1                  ;
     lda #>backgroundCache                   ;
     sta readFromMemory + 2                  ;
 
-    lda #$9d                                ; } store opcode for STA abs,X
-    sta writeToMemory                       ; }
     lda screenLow                           ;
     sta writeToMemory + 1                   ;
     lda screenHigh                          ;
     sta writeToMemory + 2                   ;
 
-nextBit
 ; ***************************************************************************************
 copyCache
-    ldx #0                              ; inner loop counter (within one row)
     ldy #0                              ; outer loop counter (number of rows * 32)
 readWriteBackgroundCacheLoop
+    ldx #31                             ; inner loop counter (within one row)
 readFromMemory
     lda $ffff,x                         ;
 writeToMemory
-    sta $ffff,y                         ;
-    inx                                 ;
-    iny                                 ;
-    cpx #32                             ;
-    bne readWriteBackgroundCacheLoop    ;
+    sta $ffff,x                         ;
+    dex                                 ;
+    bpl readFromMemory                  ;
 
     ; go to next row
-    ldx #0                              ;
 
     ; test which direction we want to read/write
     lda $70                                 ;
-    bne +                                   ;
+    beq otherDirection                      ;
 
-    lda writeToMemory + 1               ; }
-    clc                                 ; }
-    adc #$80                            ; }
-    sta writeToMemory + 1               ; } add $0280 to screen address (goto next row)
-    lda writeToMemory + 2               ; }
-    adc #$02                            ; }
-    sta writeToMemory + 2               ; }
-    jmp checkForEndOfLoop               ;
-+
+    ; read from screen, write to cache
     lda readFromMemory + 1              ; }
     clc                                 ; }
     adc #$80                            ; }
@@ -3162,9 +3142,38 @@ writeToMemory
     adc #$02                            ; }
     sta readFromMemory + 2              ; }
 
+    lda writeToMemory + 1               ; }
+    clc                                 ; }
+    adc #32                             ; }
+    sta writeToMemory + 1               ; } add 32 to cache address (goto next row)
+    bcc +                               ; }
+    inc writeToMemory + 2               ; }
++
+    jmp checkForEndOfLoop               ;
+
+otherDirection
+    ; read from cache, write to screen
+    lda writeToMemory + 1               ; }
+    clc                                 ; }
+    adc #$80                            ; }
+    sta writeToMemory + 1               ; } add $0280 to screen address (goto next row)
+    lda writeToMemory + 2               ; }
+    adc #$02                            ; }
+    sta writeToMemory + 2               ; }
+
+    lda readFromMemory + 1              ; }
+    clc                                 ; }
+    adc #32                             ; }
+    sta readFromMemory + 1              ; } add 32 to cache address (goto next row)
+    bcc +                               ; }
+    inc readFromMemory + 2              ; }
++
+
+
 checkForEndOfLoop
-    cpy #95                             ;
-    bcc readWriteBackgroundCacheLoop    ; if (Y < 95) then branch (loop back)
+    iny                                 ;
+    cpy #3                              ;
+    bcc readWriteBackgroundCacheLoop    ; if (Y < 3) then branch (loop back)
     rts                                 ;
 
 ; ***************************************************************************************
@@ -4800,30 +4809,34 @@ drawConveyor
     jsr cellPlot                        ; plot first conveyor
     ldx conveyorLength                  ;
 
+    lda plotScreenAddressLow            ;
+    sta fromScreenAddressLow            ;
+    sta toScreenAddressLow              ;
+    lda plotScreenAddressHigh           ;
+    sta fromScreenAddressHigh           ;
+    sta toScreenAddressHigh             ;
+
 --
     dex                                 ;
     beq doneConveying                   ;
 
-    lda plotScreenAddressLow            ;
+    lda toScreenAddressLow              ;
     clc                                 ;
     adc #16                             ;
-    sta altScreenAddressLow             ;
-
-    lda plotScreenAddressHigh           ;
-    adc #0
-    sta altScreenAddressHigh            ;
-
+    sta toScreenAddressLow              ;
+    bcc +
+    inc toScreenAddressHigh             ;
++
     ldy #15                             ;
 -
-    lda (plotScreenAddressLow),y        ;
-    sta (altScreenAddressLow),y         ;
-    dey
-    bpl -                              ;
-
-    lda altScreenAddressLow             ;
-    sta plotScreenAddressLow            ;
-    lda altScreenAddressHigh            ;
-    sta plotScreenAddressHigh           ;
+fromScreenAddressLow = * + 1
+fromScreenAddressHigh = * + 2
+    lda $ffff,y                         ;
+toScreenAddressLow = * + 1
+toScreenAddressHigh = * + 2
+    sta $ffff,y                         ;
+    dey                                 ;
+    bpl -                               ;
 
     jmp --                              ;
 doneConveying
@@ -5742,8 +5755,9 @@ updateMusic
     beq updateChannel3              ; update channel 3
 updateMusicVolume
     lda vsyncCounter                ;
+    lsr
     clc                             ;
-    adc #$90                        ;
+    adc #$93                        ;
     cmp #$9f                        ;
     bcc +                           ;
     lda #$9f                        ;
@@ -5755,16 +5769,18 @@ updateChannel3
     lda musicCounter                ;
     tax                             ;
     lda music,x                     ;
+    cmp #$ff                        ;
+    beq finishChannel3Notes         ; if (end of tune) then branch
     cmp previousNoteByte            ;
-    beq updateMusicVolume           ;
+    beq updateMusicVolume           ; if (same as previous note) then branch
     sta previousNoteByte            ;
+    tax                             ;
     lda #0                          ;
     sta vsyncCounter                ;
-    lda #$80                        ;
+    lda soundFrequenciesFirst,x     ;
     jsr soundDirect                 ; Channel 3 frequency
-    lda previousNoteByte            ;
-    beq finishChannel3Notes         ;
-    jmp soundDirect                 ;
+    lda soundFrequenciesSecond,x    ;
+    jsr soundDirect                 ; Channel 3 frequency
     jmp updateMusicVolume           ;
 
 finishChannel3Notes
@@ -5780,12 +5796,18 @@ quietChannel3
     lda #$9f                        ;
     jmp soundDirect                 ; set zero volume on channel 3
 
+
+soundX
+    !byte 0
+
 ; ***************************************************************************************
 ; send a byte to the sound chip (as seen in the advanced user guide)
 soundDirect
     php                             ; remember if interrupts are enabled
     sei                             ;
     pha                             ; remember A
+
+    stx soundX                      ;
 
     lda #151                        ;
     ldx #$43                        ; Data direction register A
@@ -5804,6 +5826,8 @@ soundDirect
 
     ldy #8                          ; Set sound chip write pin high
     jsr OSBYTE                      ;
+
+    ldx soundX                      ;
 
     plp                             ; Restore interrupt enabled as needed
     rts                             ;
@@ -5936,7 +5960,6 @@ notInAir
     lda newPlayerPixelY             ; }
     sec                             ; }
     sbc playerHeightOnTakeOff       ; }
-    asl                             ; }
     eor #$7f                        ; } play descending falling sound
     tax                             ; }
     lda #$f1                        ; }
@@ -7127,6 +7150,7 @@ drainAirRemaining
     eor #$3f                        ;
     sta channel2Frequency           ;
     jsr updateAir                   ;
+    jsr updateAir                   ;
     inc keyCounter                  ;
     lda keyCounter                  ;
     and #3                          ;
@@ -7140,8 +7164,8 @@ continueDrainingAir
     jmp gotoNextLevel               ;
 
 addScoreAsAirDrains
-    lda #5                          ;
-    jsr addToScore                  ; add 6 to score
+    lda #1                          ;
+    jsr addToScore                  ; add 2 to score
     jmp continueDrainingAir         ;
 
 ; ***************************************************************************************
@@ -7281,14 +7305,17 @@ updateAir
 loseAirCheck
     inc airRemainingDelayCounter    ;
     lda airRemainingDelayCounter    ;
-    and #$0f                        ;
+    and #$1f                        ;
     cmp #0                          ;
     beq loseAir                     ;
     rts                             ;
 
 ; ***************************************************************************************
 loseAir
+    lda airRemaining                    ;
+    beq +                               ;
     dec airRemaining                    ;
++
     inc airRemainingOffsetWithinCell    ;
     lda airRemainingOffsetWithinCell    ;
     and #7                              ;
@@ -13309,11 +13336,50 @@ cheatCodeEnd
 
 ; ***************************************************************************************
 music
-    ; tune frequencies
-    !byte $23, $1f, $1d, $1a, $17, $1d, $17, $17, $16, $1a, $16, $16, $17, $1d, $17, $17
-    !byte $23, $1f, $1d, $1a, $17, $1d, $17, $17, $16, $1a, $16, $16, $17, $17, $17
-    !byte $23, $1f, $1d, $1a, $17, $1d, $17, $17, $16, $1a, $16, $16, $17, $1d, $17, $17
-    !byte $23, $1f, $1d, $1a, $17, $1d, $17, $11, $13, $17, $1d, $17, $13, $13, $13, $00
+    ; OLD tune frequencies
+;    !byte $23, $1f, $1d, $1a, $17, $1d, $17, $17, $16, $1a, $16, $16, $17, $1d, $17, $17
+;    !byte $23, $1f, $1d, $1a, $17, $1d, $17, $17, $16, $1a, $16, $16, $17, $17, $17, $17
+;    !byte $23, $1f, $1d, $1a, $17, $1d, $17, $17, $16, $1a, $16, $16, $17, $1d, $17, $17
+;    !byte $23, $1f, $1d, $1a, $17, $1d, $17, $11, $13, $17, $1d, $17, $13, $13, $13, $13, $00
+
+    ;     B2, C#3, D3, E3, F#3, D3, F#3,    E#3, C#3, E#3,    E3, B#2, E3
+    !byte  0,   2,  3,  5,   7,  3,   7,7,    6,   2,   6,6,   5,   1,  5, 5
+    ;     B2, C#3, D3, E3, F#3, D3, F#3,     B3,  A3, F#3,    D3, F#3, A3
+    !byte  0,   2,  3,  5,   7,  3,   7,     12,  10,   7,     3,   7, 10, 10, 10, 10
+    ;     B2, C#3, D3, E3, F#3, D3, F#3,    E#3, C#3, E#3,    E3, B#2, E3
+    !byte  0,   2,  3,  5,   7,  3,   7,7,    6,   2,   6,6,   5,   1,  5, 5
+    ;     B2, C#3, D3, E3, F#3, D3, F#3,     B3, F#3,  D3,   F#3,  B3, B2
+    !byte  0,   2,  3,  5,   7,  3,   7,     12,   7,   3,     7,  12,  0, 0, 0, 0, $ff
+
+soundFrequenciesFirst
+    !byte $80 + 4           ; 0   1012  B2
+    !byte $80 + 12          ; 1    956  C3 (=B#2)
+    !byte $80 + 6           ; 2    902  C#3
+    !byte $80 + 3           ; 3    851  D3
+    !byte $80 + 4           ; 4    804  D#3
+    !byte $80 + 6           ; 5    758  E3
+    !byte $80 + 12          ; 6    716  F3 (=E#3)
+    !byte $80 + 4           ; 7    676  F#3
+    !byte $80 + 14          ; 8    638  G3
+    !byte $80 + 10          ; 9    602  G#3
+    !byte $80 + 8           ; 10   568  A3
+    !byte $80 + 8           ; 11   536  A#3
+    !byte $80 + 10          ; 12   506  B3
+
+soundFrequenciesSecond
+    !byte 63                ; 0   1012  B2
+    !byte 59                ; 1    956  C3 (=B#2)
+    !byte 56                ; 2    902  C#3
+    !byte 53                ; 3    851  D3
+    !byte 50                ; 4    804  D#3
+    !byte 47                ; 5    758  E3
+    !byte 44                ; 6    716  F3 (=E#3)
+    !byte 42                ; 7    676  F#3
+    !byte 39                ; 8    638  G3
+    !byte 37                ; 9    602  G#3
+    !byte 35                ; 10   568  A3
+    !byte 33                ; 11   536  A#3
+    !byte 31                ; 12   506  B3
 
 ; ***************************************************************************************
 creditsMessage

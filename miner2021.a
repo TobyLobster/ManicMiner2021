@@ -3873,14 +3873,13 @@ moveLeftOrRight
     and #3                          ;
     asl                             ;
     sta zpGuardianAnimIndex         ; temp = 2 * (guardianX and 3)
-    jsr positionCursorAtGuardian    ;
-    lda zpGuardianAnimIndex         ;
-    cmp #0                          ;
     bne notAtCellXBoundary          ;
-    jsr eraseLeftOfGuardian         ;
+
     jsr positionCursorAtGuardian    ;
+    jsr eraseLeftOfGuardian         ;
 
 notAtCellXBoundary
+    jsr positionCursorAtGuardian    ;
     ; draw e0+temp, e1+temp
     ;      e8+temp, e9+temp
     lda #$e0                        ;
@@ -3931,14 +3930,13 @@ moveGuardianLeft
     eor #3                          ;
     asl                             ;
     sta zpGuardianAnimIndex         ;
-    jsr positionCursorAtGuardian    ;
-    lda zpGuardianAnimIndex         ;
-    cmp #0                          ;
     bne +                           ;
-    jsr eraseRightOfGuardian        ;
+
     jsr positionCursorAtGuardian    ;
+    jsr eraseRightOfGuardian        ;
 
 +
+    jsr positionCursorAtGuardian    ;
     lda currentLevel                ;
     cmp #19                         ;
     beq setAnimIndexBasedOnX        ;
@@ -4572,7 +4570,7 @@ drawFixedString
     and #$7f                        ;
     jsr OSWRCH                      ;
     iny                             ;
-    cpy #32                         ;
+    cpy #fixedTextEnd - fixedText   ;
     bne -                           ;
     rts                             ;
 
@@ -6509,21 +6507,21 @@ waitForRETURN
 ; ***************************************************************************************
 
 startGame
-    lda #1                                  ; set level 1 - Central Cavern
+    lda #18                                  ; set level 1 - Central Cavern
     jsr showLevel                           ;
     jsr updateMusicState                    ; pause / resume music
 
 playCurrentLevel
     lda tempScreenAddressLow                ; }
     sta plotScreenAddressLow                ; } restore screen plotting address
-    lda tempScreenAddressHigh               ; } [not needed?]
+    lda tempScreenAddressHigh               ; }
     sta plotScreenAddressHigh               ; }
 
     jsr updatePlayer                        ;
 
     lda plotScreenAddressLow                ; }
     sta tempScreenAddressLow                ; } save screen plotting address
-    lda plotScreenAddressHigh               ; } [not needed?]
+    lda plotScreenAddressHigh               ; }
     sta tempScreenAddressHigh               ; }
 
     jsr animateKeysUpdateHorizontalGuardiansAndLevel19EnergyFields  ;
@@ -13052,6 +13050,7 @@ fixedText
     !text $00 + $09, $80 + $09, $80 + ' ', $00 + ' ', $00 + 'L'
     !text $00 + 'i', $80 + 'v', $00 + 'e', $80 + 's', $00 + ' '
     !text $09, $09, $20, $20, "Level"
+fixedTextEnd
 
 ; ***************************************************************************************
 levelTitles

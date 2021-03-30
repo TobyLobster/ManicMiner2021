@@ -4569,8 +4569,10 @@ showTitleScreenMessageAndWaitForRETURN
     inc $70                         ;
     bne -                           ;
 
-    lda #0                          ;
-    sta channel3Frequency           ; }
+    lda #$ff                        ;
+    sta previousNoteByte            ;
+    sta musicCounter                ; }
+    sta vsyncCounter                ; }
     jsr resumeMusic                 ; } demo mode
     jmp playAttractLoop             ; }
 
@@ -5698,6 +5700,7 @@ oldIrq1RoutineHigh = * + 2
     sta rasterArea                      ;
     beq handledInterrupt                ; ALWAYS branch
 
+; ***************************************************************************************
 updateSound
     ; update music
     jsr updateMusic                     ;
@@ -5733,33 +5736,45 @@ silenceChannel2
 
 ; ***************************************************************************************
 updateMusic
-    inc vsyncCounter                ; This first instruction MUST be an INC - this is self modifying code
+    inc vsyncCounter                ; This first instruction MUST be an INC (this byte is modified elsewhere)
     lda vsyncCounter                ;
-    cmp #1                          ; 1 = duration of note
-    beq quietChannel3               ;
-    cmp #6                          ; 6 = time between notes
+    and #7                          ;
     beq updateChannel3              ; update channel 3
-    rts                             ;
+updateMusicVolume
+    lda vsyncCounter                ;
+    clc                             ;
+    adc #$90                        ;
+    cmp #$9f                        ;
+    bcc +                           ;
+    lda #$9f                        ;
++
+    jmp soundDirect                 ; Channel 3 volume
 
 updateChannel3
-    lda #0                          ;
-    sta vsyncCounter                ;
-    inc channel3Frequency           ;
-    lda #$92                        ;
-    jsr soundDirect                 ; Channel 3 volume
-    lda #$80                        ;
-    jsr soundDirect                 ; Channel 3 frequency
-    lda channel3Frequency           ;
-    lsr                             ;
+    inc musicCounter                ;
+    lda musicCounter                ;
     tax                             ;
     lda music,x                     ;
+    cmp previousNoteByte            ;
+    beq updateMusicVolume           ;
+    sta previousNoteByte            ;
+    lda #0                          ;
+    sta vsyncCounter                ;
+    lda #$80                        ;
+    jsr soundDirect                 ; Channel 3 frequency
+    lda previousNoteByte            ;
     beq finishChannel3Notes         ;
     jmp soundDirect                 ;
+    jmp updateMusicVolume           ;
 
 finishChannel3Notes
     lda #$ff                        ;
-    sta channel3Frequency           ; end channel 3 notes
+    sta musicCounter                ; end channel 3 notes
+    sta vsyncCounter                ;
+    sta previousNoteByte            ;
++
     rts                             ;
+
 
 quietChannel3
     lda #$9f                        ;
@@ -6811,10 +6826,11 @@ pauseMusic
     jmp soundDirect                         ; silence sound channel 3
 
 updateMusicState
-    lda #0                                  ;
-    sta channel3Frequency                   ;
+    lda #$ff                                ;
+    sta musicCounter                        ;
+    sta vsyncCounter                        ;
+    sta previousNoteByte                    ;
     lda musicEnabled                        ;
-    cmp #0                                  ;
     beq pauseMusic                          ;
     jmp resumeMusic                         ;
 
@@ -13295,9 +13311,9 @@ cheatCodeEnd
 music
     ; tune frequencies
     !byte $23, $1f, $1d, $1a, $17, $1d, $17, $17, $16, $1a, $16, $16, $17, $1d, $17, $17
-    !byte $23, $1f, $1d, $1a, $17, $1d, $17, $17, $16, $1a, $16, $16, $17, $17, $17, $23
-    !byte $1f, $1d, $1a, $17, $1d, $17, $17, $16, $1a, $16, $16, $17, $1d, $17, $17, $23
-    !byte $1f, $1d, $1a, $17, $1d, $17, $11, $13, $17, $1d, $17, $13, $13, $13, $00, $00
+    !byte $23, $1f, $1d, $1a, $17, $1d, $17, $17, $16, $1a, $16, $16, $17, $17, $17
+    !byte $23, $1f, $1d, $1a, $17, $1d, $17, $17, $16, $1a, $16, $16, $17, $1d, $17, $17
+    !byte $23, $1f, $1d, $1a, $17, $1d, $17, $11, $13, $17, $1d, $17, $13, $13, $13, $00
 
 ; ***************************************************************************************
 creditsMessage
@@ -13631,11 +13647,13 @@ keysLeft
 
 ; ***************************************************************************************
 vsyncCounter
-    !byte $ea                       ;
-channel3Frequency
+    !byte $10                       ;
+musicCounter
     !byte $00                       ;
 channel2Frequency
     !byte $ff                       ;
+previousNoteByte
+    !byte $ff
 
 ; ***************************************************************************************
     ; Each vertical guardian has four bytes in this table

@@ -1627,6 +1627,15 @@ tempHigh
     !byte 0
 
 ; ***************************************************************************************
+;
+; On Entry:
+;   X and Y are coordinates on screen
+;
+; On Exit:
+;   plotScreenAddressLow/High set to screen address
+;   plotXOffset / plotYOffset set to offsets within cell
+;
+; ***************************************************************************************
 plotGetScreenAddress
     txa                                 ;
     and #3                              ;
@@ -6505,7 +6514,17 @@ startGame
     jsr updateMusicState                    ; pause / resume music
 
 playCurrentLevel
+    lda tempScreenAddressLow                ; }
+    sta plotScreenAddressLow                ; } restore screen plotting address
+    lda tempScreenAddressHigh               ; } [not needed?]
+    sta plotScreenAddressHigh               ; }
+
     jsr updatePlayer                        ;
+
+    lda plotScreenAddressLow                ; }
+    sta tempScreenAddressLow                ; } save screen plotting address
+    lda plotScreenAddressHigh               ; } [not needed?]
+    sta tempScreenAddressHigh               ; }
 
     jsr animateKeysUpdateHorizontalGuardiansAndLevel19EnergyFields  ;
     jsr drawPlayerAndCheckForCollisions                             ;

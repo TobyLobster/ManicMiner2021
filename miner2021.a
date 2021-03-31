@@ -4195,11 +4195,7 @@ return13
     rts                                 ;
 
 ; ***************************************************************************************
-drawIfNotOverExit
-    sta rememberCharacterToDraw         ;
-    jsr isOverExit                      ;
-    beq moveForward                     ;
-
+setCursorScreenAddress
     lda cursorX                         ;
     asl                                 ;
     asl                                 ;
@@ -4213,8 +4209,15 @@ drawIfNotOverExit
     tay                                 ;
     sty plotY                           ;
 
-    jsr plotGetScreenAddress            ;
+    jmp plotGetScreenAddress            ;
 
+; ***************************************************************************************
+drawIfNotOverExit
+    sta rememberCharacterToDraw         ;
+    jsr isOverExit                      ;
+    beq moveForward                     ;
+
+    jsr setCursorScreenAddress          ;
     lda rememberCharacterToDraw         ;
     and #$1f                            ;
     asl                                 ;
@@ -4236,20 +4239,8 @@ moveForward
 eraseIfNotOverExit
     jsr isOverExit                      ;
     beq moveForward2                    ;
-    lda cursorX                         ;
-    asl                                 ;
-    asl                                 ;
-    tax                                 ;
-    stx plotX                           ;
 
-    lda cursorY                         ;
-    asl                                 ;
-    asl                                 ;
-    asl                                 ;
-    tay                                 ;
-    sty plotY                           ;
-
-    jsr plotGetScreenAddress            ;
+    jsr setCursorScreenAddress          ;
     lda #<eraseGuardianEmptyBytes       ;
     sta cellPlotSourceSpriteAddressLow  ;
     lda #>eraseGuardianEmptyBytes       ;
@@ -6376,20 +6367,7 @@ colourCycleKeys
     lda guardianColourMasks,x       ;
     sta plotColourMask              ;
 
-    lda cursorX                         ;
-    asl                                 ;
-    asl                                 ;
-    tax                                 ;
-    stx plotX                           ;
-
-    lda cursorY                         ;
-    asl                                 ;
-    asl                                 ;
-    asl                                 ;
-    tay                                 ;
-    sty plotY                           ;
-
-    jsr plotGetScreenAddress            ;
+    jsr setCursorScreenAddress          ;
 
     lda #<keySprite                     ;
     sta cellPlotSourceSpriteAddressLow  ;
@@ -7130,20 +7108,7 @@ setColourAndShowExit
 
 ; ***************************************************************************************
 drawExitCell
-    lda cursorX                         ;
-    asl                                 ;
-    asl                                 ;
-    tax                                 ;
-    stx plotX                           ;
-
-    lda cursorY                         ;
-    asl                                 ;
-    asl                                 ;
-    asl                                 ;
-    tay                                 ;
-    sty plotY                           ;
-
-    jsr plotGetScreenAddress            ;
+    jsr setCursorScreenAddress          ;
     jsr cellPlot                        ;
     lda plotSourceSpriteAddressLow      ;
     clc                                 ;

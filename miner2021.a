@@ -1711,6 +1711,12 @@ plotGetScreenAddress
 +
     rts                                 ;
 
+yOffsetsTable
+    !byte $ff,0,0,0,0,0,0,0
+    !byte 0,0,0,0,0,0,0,0
+    !byte 8,0,0,0,0,0,0,0
+    !byte 16
+
 ; ***************************************************************************************
 ;
 ; plot
@@ -1747,26 +1753,22 @@ plot
     lda getHighByteAddress - 1,x        ;
     sta getSourceByte + 2               ;
 
-    lda #0                              ;
+    lda #16                             ;
     sta spriteRowCounter                ;
 
 spriteDrawRow
-    ldy #0                              ;
+    ldy #24                             ;
 getSourceByte
     jmp $ffff                           ; call routine to get source byte
 afterGetSourceByte
     sta (plotScreenAddressLow),y        ; store on screen
-    tya                                 ; }
-    clc                                 ; }
-    adc #8                              ; } Y += 8
+    lda yOffsetsTable, y                ; } sneaky table lookup to do y=y-8
     tay                                 ; }
-    cpy #32                             ;
-    bne getSourceByte                   ; copy four bytes
+    bpl getSourceByte                   ; copy four bytes
 
-    inc spriteRowCounter                ;
-    lda spriteRowCounter                ;
-    cmp #16                             ;
+    dec spriteRowCounter                ;
     beq return3                         ;
+    lda spriteRowCounter                ;
     and #7                              ;
     bne +                               ;
 
@@ -1774,7 +1776,7 @@ afterGetSourceByte
     clc                                 ; }
     adc #$18                            ; }
     sta plotSourceSpriteAddressLow      ; } add 24 to source sprite address
-    bcc +
+    bcc +                               ; }
     inc plotSourceSpriteAddressHigh     ; }
 
 +

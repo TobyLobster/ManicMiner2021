@@ -71,6 +71,8 @@ cachedCellX                     = $02       ;
 cachedCellY                     = $03       ;
 cursorX                         = $04       ;
 cursorY                         = $05       ;
+readCharScreenAddressLow        = $06       ;
+readCharScreenAddressHigh       = $07       ;
 levelDataOffset                 = $70       ;
 
 plotMode                        = $70       ;
@@ -411,37 +413,38 @@ exitSprites2x2
     ; skull and crossbones
     !byte %.....###            ;     ######
     !byte %....####            ;    ########
-    !byte %....#..#            ;    #  ##  #
-    !byte %....#..#            ;    #  ##  #
     !byte %....####            ;    ########
+    !byte %....#..#            ;    #  ##  #
+    !byte %....#..#            ;    #  ##  #
+    !byte %.....###            ;     ######
     !byte %.....#.#            ;     # ## #
-    !byte %.....##.            ;     ##  ##
-    !byte %......##            ;      ####
-    !byte %###.....            ; ###   ## #####
-    !byte %####....            ;#####    #######
-    !byte %#..#....            ;####### ########
-    !byte %#..#....            ;    ## ###  ###
-    !byte %####....            ; ###  ### ##
-    !byte %#.#.....            ;######## #######
-    !byte %.##.....            ;#######    #####
-    !byte %##......            ; #####      ###
+    !byte %......#.            ;      #  #
+    !byte %###.....            ; ##    ##    ##
+    !byte %####....            ;#####      #####
+    !byte %####....            ;#######  #######
+    !byte %#..#....            ;     # #####
+    !byte %#..#....            ;     ##### #
+    !byte %###.....            ;#######  #######
+    !byte %#.#.....            ;#####      #####
+    !byte %.#......            ; ##          ##
 
-    !byte %.###...#
+    !byte %.##....#
     !byte %#####...
     !byte %#######.
-    !byte %....##.#
-    !byte %.###..##
-    !byte %########
+    !byte %.....#.#
+    !byte %.....###
     !byte %#######.
-    !byte %.#####..
-    !byte %#.#####.
+    !byte %#####...
+    !byte %.##.....
+
+    !byte %#....##.
+    !byte %...#####
     !byte %.#######
-    !byte %########
-    !byte %##..###.
-    !byte %#.##....
+    !byte %####....
+    !byte %##.#....
     !byte %.#######
     !byte %...#####
-    !byte %....###.
+    !byte %.....##.
 
     ; star box
     !byte %########            ;################
@@ -513,34 +516,34 @@ exitSprites2x2
     !byte %########
 
     !byte %########            ;################
-    !byte %#...#...            ;#   #   #  #####
-    !byte %#.#.#.#.            ;# # # # # ##   #
-    !byte %#.#.#.#.            ;# # # # # ## # #
+    !byte %#####...            ;#####   #   ####
+    !byte %#...#...            ;#   #   #  #   #
+    !byte %#.#.#.#.            ;# # # # #  #   #
+    !byte %#.#.#.#.            ;# # # # #  # # #
     !byte %#...#...            ;#   #   #    # #
-    !byte %##.###.#            ;## ### #  ###  #
-    !byte %##.#...#            ;## #   # ##### #
-    !byte %##.#.#.#            ;## # # # # # # #
-    !byte %########            ;## # # # #   # #
-    !byte %#..#####            ;## #   # ##### #
-    !byte %#.##...#            ;## ### ## ### ##
-    !byte %#.##.#.#            ;#   ## ##     ##
-    !byte %#....#.#            ;# # #   # # # ##
-    !byte %..###..#            ;# # # # # # # ##
-    !byte %.#####.#            ;#   #   #   #  #
-    !byte %.#.#.#.#            ;################
+    !byte %##.#....            ;## #    #  #   #
+    !byte %##.#.#.#            ;## # # ## ###  #
+    !byte %########            ;## # # # # # # #
+    !byte %#...####            ;## #   # #   # #
+    !byte %#..#...#            ;#   #  #  ###  #
+    !byte %#..#...#            ;#   #  #      ##
+    !byte %#..#.#.#            ;# # #   # # # ##
+    !byte %#....#.#            ;# # # # # # # ##
+    !byte %#..#...#            ;#   # # #   #  #
+    !byte %#.###..#            ;################
 
     !byte %##.#.#.#
     !byte %##.#...#
-    !byte %##.###.#
-    !byte %#...##.#
+    !byte %#...#..#
+    !byte %#...#..#
     !byte %#.#.#...
     !byte %#.#.#.#.
-    !byte %#...#...
+    !byte %#...#.#.
     !byte %########
+    !byte %.#.#.#.#
     !byte %.#...#.#
-    !byte %.#####.#
-    !byte %#.###.##
-    !byte %#.....##
+    !byte %..###..#
+    !byte %......##
     !byte %#.#.#.##
     !byte %#.#.#.##
     !byte %#...#..#
@@ -595,92 +598,92 @@ exitSprites1x2
 
     !byte %########
     !byte %#......#
-    !byte %#......#
-    !byte %#......#
-    !byte %#...####
-    !byte %#...####
-    !byte %#...##..
-    !byte %######..
+    !byte %#.######
+    !byte %#.######
+    !byte %#.##....
+    !byte %#.##....
+    !byte %#.##....
+    !byte %####....
 
-    !byte %######..
-    !byte %#...##..
-    !byte %#...####
-    !byte %#...####
-    !byte %#......#
-    !byte %#......#
+    !byte %####....
+    !byte %#.##....
+    !byte %#.##....
+    !byte %#.##....
+    !byte %#.######
+    !byte %#.######
     !byte %#......#
     !byte %########
 
     !byte %########
-    !byte %#.......
     !byte %#.......
     !byte %##......
     !byte %#.#.....
-    !byte %##.#....
-    !byte %#.#.#...
-    !byte %#..#.#..
-
-    !byte %#...#.#.
-    !byte %##...#.#
-    !byte %#.#...#.
-    !byte %#..#...#
-    !byte %#...#..#
-    !byte %#..#..#.
+    !byte %#..#....
+    !byte %##..#...
     !byte %#.#..#..
+    !byte %#..#..#.
+
+    !byte %##..#..#
+    !byte %#.#..#..
+    !byte %#..#..#.
+    !byte %##..#..#
+    !byte %#.#..#..
+    !byte %##..#..#
+    !byte %#..#..#.
     !byte %########
 
     !byte %########
+    !byte %#.......
     !byte %#......#
     !byte %#.....#.
     !byte %#....#..
     !byte %#...#...
     !byte %#..#....
     !byte %#.#....#
-    !byte %##....##
 
-    !byte %##....##
     !byte %#.#....#
     !byte %#..#....
     !byte %#...#...
     !byte %#....#..
     !byte %#.....#.
     !byte %#......#
-    !byte %########
-
-    !byte %########
-    !byte %#.......
-    !byte %#.......
-    !byte %#...####
-    !byte %#...####
-    !byte %#...####
-    !byte %#...##..
-    !byte %#...##..
-
-    !byte %#...##..
-    !byte %#...##..
-    !byte %#...####
-    !byte %#...####
-    !byte %#...####
-    !byte %#.......
     !byte %#.......
     !byte %########
 
     !byte %########
     !byte %#.......
-    !byte %#.......
-    !byte %#.......
-    !byte %#....###
-    !byte %#...#...
-    !byte %#..#....
-    !byte %#..#...#
+    !byte %#...####
+    !byte %#...####
+    !byte %#...####
+    !byte %#...####
+    !byte %#...####
+    !byte %#...##..
 
-    !byte %#..#...#
-    !byte %#..#....
-    !byte %#...#...
-    !byte %#....###
+    !byte %#...##..
+    !byte %#...####
+    !byte %#...####
+    !byte %#...####
+    !byte %#...####
+    !byte %#...####
     !byte %#.......
-    !byte %#.......
-    !byte %#.......
+    !byte %########
+
+    !byte %########
+    !byte %########
+    !byte %######..
+    !byte %#####...
+    !byte %####....
+    !byte %###.....
+    !byte %##.....#
+    !byte %##....#.
+
+    !byte %##....#.
+    !byte %##.....#
+    !byte %###.....
+    !byte %####....
+    !byte %#####...
+    !byte %######..
+    !byte %########
     !byte %########
 
     !byte %########
@@ -722,19 +725,19 @@ exitSprites1x2
 
     !byte %########
     !byte %#.......
-    !byte %#.......
-    !byte %#..#####
-    !byte %#..#....
-    !byte %#..#.##.
-    !byte %#..#.##.
-    !byte %#..#.##.
+    !byte %#.##....
+    !byte %#.#.....
+    !byte %#.#.#.#.
+    !byte %#.#.#.#.
+    !byte %#.#.#.#.
+    !byte %#.#.#.#.
 
-    !byte %#..#.##.
-    !byte %#..#.##.
-    !byte %#..#.##.
-    !byte %#..#....
-    !byte %#..#####
-    !byte %#.......
+    !byte %#.#.#.#.
+    !byte %#.#.#.#.
+    !byte %#.#.#.#.
+    !byte %#.#.#.#.
+    !byte %#.#.....
+    !byte %#.##....
     !byte %#.......
     !byte %########
 
@@ -795,11 +798,11 @@ exitSprites1x2
 spikePlant
     !byte %.#...#..
     !byte %..#.#...
-    !byte %.#.#.#..
-    !byte %..##...#
-    !byte %#..#.#.#
-    !byte %.###.##.
-    !byte %...##...
+    !byte %#..#.#..
+    !byte %.#.#...#
+    !byte %..##.#.#
+    !byte %##.#.##.
+    !byte %.#.##...
     !byte %...#....
 
 allOtherSpikes
@@ -810,58 +813,58 @@ allOtherSpikes
     !byte %...##...
     !byte %....#...
     !byte %....#...
-    !byte %........
+    !byte %....#...
 
     !byte %########
     !byte %#######.
     !byte %.######.
     !byte %.#..##..
     !byte %.#..##..
+    !byte %....##..
     !byte %....#...
     !byte %....#...
-    !byte %........
 
-    !byte %....#...
-    !byte %.##.#.##
-    !byte %...###..
-    !byte %.##.#.##
-    !byte %...###..
-    !byte %..#...#.
-    !byte %.##...##
-    !byte %...#.#..
-
-    !byte %.##...##
-    !byte %...#.#..
-    !byte %...###..
-    !byte %.##.#.##
-    !byte %...###..
-    !byte %..#...#.
-    !byte %.##...##
-    !byte %...#.#..
-
-    !byte %..####..
-    !byte %...##...
-    !byte %#.####.#
-    !byte %###..###
-    !byte %###..###
-    !byte %#.####.#
-    !byte %...##...
-    !byte %..####..
-
-    !byte %#.#.#.#.
-    !byte %.#...#..
+    !byte %...#....
+    !byte %...#....
+    !byte %##.#.##.
     !byte %..###...
     !byte %##.#.##.
     !byte %..###...
-    !byte %.#####..
-    !byte %#.#.#.#.
-    !byte %..#.#...
+    !byte %.#.#.#..
+    !byte %#..#..#.
+
+    !byte %.##...##
+    !byte %...#.#..
+    !byte %...###..
+    !byte %.##.#.##
+    !byte %...###..
+    !byte %..#...#.
+    !byte %.##...##
+    !byte %...#.#..
+
+    !byte %..####..
+    !byte %...##...
+    !byte %#.####.#
+    !byte %###..###
+    !byte %###..###
+    !byte %#.####.#
+    !byte %...##...
+    !byte %..####..
+
+    !byte %#.#..#.#
+    !byte %.#....#.
+    !byte %..####..
+    !byte %##.##.##
+    !byte %..####..
+    !byte %.######.
+    !byte %#.#..#.#
+    !byte %..#..#..
 
     !byte %.#..#...
-    !byte %#.#.#.#.
+    !byte %#.##..#.
     !byte %.#.###.#
-    !byte %....#.#.
-    !byte %.####...
+    !byte %...#..#.
+    !byte %.###....
     !byte %#.#.###.
     !byte %#.#.#..#
     !byte %.#...###
@@ -875,24 +878,24 @@ allOtherSpikes
     !byte %###.###.
     !byte %########
 
-    !byte %##....##
-    !byte %.##..##.
-    !byte %..####..
-    !byte %..#..#..
-    !byte %..#..#..
-    !byte %..####..
-    !byte %.##..##.
-    !byte %##....##
+    !byte %#.####.#
+    !byte %..#.#...
+    !byte %.......#
+    !byte %#..##.#.
+    !byte %.#.##..#
+    !byte %#.....#.
+    !byte %...#...#
+    !byte %..#.#...
 
     ; thread
-    !byte %....#...
-    !byte %....#...
-    !byte %....#...
-    !byte %....#...
-    !byte %....#...
-    !byte %....#...
-    !byte %....#...
-    !byte %....#...
+    !byte %...#....
+    !byte %...#....
+    !byte %...#....
+    !byte %...#....
+    !byte %...#....
+    !byte %...#....
+    !byte %...#....
+    !byte %...#....
 
     ; key
     !byte %..##....
@@ -925,24 +928,24 @@ allOtherSpikes
     !byte %#####...
 
     ; banana
+    !byte %#.......
     !byte %##......
     !byte %###.##..
     !byte %.###..#.
     !byte %..#.#...
     !byte %.#.#.#..
-    !byte %.#..#.#.
-    !byte %.....###
-    !byte %........
+    !byte %#...#.#.
+    !byte %#....###
 
     ; apple
     !byte %....#...
     !byte %....#...
-    !byte %.######.
-    !byte %#.######
-    !byte %#..#####
-    !byte %#...####
-    !byte %##....##
-    !byte %.######.
+    !byte %..#####.
+    !byte %.#.#####
+    !byte %.#.#####
+    !byte %.#...###
+    !byte %.#.....#
+    !byte %..#####.
 
     !byte %...##...
     !byte %.##..##.
@@ -971,14 +974,14 @@ allOtherSpikes
     !byte %#.#.#.#.
     !byte %#.#.#.#.
 
-    !byte %.######.
-    !byte %..####..
-    !byte %.##..##.
-    !byte %##.#####
-    !byte %#...####
-    !byte %##.#####
-    !byte %#.....##
-    !byte %.######.
+    !byte %.#####..
+    !byte %..###...
+    !byte %.##..#..
+    !byte %##.####.
+    !byte %#...###.
+    !byte %##.####.
+    !byte %#.....#.
+    !byte %.#####..
 
     !byte %....####
     !byte %....#..#
@@ -992,9 +995,9 @@ allOtherSpikes
     !byte %########
     !byte %########
     !byte %##.##.##
-    !byte %..#.###.
+    !byte %.##.###.
     !byte %##...#.#
-    !byte %..#.....
+    !byte %.#......
     !byte %........
     !byte %........
 
@@ -1016,10 +1019,10 @@ allOtherSpikes
     !byte %.##..##.
     !byte %........
 
-    !byte %..####..
+    !byte %.#####..
     !byte %########
     !byte %###.####
-    !byte %##.#####
+    !byte %...####.
     !byte %...###..
     !byte %....#...
     !byte %....#...
@@ -1027,12 +1030,12 @@ allOtherSpikes
 
     !byte %########
     !byte %########
-    !byte %###.#.#.
-    !byte %#..#.#.#
-    !byte %.#..#.#.
-    !byte %#.#..#.#
-    !byte %.#.#....
-    !byte %#....###
+    !byte %##..#.#.
+    !byte %.##..#.#
+    !byte %#..#..#.
+    !byte %..#.#...
+    !byte %#.....#.
+    !byte %........
 
     !byte %########
     !byte %########
@@ -1047,7 +1050,7 @@ allOtherSpikes
     !byte %########
     !byte %.##...#.
     !byte %.##..#..
-    !byte %.##.#...
+    !byte %.####...
     !byte %.###....
     !byte %.##.....
     !byte %.##.....
@@ -1056,7 +1059,7 @@ allOtherSpikes
     !byte %########
     !byte %.#...##.
     !byte %..#..##.
-    !byte %...#.##.
+    !byte %...####.
     !byte %....###.
     !byte %.....##.
     !byte %.....##.
@@ -1088,14 +1091,14 @@ allOtherSpikes
     !byte %.#....##
     !byte %#......#
 
-    !byte %##.##.##
-    !byte %##.##.##
-    !byte %##.##.##
-    !byte %##.##.##
-    !byte %#.##.#..
-    !byte %#.###.##
-    !byte %##.##.##
-    !byte %##.##.##
+    !byte %#.##.#.#
+    !byte %#.##.#.#
+    !byte %#.##.#.#
+    !byte %#.#.##.#
+    !byte %#.#.#.##
+    !byte %#.##.#.#
+    !byte %##.#.#.#
+    !byte %##.#.#.#
 
     !byte %########
     !byte %#......#
@@ -1124,22 +1127,22 @@ allOtherSpikes
     !byte %#.#..#.#
     !byte %########
 
-    !byte %########
-    !byte %########
-    !byte %########
-    !byte %########
-    !byte %########
-    !byte %########
-    !byte %########
-    !byte %########
+    !byte %#.#.#.#.
+    !byte %.#.#.#.#
+    !byte %#.#.#.#.
+    !byte %.#.#.#.#
+    !byte %#.#.#.#.
+    !byte %.#.#.#.#
+    !byte %#.#.#.#.
+    !byte %.#.#.#.#
 
     !byte %########
     !byte %##.##.##
+    !byte %#.#..#..
     !byte %..#..#..
-    !byte %.#.#.#..
-    !byte %..#...#.
-    !byte %........
-    !byte %........
+    !byte %.#.#..#.
+    !byte %..#.....
+    !byte %....#...
     !byte %........
 
     !byte %########
@@ -1151,23 +1154,23 @@ allOtherSpikes
     !byte %###..#.#
     !byte %........
 
-    !byte %..####..
+    !byte %.#####..
     !byte %########
-    !byte %####.###
+    !byte %#....###
     !byte %....##..
-    !byte %...##...
-    !byte %...#....
-    !byte %...#....
-    !byte %...#....
+    !byte %....#...
+    !byte %....#...
+    !byte %....#...
+    !byte %........
 
     !byte %########
-    !byte %#...#...
-    !byte %..#...#.
-    !byte %#...#...
-    !byte %..#...#.
-    !byte %#...#...
-    !byte %..#...#.
-    !byte %#...#...
+    !byte %#.#.#.#.
+    !byte %.#.#.#.#
+    !byte %#.#.#.#.
+    !byte %.#.#.#.#
+    !byte %#.#.#.#.
+    !byte %.#.#.#.#
+    !byte %#.#.#.#.
 
     !byte %#######.                 ; conveyor 1
     !byte %.##..##.
@@ -1498,20 +1501,20 @@ exitSprite
     !byte %........
     !byte %........
 
-    !byte %#######.                 ; char 152 ($98, $B8, $D8, $F8)
-    !byte %#.....#.
-    !byte %#.....#.
-    !byte %.#...#..
-    !byte %..###...
-    !byte %..#.....
-    !byte %##......
-    !byte %##......
+    !byte %########                 ; char 152 ($98, $B8, $D8, $F8)
+    !byte %#......#
+    !byte %#......#
+    !byte %.#....#.
+    !byte %..####..
+    !byte %...#....
+    !byte %.##.....
+    !byte %.##.....
 
-    !byte %#######.                 ; char 153 ($99, $B9, $D9, $F9)
-    !byte %#.....#.
-    !byte %#.....#.
-    !byte %.#...#..
-    !byte %..###...
+    !byte %########                 ; char 153 ($99, $B9, $D9, $F9)
+    !byte %#......#
+    !byte %#......#
+    !byte %.#....#.
+    !byte %..####..
     !byte %....#...
     !byte %.....##.
     !byte %.....##.
@@ -2219,19 +2222,12 @@ cancelJump
 
 ; ***************************************************************************************
 checkForWallOnJump
-    lda #31                         ;
-    jsr OSWRCH                      ;
-    lda newPlayerPixelX             ;
-    lsr                             ;
-    lsr                             ;
-    jsr OSWRCH                      ;
-    lda newPlayerPixelY             ;
-    lsr                             ; TAB(newPlayerPixelX/4, newPlayerPixelY/8 - 1)
-    lsr                             ;
-    lsr                             ;
-    sec                             ;
-    sbc #1                          ;
-    jsr OSWRCH                      ;
+    ldx newPlayerPixelX             ;
+    ldy newPlayerPixelY             ;
+    jsr setTextPosFromPixelPos      ;
+    dec cursorY                     ;
+    dec cursorY                     ;
+    dec cursorY                     ;
 
     jsr readTwoCharactersFromScreen ; read the two characters immediately higher on screen than the player
     lda screenCharacterA            ;
@@ -2436,21 +2432,20 @@ opcodeForJsrPlot
     jsr updateAirAndCheckExit           ;
     jsr checkForLandingOnSpike          ;
 
-    ldx #34                             ;
-    ldy #23                             ;
-    jsr setTextPos                      ; TAB(34,23)
+    lda #34                             ;
+    sta cursorX                         ;
+    lda #23                             ;
+    sta cursorY                         ;
 
     jsr checkSpikeKeySwitch             ;
-    lda #9                              ; forward space
-    jsr OSWRCH                          ;
+    inc cursorX                         ;
     jsr checkSpikeKeySwitch             ;
 
     lda newPlayerPixelY                 ;
     and #7                              ;
     cmp #0                              ;
     beq +                               ; if (level with cell vertically) then branch
-    lda #9                              ; forward space
-    jsr OSWRCH                          ;
+    inc cursorX                         ; [TODO: is this right?, why check vertical alignment then check an extra X position?]
     jsr checkSpikeKeySwitch             ;
 +
     ; copy local variables back (4 bytes)
@@ -2473,8 +2468,7 @@ readTwoCharactersFromScreen
     jsr readCharacter       ; read character at cursor position
     stx screenCharacterA    ; store result
 
-    lda #9                  ;
-    jsr OSWRCH              ; move forward one space
+    inc cursorX             ; move right one cell
 
     jsr readCharacter       ; read character at cursor position
     stx screenCharacterB    ; store result
@@ -2485,8 +2479,7 @@ readTwoCharactersVertically
     jsr readCharacter       ; read character at text cursor position
     stx screenCharacterA    ; store result
 
-    lda #$0a                ;
-    jsr OSWRCH              ; move text cursor down one cell
+    inc cursorY             ; move down one cell
 
     jsr readCharacter       ; read character at text cursor position
     stx screenCharacterB    ; store result
@@ -2495,12 +2488,10 @@ readTwoCharactersVertically
 ; ***************************************************************************************
 checkSpikeKeySwitch
     jsr readTwoCharactersFromScreen                 ;
-    lda #8                                          ;
-    jsr OSWRCH                                      ; move back one character
+    dec cursorX                                     ;
     lda screenCharacterA                            ; first character
     jsr checkForSpikeKeySwitchCollisions            ;
-    lda #9                                          ; tab forwards
-    jsr OSWRCH                                      ;
+    inc cursorX
     lda screenCharacterB                            ; second character
     jmp checkForSpikeKeySwitchCollisions            ;
 
@@ -2522,30 +2513,29 @@ checkForSpikeKeySwitchCollisions
 ;
 ; ***************************************************************************************
 checkForLandingOnSpike
-    ldx #34                             ;
-    ldy #23                             ;
-    jsr setTextPos                      ; TAB(34,23)
+    lda #34                             ;
+    sta cursorX                         ;
+    lda #23                             ;
+    sta cursorY                         ; TAB(34,23)
 
 -
     jsr readCharacter           ;
     cpx #0                      ;
-    beq drawSpaces              ;
+    beq drawSpace               ;
     cpx #$9b                    ;
     beq deathJumper             ; if (spike) then branch (die)
     cpx #$9c                    ;
     beq deathJumper             ; if (spike) then branch (die)
 
-    lda #9                      ; forward space
 backIntoSpaceLoop
-    jsr OSWRCH                  ;
-    lda vduTextCursorXPosition  ; read text cursor X position
-    cmp #0                      ;
+    inc cursorX
+    lda cursorX                 ; read text cursor X position
+    cmp #40                     ;
     bne -                       ; loop until we reach the end of the row (end of the cache)
     rts                         ;
 
-; ***************************************************************************************
-drawSpaces
-    lda #$20                    ;
+drawSpace
+    jsr eraseCell               ;
     jmp backIntoSpaceLoop       ;
 
 ; ***************************************************************************************
@@ -2553,14 +2543,17 @@ deathJumper
     jmp death                       ;
 
 ; ***************************************************************************************
-cacheOffsetX
-    !byte 0, 1, 0, 1, 0, 1
-cacheOffsetY
-    !byte 0, 0, 1, 1, 2, 2
+eraseCell
+    jsr setCursorScreenAddress          ;
+    lda #<eraseGuardianEmptyBytes       ;
+    sta cellPlotSourceSpriteAddressLow  ;
+    lda #>eraseGuardianEmptyBytes       ;
+    sta cellPlotSourceSpriteAddressHigh ;
+    jmp cellPlot                        ;
 
 ; ***************************************************************************************
 keyCollisionFound
-    lda vduTextCursorXPosition  ;
+    lda cursorX                 ;
     sec                         ;
     sbc #34                     ;
     tax                         ; get cell offset within cache
@@ -2575,8 +2568,8 @@ keyCollisionFound
     adc cacheOffsetY,x          ;
     sta textCursorY             ;
 
-    lda #charSPACE              ;
-    jsr OSWRCH                  ;
+    ; erase key
+    jsr eraseCell               ;
 
     dec keysLeft                ;
 
@@ -2601,10 +2594,11 @@ keyCollisionFound
 ;    jmp tabToOldCursorPositionAndReturn ;
 
 switchCollisionFound
-    lda vduTextCursorXPosition      ; }
-    sta textCursorX                 ; } record current position
-    lda vduTextCursorYPosition      ; }
-    sta textCursorY                 ; }
+    ldx cursorX                     ; }
+    stx textCursorX                 ; } record current position
+    ldy cursorY                     ; }
+    sty textCursorY                 ; }
+    jsr setTextPos                  ;
 
     ldx #0                          ; loop counter
 -
@@ -2717,7 +2711,7 @@ notFoundConveyor
 updateConveyor
     ldx playerPixelX                ;
     ldy playerPixelY                ;
-    jmp setTextPosFromPixelPos      ; TAB(playerX/4, playerY/8 + 2)
+    jsr setTextPosFromPixelPos      ; TAB(playerX/4, playerY/8 + 2)
 
     jsr readTwoCharactersFromScreen ; read the two characters immediately lower on screen than the player
 
@@ -2754,21 +2748,19 @@ updatePlayerWhenJumping
 
 ; ***************************************************************************************
 checkForLanding
-    lda #31                         ;
-    jsr OSWRCH                      ;
     lda playerPixelX                ;
     lsr                             ;
     lsr                             ;
-    jsr OSWRCH                      ; TAB(playerX/4, (playerY-2) / 8)
+    sta cursorX                     ;
     lda playerPixelY                ;
     sec                             ;
-    sbc #2                          ;
+    sbc #2                          ; [TODO: is this calculation right??]
     lsr                             ;
     lsr                             ;
     lsr                             ;
-    jsr OSWRCH                      ;
+    sta cursorY                     ;
 
-    jsr readTwoCharactersFromScreen
+    jsr readTwoCharactersFromScreen ;
 
     lda screenCharacterA            ;
     cmp #$8f                        ;
@@ -2798,13 +2790,11 @@ updateInAir
     cmp #8                          ;
     bcc updateJump                  ;
 
-    lda #31                         ;
-    jsr OSWRCH                      ;
     lda playerPixelX                ;
     lsr                             ;
     lsr                             ;
-    jsr OSWRCH                      ; TAB(playerX/4, 2 + (playerY + 3)/8)
-    lda playerPixelY                ;
+    sta cursorX                     ; TAB(playerX/4, 2 + (playerY + 3)/8)
+    lda playerPixelY                ; [TODO: is this calculation right??]
     clc                             ;
     adc #3                          ;
     lsr                             ;
@@ -2812,7 +2802,7 @@ updateInAir
     lsr                             ;
     clc                             ;
     adc #2                          ;
-    jsr OSWRCH                      ;
+    sta cursorY                     ;
 
     jsr readTwoCharactersFromScreen ;
     lda screenCharacterA            ;
@@ -2857,21 +2847,19 @@ updatePlayerWhenSupported
 
 ; ***************************************************************************************
 checkWhatsLeftOfThePlayer
-    lda #31                         ;
-    jsr OSWRCH                      ;
     lda playerPixelX                ;
     lsr                             ;
     lsr                             ;
     sec                             ;
     sbc #1                          ;
-    jsr OSWRCH                      ; TAB(playerX/4 - 1, (newPlayerPixelY + playerYNegativeOffsetWithinCell) / 8)
+    sta cursorX                     ; TAB(playerX/4 - 1, (newPlayerPixelY + playerYNegativeOffsetWithinCell) / 8)
     lda newPlayerPixelY             ;
     clc                             ;
     adc playerYNegativeOffsetWithinCell ;
     lsr                             ;
     lsr                             ;
     lsr                             ;
-    jsr OSWRCH                      ;
+    sta cursorY                     ;
     jsr readTwoCharactersVertically ;
 
     lda newPlayerPixelY             ;
@@ -2882,8 +2870,7 @@ checkWhatsLeftOfThePlayer
     ; if we are not vertically aligned with a cell then we need to check another cell
     lda screenCharacterB            ;
     sta screenCharacterAPrime       ;
-    lda #10                         ; VDU 10 (down)
-    jsr OSWRCH                      ;
+    inc cursorY                     ;
     jsr readTwoCharactersVertically ;
 
 +
@@ -2923,21 +2910,19 @@ markAsBlockedToTheLeft
 
 ; ***************************************************************************************
 checkWhatsRightOfThePlayer
-    lda #31                         ; }
-    jsr OSWRCH                      ; }
     lda playerPixelX                ; }
     lsr                             ; }
     lsr                             ; }
     clc                             ; }
     adc #2                          ; }
-    jsr OSWRCH                      ; } TAB(playerX/4 + 2, (newPlayerPixelY + playerYNegativeOffsetWithinCell)/8)
+    sta cursorX                     ; } TAB(playerX/4 + 2, (newPlayerPixelY + playerYNegativeOffsetWithinCell)/8)
     lda newPlayerPixelY             ; }
     clc                             ; }
     adc playerYNegativeOffsetWithinCell ; }
     lsr                             ; }
     lsr                             ; }
     lsr                             ; }
-    jsr OSWRCH                      ; }
+    sta cursorY                     ; }
     jsr readTwoCharactersVertically ;
 
     lda newPlayerPixelY             ;
@@ -2948,8 +2933,7 @@ checkWhatsRightOfThePlayer
     ; if we are not vertically aligned with a cell then we need to check another cell
     lda screenCharacterB            ;
     sta screenCharacterAPrime       ;
-    lda #10                         ; VDU 10 (down)
-    jsr OSWRCH                      ;
+    inc cursorY                     ;
     jsr readTwoCharactersVertically ;
 
 +
@@ -4177,7 +4161,7 @@ copyGuardianPositionDataLoop
 
 ; ***************************************************************************************
 isOverExit
-    lda vduTextCursorYPosition          ;
+    lda cursorY                         ;
     clc                                 ;
     adc #2                              ;
     cmp exitPositionY                   ;
@@ -4187,7 +4171,7 @@ isOverExit
     cmp exitPositionY                   ;
     bne return13                        ; if (not over exit) return with Z=0
 textXPosition
-    lda vduTextCursorXPosition          ;
+    lda cursorX                         ;
     cmp exitPositionX                   ;
     beq return13                        ; if (over exit) return with Z=1
     sec                                 ;
@@ -4632,19 +4616,18 @@ setTextColour
 
 ; ***************************************************************************************
 setTextPosFromPixelPos
-    lda #31                                 ; }
-    jsr OSWRCH                              ; }
     txa                                     ; }
     lsr                                     ; }
     lsr                                     ; }
-    jsr OSWRCH                              ; } TAB(X/4, Y/8+2)
+    sta cursorX                             ; } TAB(X/4, Y/8+2)
     tya                                     ; }
     lsr                                     ; }
     lsr                                     ; }
     lsr                                     ; }
     clc                                     ; }
     adc #2                                  ; }
-    jsr OSWRCH                              ; }
+    sta cursorY                             ; }
+    rts                                     ;
 
 ; ***************************************************************************************
 setTextPos
@@ -5833,7 +5816,7 @@ showALevelLoop
 
     ; delay loop
     ldx #0                          ; 0
-    ldy #208                        ; 208
+    ldy #158                        ;
 -
     inx                             ;
     bne -                           ;
@@ -5860,7 +5843,7 @@ showALevelLoop
 showNextLevel
     inc currentLevel                ;
     lda currentLevel                ;
-    cmp #19                         ;
+    cmp #21                         ;
     beq endOfAttractLoop            ;
     jmp attractLoop                 ;
 
@@ -6463,66 +6446,7 @@ foundControlCharacter
     lda #128                        ; COLOUR 128
     jsr setTextColour               ;
     lda #3                          ; COLOUR 3
-    jsr setTextColour               ;
-
-
-    ; EOR each byte with $ff in the range $5ac0-$5cc0 (inverting the room title)
-;+
-;    lda #$00                        ;
-;    sta readOrWriteAddrLow          ;
-;    lda #$5a                        ; store $5a00 as screen address to read / write to
-;    sta readOrWriteAddrHigh         ;
-;    ldy #$c0                        ;
-;eorLoop
-;    lda #$b9                        ; } set to read a byte (store $B9 = opcode for LDA abs,Y)
-;    sta readOrWriteByte             ; }
-;    jsr readOrWriteByte             ; read byte
-;    eor #$ff                        ; eor with 255
-;    tax                             ; remember A
-;    lda #$99                        ; } set to write a byte (store $99 = opcode for STA abs,Y)
-;    sta readOrWriteByte             ; }
-;    txa                             ; recall A
-;    jsr readOrWriteByte             ; write byte
-;    iny                             ;
-;    cpy #$c0                        ;
-;    beq +                           ;
-;    cpy #0                          ;
-;    bne eorLoop                     ; if (not done) then loop back
-;    inc readOrWriteAddrHigh         ;
-;    jmp eorLoop                     ;
-
-;+
-;    lda readOrWriteAddrHigh         ;
-;    cmp #$5c                        ;
-;    bne eorLoop                     ;
-;
-    lda #$47                        ;
-    sta $8e                         ;
-    lda #$58                        ; ($8e,$8f) = $5847 (on screen)
-    sta $8f                         ;
-
-    ; write to floor
-    ldy #0                          ;
-    ldx #2                          ;
-writeToScreenLoop
-    lda #$ff                        ;
-    sta ($8e),y                     ;
-    lda #0                          ;
-    dey                             ;
-    sta ($8e),y                     ;
-    tya                             ;
-    clc                             ;
-    adc #9                          ;
-    tay                             ;
-    cpy #0                          ;
-    bne writeToScreenLoop           ;
-    inc $8f                         ;
-    dex                             ;
-    bne writeToScreenLoop           ;
-
-    lda #0                          ;
-    sta $5846                       ; screen address
-    rts                             ;
+    jmp setTextColour               ;
 
 copySpikeSprites
     ldx #0                          ; loop counter
@@ -6683,7 +6607,7 @@ waitForRETURN
 ; ***************************************************************************************
 
 startGame
-    lda #1                                  ; set level 1 - Central Cavern
+    lda #7                                  ; set level 1 - Central Cavern
     jsr showLevel                           ;
     jsr updateMusicState                    ; pause / resume music
 
@@ -7001,12 +6925,10 @@ updateAirAndCheckExit
     rts                             ;
 
 checkExit
-    lda #31                         ; TAB(34, 23)
-    jsr OSWRCH                      ;
-    lda #$22                        ;
-    jsr OSWRCH                      ;
-    lda #$17                        ;
-    jsr OSWRCH                      ;
+    lda #34                         ;
+    sta cursorX                     ;
+    lda #23                         ; TAB(34, 23)
+    sta cursorY                     ;
 
     jsr readTwoCharactersFromScreen ;
     lda currentLevel                ;
@@ -7674,6 +7596,32 @@ gotoNextCharacter
 ;
 ; ***************************************************************************************
 readCharacterDefinitionMaskFromScreen
+    ; Set readCharScreenAddress = $3000 + cursorY*$280 + cursorX * 16
+    ; get the row address
+    ldx cursorY                         ;
+    lda screenRowAddressLow,x           ;
+    sta readCharScreenAddressLow        ;
+    lda screenRowAddressHigh,x          ;
+    sta readCharScreenAddressHigh       ;
+
+    ; add 16 * cell X
+    lda #0                              ;
+    sta tempHigh                        ;
+    lda cursorX                         ;
+    asl                                 ; no need for a rol here, as X is too small
+    asl                                 ;
+    rol tempHigh                        ;
+    asl                                 ;
+    rol tempHigh                        ;
+    asl                                 ;
+    rol tempHigh                        ;
+    clc
+    adc readCharScreenAddressLow        ;
+    sta readCharScreenAddressLow        ;
+    lda readCharScreenAddressHigh       ;
+    adc tempHigh                        ;
+    sta readCharScreenAddressHigh       ;
+
     ldy #7                                              ; Y=7
 setupPatternLoop
     sty tempLoopCounter                                 ; tempLoopCounter=Y (loop counter)
@@ -7682,7 +7630,7 @@ setupPatternLoop
 --
     lda #$88                                            ; A=left colour mask
     sta tempMask                                        ; store in tempMask
-    lda (vduWriteCursorScreenAddressLow),Y              ; get a byte from current text character
+    lda (readCharScreenAddressLow),Y                    ; get a byte from screen
     eor vduBackgroundTextColour                         ; EOR with text background colour
     clc                                                 ; clear carry
 -
@@ -8991,7 +8939,7 @@ levelDefinitions
 
     ; ***********************************************************************************
     ; terminator
-    !byte $ff, $ff
+    !byte $ff, $ff, $ff
 
     ; A Penrose triangle as encoded PLOT statements
 penroseTriangle
@@ -13782,6 +13730,12 @@ screenAreaMinY
     !byte $18,$30,$48,$60,$78,$90,$A8,$C0
 dangerAreas
     !byte  7, 8, 9, 10, 11, 12, 0, 1, 2, 3, 4, 5, 6, 7
+
+; ***************************************************************************************
+cacheOffsetX
+    !byte 0, 1, 0, 1, 0, 1
+cacheOffsetY
+    !byte 0, 0, 1, 1, 2, 2
 
 ; ***************************************************************************************
 debugChangePalette

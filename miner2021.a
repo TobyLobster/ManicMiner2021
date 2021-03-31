@@ -69,6 +69,8 @@ altScreenAddressLow             = $00       ;
 altScreenAddressHigh            = $01       ;
 cachedCellX                     = $02       ;
 cachedCellY                     = $03       ;
+cursorX                         = $04       ;
+cursorY                         = $05       ;
 levelDataOffset                 = $70       ;
 
 plotMode                        = $70       ;
@@ -85,8 +87,6 @@ levelFeatureIndex               = $79       ;
 currentLevel                    = $80       ;
 levelColours                    = $81       ;
 levelColours2                   = $82       ;
-characterAddrLow                = $83       ;
-characterAddrHigh               = $84       ;
 screenLow                       = $85       ;
 screenHigh                      = $86       ;
 cellPlotSourceSpriteAddressLow  = $87       ;
@@ -113,6 +113,7 @@ minerWilly
 willyRight0
     ; right0
     !byte $00, $33, $77, $33, $33, $33, $11, $33, $66, $ee, $cc, $44, $ee, $cc, $88, $cc
+eraseGuardianEmptyBytes
     !byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
     !byte $77, $77, $ff, $ff, $33, $77, $66, $77, $ee, $ee, $77, $bb, $cc, $66, $ee, $77
     !byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
@@ -1419,7 +1420,7 @@ allOtherSpikes
     !byte %########
     !byte %#...#...
     !byte %########
-
+keySprite
     !byte %..##....                 ; char 144 ($90, $B0, $D0, $F0)
     !byte %.#..#...
     !byte %#...#...
@@ -1429,6 +1430,7 @@ allOtherSpikes
     !byte %....#.#.
     !byte %.....#..
 
+exitSprite
     ; exit0
     !byte %########                 ; char 145 ($91, $B1, $D1, $F1)
     !byte %#......#
@@ -3351,12 +3353,12 @@ updateOneVerticalGuardian
     lda currentGuardianX                ;
     and #$40                            ;
     cmp #$40                            ;
-    beq fastGuardian                    ;
+    beq fastVerticalGuardian            ;
     lda #2                              ; set slow speed
     jmp +                               ;
 
 ; ***************************************************************************************
-fastGuardian
+fastVerticalGuardian
     lda #4                          ; set fast speed
 +
     sta currentGuardianSpeed        ;
@@ -3368,11 +3370,11 @@ fastGuardian
     lda currentGuardianExtent1      ;
     and #$80                        ;
     cmp #$80                        ;
-    bne updateGuardian              ;
+    bne updateVerticalGuardian      ;
     jmp drawSkylabCrashing          ;
 
 ; ***************************************************************************************
-updateGuardian
+updateVerticalGuardian
     lda currentLevel                ;
     cmp #19                         ;
     bne +                           ; if (not level 19 - The Meteor Storm) then branch
@@ -3399,7 +3401,7 @@ verticalGuardiansPlotType = * + 1
     lda currentGuardianX            ; }
     and #$80                        ; } check current direction
     cmp #$80                        ; }
-    beq moveGuardianDown            ; if (down) then branch
+    beq moveVerticalGuardianDown    ; if (down) then branch
 
     ; move guardian up
     lda currentGuardianY            ;
@@ -3409,7 +3411,7 @@ verticalGuardiansPlotType = * + 1
     jmp drawVerticalGuardian        ;
 
 ; ***************************************************************************************
-moveGuardianDown
+moveVerticalGuardianDown
     lda currentGuardianY            ;
     clc                             ;
     adc currentGuardianSpeed        ;
@@ -3441,7 +3443,7 @@ drawGuardianPlotType = * + 1
     cmp currentGuardianExtent2      ;
     beq bounceCurrentGuardian       ;
 
-updateCurrentGuardian
+updateCurrentVerticalSkylab
     ldx currentGuardianIndex            ;
     dex                                 ;
     dex                                 ;
@@ -3470,62 +3472,62 @@ updateCurrentGuardian
 
 ; ***************************************************************************************
 return11
-    rts                             ;
+    rts                                 ;
 
 ; ***************************************************************************************
 bounceCurrentGuardian
-    lda currentLevel                ;
-    cmp #14                         ;
-    beq crashLand                   ; if (skylab landing bay) then don't bounce, crash land
-    lda currentGuardianX            ; }
-    eor #$80                        ; } flip direction
-    sta currentGuardianX            ; }
-    jmp updateCurrentGuardian       ;
+    lda currentLevel                    ;
+    cmp #14                             ;
+    beq crashLand                       ; if (skylab landing bay) then don't bounce, crash land
+    lda currentGuardianX                ; }
+    eor #$80                            ; } flip direction
+    sta currentGuardianX                ; }
+    jmp updateCurrentVerticalSkylab     ;
 
 ; ***************************************************************************************
 crashLand
-    lda currentGuardianExtent1      ;
-    eor #$80                        ;
-    sta currentGuardianExtent1      ;
-    jsr guardianGetAnimationIndex   ;
-    lda #0                          ;
-    sta guardianSpriteOffsets,y     ;
-    jmp updateCurrentGuardian       ;
+    lda currentGuardianExtent1          ;
+    eor #$80                            ;
+    sta currentGuardianExtent1          ;
+    jsr getSkylabAnimationIndex         ;
+    lda #0                              ;
+    sta guardianSpriteOffsets,y         ;
+    jmp updateCurrentVerticalSkylab     ;
 
 ; ***************************************************************************************
 drawSkylabCrashing
-    jsr guardianGetAnimationIndex   ;
-    lda guardianSpriteOffsets,y     ; }
-    clc                             ; }
-    adc #1                          ; } add one to sprite offsets
-    sta guardianSpriteOffsets,y     ; }
-    asl                             ;
-    asl                             ;
-    asl                             ;
-    asl                             ;
-    asl                             ;
-    asl                             ;
-    sta plotSourceSpriteAddressLow  ; set source address (low) to 64 * spriteOffset
-    sty tempGuardianSpriteOffset    ;
-    jsr getSkylabSprite             ;
-    lda currentGuardianX            ;
-    and #$3f                        ;
-    asl                             ;
-    asl                             ;
-    clc                             ;
-    adc #$10                        ;
-    tax                             ;
-    lda currentGuardianY            ;
-    clc                             ;
-    adc #8                          ;
-    tay                             ;
-    lda #3                          ;
-    jsr plot                        ; draw Skylab crashing (mode 3)
-    ldy tempGuardianSpriteOffset    ;
-    lda guardianSpriteOffsets,y     ;
-    cmp #6                          ;
-    beq finishedCrashingSkylab      ;
-    jmp updateCurrentGuardian       ;
+    jsr getSkylabAnimationIndex         ;
+    lda guardianSpriteOffsets,y         ; }
+    clc                                 ; }
+    adc #1                              ; } add one to sprite offsets
+    sta guardianSpriteOffsets,y         ; }
+    asl                                 ;
+    asl                                 ;
+    asl                                 ;
+    asl                                 ;
+    asl                                 ;
+    asl                                 ;
+    sta plotSourceSpriteAddressLow      ; set source address (low) to 64 * spriteOffset
+    sty tempGuardianSpriteOffset        ;
+    jsr getSkylabSprite                 ;
+    lda currentGuardianX                ;
+    and #$3f                            ;
+    asl                                 ;
+    asl                                 ;
+    clc                                 ;
+    adc #$10                            ;
+    tax                                 ;
+    lda currentGuardianY                ;
+    clc                                 ;
+    adc #8                              ;
+    tay                                 ;
+    lda #3                              ;
+    jsr plot                            ; draw Skylab crashing (mode 3)
+    ldy tempGuardianSpriteOffset        ;
+    lda guardianSpriteOffsets,y         ;
+    cmp #6                              ;
+    beq finishedCrashingSkylab          ;
+    jmp updateCurrentVerticalSkylab     ;
 
 ; ***************************************************************************************
 finishedCrashingSkylab
@@ -3542,10 +3544,10 @@ finishedCrashingSkylab
     and #$3f                        ;
     cmp #$20                        ;
     bcs guardianXTooBig             ;
-    jmp updateCurrentGuardian       ;
+    jmp updateCurrentVerticalSkylab ;
 
 ; ***************************************************************************************
-guardianGetAnimationIndex
+getSkylabAnimationIndex
     lda currentGuardianY            ;
     cmp #$48                        ;
     beq setYZero                    ;
@@ -3571,11 +3573,11 @@ guardianXTooBig
     sec                             ;
     sbc #$20                        ;
     sta currentGuardianX            ;
-    jmp updateCurrentGuardian       ;
+    jmp updateCurrentVerticalSkylab ;
 
 ; ***************************************************************************************
 getSkylabSprite
-    jsr guardianGetAnimationIndex   ;
+    jsr getSkylabAnimationIndex     ;
     lda guardianSpriteOffsets,y     ;
     cmp #4                          ;
     beq setSkylabSprite4            ;
@@ -3827,7 +3829,7 @@ writeByteToVerticalGuardians
 
 ; ***************************************************************************************
 swapBackPages
-    jmp swapPagesC00AndGuardiansPage    ;
+    RTS                                 ;
 
 ; ***************************************************************************************
 readGuardianByte
@@ -3854,7 +3856,6 @@ animateKeysUpdateHorizontalGuardiansAndLevel19EnergyFields
 
 ; ***************************************************************************************
 updateHorizontalGuardians
-    jsr swapPagesC00AndGuardiansPage    ; swap in guardian definitions
     lda #0                          ;
     sta drawGuardianLoopCounter     ;
     tay                             ;
@@ -3892,12 +3893,6 @@ drawGuardiansLoop
     inc drawGuardianLoopCounter     ;
 
     lda drawGuardianLoopCounter     ;
-    and #3                          ;
-    tax                             ;
-    lda guardianColourTable,x       ;
-    jsr setTextColour               ;
-
-    lda drawGuardianLoopCounter     ;
     clc                             ;
     rol                             ;
     rol                             ;
@@ -3923,10 +3918,15 @@ updateAndDrawGuardian
 
 ; ***************************************************************************************
 moveLeftOrRight
+    lda drawGuardianLoopCounter     ;
+    and #3                          ;
+    tax                             ;
+    lda guardianColourTable,x       ;
+    sta plotColourMask              ; set plot colour
+
     lda zpGuardianPositionY         ;
     and #$80                        ;
-    cmp #$80                        ;
-    bne moveGuardianLeft            ;
+    beq moveGuardianLeft            ;
 
     ; move guardian right
     lda zpGuardianPositionX         ;
@@ -3958,11 +3958,9 @@ notAtCellXBoundary
     adc zpGuardianAnimIndex         ;
     jsr drawIfNotOverExit           ;
 
-    lda #$0a                        ;
-    jsr OSWRCH                      ; down one
-    lda #8                          ;
-    jsr OSWRCH                      ; back two
-    jsr OSWRCH                      ;
+    inc cursorY                     ;
+    dec cursorX                     ;
+    dec cursorX                     ;
 
     lda #$e8                        ;
     clc                             ;
@@ -4020,11 +4018,9 @@ moveGuardianLeft
     adc zpGuardianAnimIndex         ;
     jsr drawIfNotOverExit           ;
 
-    lda #8                          ;
-    jsr OSWRCH                      ; move back two places
-    jsr OSWRCH                      ; and down one
-    lda #$0a                        ;
-    jsr OSWRCH                      ;
+    inc cursorY                     ;
+    dec cursorX                     ;
+    dec cursorX                     ;
 
     lda #$f9                        ;
     clc                             ;
@@ -4040,42 +4036,36 @@ moveGuardianLeft
 
 ; ***************************************************************************************
 positionCursorAtGuardian
-    lda #31                         ;
-    jsr OSWRCH                      ;
     lda zpGuardianPositionX         ;
     and #$fc                        ;
     lsr                             ;
     lsr                             ; TAB($8a/4 + 5, ($8b AND $0f) + 1)
     clc                             ;
     adc #5                          ;
-    jsr OSWRCH                      ;
+    sta cursorX                     ;
+
     lda zpGuardianPositionY         ;
     and #$0f                        ;
     clc                             ;
     adc #1                          ;
-    jmp OSWRCH                      ;
+    sta cursorY                     ;
+    rts                             ;
 
 ; ***************************************************************************************
 eraseLeftOfGuardian
-    lda #8                          ;
-    jsr OSWRCH                      ;
-    jmp +
+    dec cursorX                     ; move left one character
+    jmp +                           ;
 
 ; ***************************************************************************************
 eraseRightOfGuardian
-    lda #9                          ;
-    jsr OSWRCH                      ;
-    jsr OSWRCH                      ; move forward two characters
+    inc cursorX                     ;
+    inc cursorX                     ; move forward two characters
 +
-    lda #$20                        ;
     jsr eraseIfNotOverExit          ;
 
-    lda #$0a                        ; down
-    jsr OSWRCH                      ;
-    lda #8                          ; left
-    jsr OSWRCH                      ;
+    inc cursorY                     ; down
+    dec cursorX                     ; left
 
-    lda #$20                        ;
     jsr eraseIfNotOverExit          ;
     rts                             ;
 
@@ -4111,6 +4101,7 @@ copyGuardianSprites
 -
     cpx zpGuardianPositionX             ;
     beq copyGuardiansWithAddress        ;
+
     lda readGuardianByte + 1            ;
     clc                                 ;
     adc #$80                            ; multiplication by repeated addition
@@ -4126,14 +4117,14 @@ copyGuardiansWithAddress
     ldx #0                              ; loop counter
 -
     jsr readGuardianByte                ;
-    sta softCharacterDefinitions,x      ; copy from guardian sprites to $0c00-$0c7f
+    sta guardianSpriteCache,x           ; copy from guardian sprites to cache
     jsr reverseBits                     ;
-    sta $0c80,x                         ; copy reflected guardians to $0c80-$0cff
+    sta guardianSpriteCache + $80,x     ; copy reflected guardians to cache
     inx                                 ;
     cpx #$80                            ;
     bne -                               ;
 
-    ; find guardian data for current level
+    ; find guardian position data for current level
     lda #<(guardianLevelData - 1)       ;
     sta readGuardianByte + 1            ; set start of guardian level data
     lda #>(guardianLevelData - 1)       ;
@@ -4142,13 +4133,10 @@ copyGuardiansWithAddress
     ldy #0                              ;
     ldx #0                              ;
 findGuardianDataLoop
-    lda readGuardianByte + 1            ; }
-    clc                                 ; }
-    adc #1                              ; }
-    sta readGuardianByte + 1            ; } increment source address
-    lda readGuardianByte + 2            ; }
-    adc #0                              ; }
-    sta readGuardianByte + 2            ; }
+    inc readGuardianByte + 1            ; } increment source address
+    bne +                               ; }
+    inc readGuardianByte + 2            ; }
++
     jsr readGuardianByte                ;
     cmp #$ff                            ;
     beq checkLevelNumber                ; when we reach a 255 (a level separator byte), then branch
@@ -4164,44 +4152,25 @@ checkLevelNumber
     ldx #1                              ;
 copyGuardianPositionDataLoop
     jsr readGuardianByte                ;
-    jsr storeByteToD80                  ; Y coordinate
+    sta guardianPositions,y             ; Y coordinate
     iny                                 ;
     iny                                 ;
-    jsr storeByteToD80                  ; X1 coordinate
+    sta guardianPositions,y             ; X1 coordinate
     inx                                 ;
     dey                                 ;
     jsr readGuardianByte                ; Y coordinate
-    jsr storeByteToD80                  ;
+    sta guardianPositions,y             ;
     inx                                 ;
     iny                                 ;
     iny                                 ;
     jsr readGuardianByte                ; X2 coordinate
-    jsr storeByteToD80                  ;
+    sta guardianPositions,y             ;
     inx                                 ;
     jsr readGuardianByte                ;
     iny                                 ;
     cmp #$ff                            ;
     bne copyGuardianPositionDataLoop    ;
-    jsr storeByteToD80                  ;
-    jmp swapPagesC00AndGuardiansPage    ;
-
-; ***************************************************************************************
-storeByteToD80
     sta guardianPositions,y             ;
-    rts                                 ;
-
-; ***************************************************************************************
-swapPagesC00AndGuardiansPage
-    ldx #0                              ;
-swapPagesLoop
-    lda softCharacterDefinitions,x      ;
-    tay                                 ;
-    lda guardianSpriteCache,x           ;
-    sta softCharacterDefinitions,x      ; swap page at $0c00 with page at guardianSpriteCache
-    tya                                 ;
-    sta guardianSpriteCache,x           ;
-    inx                                 ;
-    bne swapPagesLoop                   ; copy 256 bytes in this loop
     rts                                 ;
 
 ; ***************************************************************************************
@@ -4230,15 +4199,14 @@ drawIfNotOverExit
     sta rememberCharacterToDraw         ;
     jsr isOverExit                      ;
     beq moveForward                     ;
-;    lda rememberCharacterToDraw         ;
-;    jmp OSWRCH                          ;
-    lda vduTextCursorXPosition          ;
+
+    lda cursorX                         ;
     asl                                 ;
     asl                                 ;
     tax                                 ;
     stx plotX                           ;
 
-    lda vduTextCursorYPosition          ;
+    lda cursorY                         ;
     asl                                 ;
     asl                                 ;
     asl                                 ;
@@ -4246,8 +4214,6 @@ drawIfNotOverExit
     sty plotY                           ;
 
     jsr plotGetScreenAddress            ;
-    lda #$ff                            ;
-    sta plotColourMask                  ; plot colour 3 (TODO: set appropriate colour)
 
     lda rememberCharacterToDraw         ;
     and #$1f                            ;
@@ -4255,25 +4221,44 @@ drawIfNotOverExit
     asl                                 ;
     asl                                 ;
     clc                                 ;
-    adc #<softCharacterDefinitions      ;
+    adc #<guardianSpriteCache           ;
     sta cellPlotSourceSpriteAddressLow  ;
-    lda #>softCharacterDefinitions      ;
+    lda #>guardianSpriteCache           ;
+    adc #0                              ;
     sta cellPlotSourceSpriteAddressHigh ;
     jsr cellPlot                        ;
 
 moveForward
-    lda #9                              ; move forward
-    jmp OSWRCH                          ;
+    inc cursorX                         ; move forward
+    rts                                 ;
 
 ; ***************************************************************************************
 eraseIfNotOverExit
     jsr isOverExit                      ;
     beq moveForward2                    ;
-    lda #charSPACE                      ;
-    jmp OSWRCH                          ;
+    lda cursorX                         ;
+    asl                                 ;
+    asl                                 ;
+    tax                                 ;
+    stx plotX                           ;
+
+    lda cursorY                         ;
+    asl                                 ;
+    asl                                 ;
+    asl                                 ;
+    tay                                 ;
+    sty plotY                           ;
+
+    jsr plotGetScreenAddress            ;
+    lda #<eraseGuardianEmptyBytes       ;
+    sta cellPlotSourceSpriteAddressLow  ;
+    lda #>eraseGuardianEmptyBytes       ;
+    sta cellPlotSourceSpriteAddressHigh ;
+    jsr cellPlot                        ;
+
 moveForward2
-    lda #9                              ; move forward
-    jmp OSWRCH                          ;
+    inc cursorX                         ; move forward
+    rts                                 ;
 
 ; ***************************************************************************************
 updateLevel19Special
@@ -5336,7 +5321,7 @@ getExitSourceByte
     lda exitSprites1x2              ;
     sta $0c88,y                     ;
     inc getExitSourceByte + 1       ; }
-    bcc +                           ; } increment source address
+    bne +                           ; } increment source address
     inc getExitSourceByte + 2       ; }
 +
     iny                             ;
@@ -5437,8 +5422,7 @@ setRoomColours
     jsr setPalette                  ; set palette from second colour byte (lower nybble)
     ldx #3                          ;
     lda #3                          ;
-    jsr setPalette                  ; set palette(3) = 3
-    jmp swapPagesC00AndGuardiansPage    ; use different character set
+    jmp setPalette                  ; set palette(3) = 3
 
 ; ***************************************************************************************
 command255IncrementFeatureIndex
@@ -6305,14 +6289,11 @@ swapPagesC00andA00
 
 ; ***************************************************************************************
 incrementLevelDataPointer
-    lda getLevelDataByte + 1        ;
-    clc                             ;
-    adc #1                          ;
-    sta getLevelDataByte + 1        ;
-    lda getLevelDataByte + 2        ;
-    adc #0                          ;
-    sta getLevelDataByte + 2        ;
-    rts
+    inc getLevelDataByte + 1        ;
+    bne +                           ;
+    inc getLevelDataByte + 2        ;
++
+    rts                             ;
 
 ; ***************************************************************************************
 drawSpiderAndThread
@@ -6363,8 +6344,6 @@ recordKey
 
 ; ***************************************************************************************
 colourCycleKeys
-    ldy #0                          ; # attempts to animate a key
-cycleKeyLoop
     ldx currentKeyIndex             ; }
     inx                             ; }
     cpx keyPositionCounter          ; } cycle between zero and the number of keys
@@ -6385,36 +6364,43 @@ cycleKeyLoop
 +
 
     lda keyGot,x                    ;
-    bne keyAlreadyTaken             ; if (not got) then animate it
+    bne return12                    ; if (got) then skip animating
 
     ; tab into to position
-    lda #31                         ;
-    jsr OSWRCH                      ;
     lda keyXPositions,x             ;
-    jsr OSWRCH                      ;
+    sta cursorX                     ;
     lda keyYPositions,x             ;
-    jsr OSWRCH                      ;
-    jmp animateKey                  ;
+    sta cursorY                     ;
 
-keyAlreadyTaken
-    iny                             ; increment number of attempts
-    cpy keyPositionCounter          ;
-    bcc cycleKeyLoop                ;
-return12
-    rts                             ;
+    ldx keyColourCounter            ;
+    lda guardianColourMasks,x       ;
+    sta plotColourMask              ;
 
-animateKey
-    lda keyColourCounter            ;
-    clc
-    adc #1
-setColourAndShow
-    jsr setTextColour               ;
-    lda #$90                        ; draw key
-    jmp OSWRCH                      ;
+    lda cursorX                         ;
+    asl                                 ;
+    asl                                 ;
+    tax                                 ;
+    stx plotX                           ;
+
+    lda cursorY                         ;
+    asl                                 ;
+    asl                                 ;
+    asl                                 ;
+    tay                                 ;
+    sty plotY                           ;
+
+    jsr plotGetScreenAddress            ;
+
+    lda #<keySprite                     ;
+    sta cellPlotSourceSpriteAddressLow  ;
+    lda #>keySprite                     ;
+    sta cellPlotSourceSpriteAddressHigh ;
+    jmp cellPlot                        ;
 
 ; ***************************************************************************************
 readRoomNameCharacter
     lda $ffff,x                     ;
+return12
     rts                             ;
 
 drawRoomName
@@ -7102,36 +7088,71 @@ flashExit
     lda flashingExitCounter         ;
     and #4                          ;
     cmp #4                          ;
-    beq setColour3AndShowExit       ;
-    lda #2                          ; COLOUR 2
+    beq +                           ;
+    lda #$f0                        ; plot colour 2
+    jmp setColourAndShowExit
++
+    lda #$ff                        ; plot colour 3
 setColourAndShowExit
-    jsr setTextColour               ;
+    sta plotColourMask              ;
 
-    lda #31                         ; }
-    jsr OSWRCH                      ; }
-    lda exitPositionX               ; }
-    jsr OSWRCH                      ; }
-    lda exitPositionY               ; }
-    sec                             ; } TAB(exitX, exitY-2)
-    sbc #2                          ; }
-    jsr OSWRCH                      ; }
+    lda exitPositionX               ;
+    sta cursorX                     ;
+    lda exitPositionY               ;
+    sec                             ; TAB(exitX, exitY-2)
+    sbc #2                          ;
+    sta cursorY                     ;
 
-    ; print 2x2 block of characters for the flashing exit:
-    ;   VDU $91, $92
-    ;   VDU $93, $94
-    ldx #0                          ;
--
-    lda flashingExit,x              ;
-    jsr OSWRCH                      ;
-    inx                             ;
-    cpx #flashingExitEnd - flashingExit ;
-    bne -                           ;
+    lda #<exitSprite                    ;
+    sta cellPlotSourceSpriteAddressLow  ;
+    lda #>exitSprite                    ; use exit sprite
+    sta cellPlotSourceSpriteAddressHigh ;
+
+    lda plotScreenAddressLow        ;
+    pha                             ;
+    lda plotScreenAddressHigh       ;
+    pha                             ;
+
+    jsr drawExitCell                ; top left
+    inc cursorX                     ;
+    jsr drawExitCell                ; top right
+    inc cursorY                     ;
+    dec cursorX                     ;
+    jsr drawExitCell                ; bottom left
+    inc cursorX                     ;
+    jsr drawExitCell                ; bottom right
+
+    pla                             ;
+    sta plotScreenAddressHigh       ;
+    pla                             ;
+    sta plotScreenAddressLow        ;
     rts                             ;
 
-setColour3AndShowExit
-    lda #3                          ; COLOUR 3
-    jmp setColourAndShowExit        ;
+; ***************************************************************************************
+drawExitCell
+    lda cursorX                         ;
+    asl                                 ;
+    asl                                 ;
+    tax                                 ;
+    stx plotX                           ;
 
+    lda cursorY                         ;
+    asl                                 ;
+    asl                                 ;
+    asl                                 ;
+    tay                                 ;
+    sty plotY                           ;
+
+    jsr plotGetScreenAddress            ;
+    jsr cellPlot                        ;
+    lda plotSourceSpriteAddressLow      ;
+    clc                                 ;
+    adc #8                              ;
+    sta plotSourceSpriteAddressLow      ;
+    bcc +
+    inc plotSourceSpriteAddressHigh     ;
++
+    rts                                 ;
 ; ***************************************************************************************
 reachedExit
     lda #$4c                        ;
@@ -7637,7 +7658,6 @@ readCharacter
     ldy #7                                              ; Y=7
 --
     lda characterFromScreen,Y                           ; get byte in workspaceA-H copy
-    cmp #0                                              ; check against character definition
     bne checkUserDefinedCharacters                      ; if (not the same) then branch (to skip to next character)
     dey                                                 ; Y--
     bpl --                                              ; if (still non-negative) then branch (back to loop eight times, to check each row of the character)
@@ -7653,13 +7673,15 @@ readCharLoop
     ldy #7                                              ; Y=7
 --
     lda characterFromScreen,Y                           ; get byte in workspaceA-H copy
-    cmp (characterAddrLow),Y                            ; check against character definition
+characterAddrLow = * + 1
+characterAddrHigh = * + 2
+    cmp $ffff,Y                                         ; check against character definition
     bne gotoNextCharacter                               ; if (not the same) then branch (to skip to next character)
     dey                                                 ; Y--
     bpl --                                              ; if (still non-negative) then branch (back to loop eight times, to check each row of the character)
 finishUp
     txa                                                 ; At this point the character matches
-    ora #$80                                            ;
+    ora #$80                                            ; Add 128 to the code returned
     tax                                                 ;
     rts                                                 ;
 
@@ -13193,7 +13215,7 @@ jumpMovementArray
 
 ; ***************************************************************************************
 guardianColourTable
-    !byte $03, $02, $01, $03        ;
+    !byte $ff, $f0, $0f, $ff        ;
 
 guardianSetForEachLevel
     ; level 1,   2,   3,   4,   5,   6,   7,  8,    9,  10,  11,  12,  13,  14,  15,  16,  17,  18,  19,  20

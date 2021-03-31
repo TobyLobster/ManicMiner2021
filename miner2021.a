@@ -12,14 +12,6 @@ interruptAccumulator            = $FC       ; RESERVED for INTERRUPTS
 irqv1                           = $204      ;
 irqv2                           = $206      ;
 
-fsBlockNumberHigh               = $03c7     ;
-fsBlockFlagByte                 = $03ca     ;
-
-vectorEVNTV                     = $0220     ; Event vector, fired at VSYNC to update sound
-timeClockB                      = $0297     ; 5 byte clock as read by TIME
-countdownIntervalTimer          = $029C     ; 5 byte countdown interval timer (causes an EVENT when it reaches zero)
-vduTextCursorXPosition          = $0318     ;
-vduTextCursorYPosition          = $0319     ;
 vduForegroundTextColour         = $0357     ; } Current colours. Stored as the byte value
 vduBackgroundTextColour         = $0358     ; } to colour the whole byte the given colour
 softCharacterDefinitions        = $0c00     ;
@@ -73,6 +65,10 @@ cursorX                         = $04       ;
 cursorY                         = $05       ;
 readCharScreenAddressLow        = $06       ;
 readCharScreenAddressHigh       = $07       ;
+clock                           = $08       ;
+oldClock                        = $09       ;
+cellScreenAddressLow            = $0a       ;
+cellScreenAddressHigh           = $0b       ;
 levelDataOffset                 = $70       ;
 
 plotMode                        = $70       ;
@@ -2208,7 +2204,6 @@ cancelJump
     sta willyFalling                ;
     sta jumpDirection               ;
     lda hasDrawnConveyors           ;
-    cmp #0                          ;
     beq +                           ;
     lda #0                          ;
     sta hasDrawnConveyors           ;
@@ -2216,7 +2211,7 @@ cancelJump
 
 ; ***************************************************************************************
 +
-    jsr updateAirAndCheckExit       ;
+;    jsr updateAirAndCheckExit       ;
     jsr drawConveyor                ;
     jmp updatePlayerWithAnimation   ;
 
@@ -3831,9 +3826,6 @@ updateLevel19Guardians
 animateKeysUpdateHorizontalGuardiansAndLevel19EnergyFields
     jsr colourCycleKeys             ;
 
-    lda #3                          ; COLOUR 3
-    jsr setTextColour               ;
-
     lda currentLevel                ;
     cmp #19                         ;
     beq updateLevel19Guardians      ; if (level 19 - The Meteor Storm) then branch (update guardians and energy fields)
@@ -4195,7 +4187,26 @@ setCursorScreenAddress
     tay                                 ;
     sty plotY                           ;
 
-    jmp plotGetScreenAddress            ;
+    ; remember plot screen address
+    lda plotScreenAddressLow            ;
+    pha                                 ;
+    lda plotScreenAddressHigh           ;
+    pha                                 ;
+
+    jsr plotGetScreenAddress            ;
+
+    ; record results
+    lda plotScreenAddressLow            ;
+    sta cellScreenAddressLow            ;
+    lda plotScreenAddressHigh           ;
+    sta cellScreenAddressHigh           ;
+
+    ; restore plot screen address
+    pla                                 ;
+    sta plotScreenAddressHigh           ;
+    pla                                 ;
+    sta plotScreenAddressLow            ;
+    rts                                 ;
 
 ; ***************************************************************************************
 drawIfNotOverExit
@@ -4694,7 +4705,7 @@ cellPlot
 tempCellPlotA = * + 1
     adc #$ff                            ;
     and plotColourMask                  ;
-    sta (plotScreenAddressLow),y        ; left side
+    sta (cellScreenAddressLow),y        ; left side
 
 
     lda (cellPlotSourceSpriteAddressLow),y  ;
@@ -4709,7 +4720,7 @@ tempCellPlotA = * + 1
     adc #8                              ;
     tay                                 ;
     lda tempA                           ;
-    sta (plotScreenAddressLow),y        ; right side
+    sta (cellScreenAddressLow),y        ; right side
 
     txa                                 ;
     tay                                 ;
@@ -4728,9 +4739,6 @@ drawConveyor
     lda conveyorLength              ;
     cmp #$ff                        ;
     beq return10                    ;
-
-    lda #2                          ; } COLOUR 2
-    jsr setTextColour               ; }
 
     lda conveyorX                   ;
     and #$80                        ;
@@ -4751,29 +4759,22 @@ drawConveyor
 
     lda conveyorX                       ;
     and #$7f                            ; remove top bit (direction)
-    asl                                 ;
-    asl                                 ;
-    tax                                 ;
-    stx plotX                           ;
+    sta cursorX                         ;
 
     lda conveyorY                       ;
-    asl                                 ;
-    asl                                 ;
-    asl                                 ;
-    tay                                 ;
-    sty plotY                           ;
+    sta cursorY                         ;
 
-    jsr plotGetScreenAddress            ;
+    jsr setCursorScreenAddress          ;
     lda #$f0                            ;
     sta plotColourMask                  ; plot colour 2
 
     jsr cellPlot                        ; plot first conveyor
     ldx conveyorLength                  ;
 
-    lda plotScreenAddressLow            ;
+    lda cellScreenAddressLow            ;
     sta fromScreenAddressLow            ;
     sta toScreenAddressLow              ;
-    lda plotScreenAddressHigh           ;
+    lda cellScreenAddressHigh           ;
     sta fromScreenAddressHigh           ;
     sta toScreenAddressHigh             ;
 
@@ -5669,6 +5670,7 @@ oldIrq1RoutineHigh = * + 2
 
     cmp #13                             ;
     bne handledInterrupt                ;
+    inc clock                           ;
     lda #0                              ;
     sta rasterArea                      ;
     beq handledInterrupt                ; ALWAYS branch
@@ -5814,14 +5816,13 @@ showALevelLoop
     jsr animateKeysUpdateHorizontalGuardiansAndLevel19EnergyFields   ;
     jsr updateVerticalGuardians     ;
 
-    ; delay loop
-    ldx #0                          ; 0
-    ldy #158                        ;
+    ; wait for tick
 -
-    inx                             ;
-    bne -                           ;
-    iny                             ;
-    bne -                           ;
+    lda clock                       ;
+    cmp #3                          ;
+    bcc -                           ;
+    lda #0                          ;
+    sta clock                       ;
 
     inc attractModeTimer            ;
     lda attractModeTimer            ;
@@ -6610,6 +6611,8 @@ startGame
     lda #1                                  ; set level 1 - Central Cavern
     jsr showLevel                           ;
     jsr updateMusicState                    ; pause / resume music
+    lda #0                                  ;
+    sta clock                               ;
 
 playCurrentLevel
     lda tempScreenAddressLow                ; }
@@ -6627,6 +6630,14 @@ playCurrentLevel
     jsr animateKeysUpdateHorizontalGuardiansAndLevel19EnergyFields  ;
     jsr checkForCollisions                                          ;
     jsr updateVerticalGuardiansAndJumpAndFallSounds                 ;
+
+    ; wait for tick
+-
+    lda clock                               ;
+    cmp #3
+    bcc -                                   ;
+    lda #0                                  ;
+    sta clock                               ;
 
     ; read special keys (for sound on/off, pause, quit)
     ldy #$ff                                ;
@@ -7010,11 +7021,6 @@ setColourAndShowExit
     lda #>exitSprite                    ; use exit sprite
     sta cellPlotSourceSpriteAddressHigh ;
 
-    lda plotScreenAddressLow        ;
-    pha                             ;
-    lda plotScreenAddressHigh       ;
-    pha                             ;
-
     jsr drawExitCell                ; top left
     inc cursorX                     ;
     jsr drawExitCell                ; top right
@@ -7024,22 +7030,18 @@ setColourAndShowExit
     inc cursorX                     ;
     jsr drawExitCell                ; bottom right
 
-    pla                             ;
-    sta plotScreenAddressHigh       ;
-    pla                             ;
-    sta plotScreenAddressLow        ;
     rts                             ;
 
 ; ***************************************************************************************
 drawExitCell
     jsr setCursorScreenAddress          ;
     jsr cellPlot                        ;
-    lda plotSourceSpriteAddressLow      ;
+    lda cellPlotSourceSpriteAddressLow  ;
     clc                                 ;
     adc #8                              ;
-    sta plotSourceSpriteAddressLow      ;
-    bcc +
-    inc plotSourceSpriteAddressHigh     ;
+    sta cellPlotSourceSpriteAddressLow  ;
+    bcc +                               ;
+    inc cellPlotSourceSpriteAddressHigh ;
 +
     rts                                 ;
 ; ***************************************************************************************

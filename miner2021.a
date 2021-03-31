@@ -6607,7 +6607,7 @@ waitForRETURN
 ; ***************************************************************************************
 
 startGame
-    lda #7                                  ; set level 1 - Central Cavern
+    lda #1                                  ; set level 1 - Central Cavern
     jsr showLevel                           ;
     jsr updateMusicState                    ; pause / resume music
 
@@ -11798,7 +11798,7 @@ pedestalSprite
     !byte %.#.#..#.             ;   # # #  # # #
     !byte %.#..#...             ;   # # #  # # #
     !byte %.#...#..             ;   # # #  # # #
-    !byte %.#.#.#..             ; ################
+    !byte %.#.#.#..             ;   # # #  # # #
 
     !byte %..#.#.#.
     !byte %..#.#.#.
@@ -11807,7 +11807,7 @@ pedestalSprite
     !byte %..#.#.#.
     !byte %..#.#.#.
     !byte %..#.#.#.
-    !byte %########
+    !byte %..#.#.#.
     !byte %.#.#.#..
     !byte %.#.#.#..
     !byte %.#.#.#..
@@ -11815,7 +11815,7 @@ pedestalSprite
     !byte %.#.#.#..
     !byte %.#.#.#..
     !byte %.#.#.#..
-    !byte %########
+    !byte %.#.#.#..
 
 
     !byte %........            ;

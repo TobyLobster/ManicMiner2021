@@ -69,6 +69,8 @@ clock                           = $08       ;
 oldClock                        = $09       ;
 cellScreenAddressLow            = $0a       ;
 cellScreenAddressHigh           = $0b       ;
+airScreenAddressLow             = $0c       ;
+airScreenAddressHigh            = $0d       ;
 levelDataOffset                 = $70       ;
 
 plotMode                        = $70       ;
@@ -7078,8 +7080,10 @@ addScoreAsAirDrains
 
 ; ***************************************************************************************
 drawInitialAirMeter
-    lda #$67                        ;
+    lda #224                        ;
     sta airRemaining                ;
+    lda #0                          ;
+    sta airRemainingOffsetWithinCell;
 
     lda #3                          ; COLOUR 3
     jsr setTextColour               ;
@@ -7096,92 +7100,6 @@ drawInitialAirMeter
     cpx #airMessageEnd - airMessage ;
     bne -                           ;
 
-    ; draw AIR meter on screen
-    lda #$32                        ; }
-    sta storeByteX + 2              ; }
-    lda #$a0                        ; } screen address = $32a0
-    sta storeByteX + 1              ; }
-
-    ldy #$0a                        ; loop counter
-drawAirRow
-    ldx #0                          ; loop counter
-    lda #$f3                        ; value to store
--
-    jsr storeByteX                  ;
-    inx                             ;
-    cpx #8                          ;
-    beq switchValueToStore          ;
-backToLoop
-    cpx #16                         ;
-    bne -                           ;
-    jsr gotoNextRow                 ;
-    dey                             ;
-    bne drawAirRow                  ;
-
-    ; draw bottom of AIR meter
-    ldy #3                          ;
-drawAirRow2
-    ldx #0                          ;
-    lda #$3f                        ;
--
-    jsr storeByteX                  ;
-    inx                             ;
-    cpx #8                          ;
-    beq changeValueToStore2         ;
-backToAirLoop2
-    cpx #16                         ;
-    bne -                           ;
-    jsr gotoNextRow                 ;
-    dey                             ;
-    bne drawAirRow2                 ;
-
-    ldy #4                          ;
-drawAirRow3
-    ldx #0                          ;
-drawAir
-    lda #$bd                        ; }
-    sta storeByteX                  ; } change op code to LDA abs,x
-    jsr storeByteX                  ; load byte
-    sta tempScreenByte              ; remember original byte
-    lda #$9d                        ; }
-    sta storeByteX                  ; } change op code to STA abs,x
-
-    lda tempScreenByte              ; recall original byte
-    ora #$0f                        ; add colour
-    jsr storeByteX                  ; store byte
-    inx                             ;
-    cpx #16                         ; 16 bytes
-    bne drawAir                     ;
-    jsr gotoNextRow                 ;
-    dey                             ;
-    bne drawAirRow3                 ;
-
-    lda #0                          ;
-    sta airRemainingOffsetWithinCell;
-
-    lda #$f0                        ; draw the very top pixel row of the air bar
-    sta $32a0                       ; screen address
-    sta $32a8                       ; screen address
-
-    lda #$32                        ;
-    sta storeByteX + 2              ;
-    lda #$a0                        ; set screen address back to $32a0
-    sta storeByteX + 1              ;
-    rts                             ;
-
-; ***************************************************************************************
-switchValueToStore
-    lda #$fc                        ;
-    jmp backToLoop                  ;
-
-; ***************************************************************************************
-changeValueToStore2
-    lda #$cf                        ;
-    jmp backToAirLoop2              ;
-
-; ***************************************************************************************
-storeByteX
-    sta $ffff,x                     ;
     rts                             ;
 
 ; ***************************************************************************************
@@ -7190,81 +7108,73 @@ storeByteY
     rts                             ;
 
 ; ***************************************************************************************
-gotoNextRow
-    lda storeByteX + 1              ;
-    clc                             ;
-    adc #$80                        ;
-    sta storeByteX + 1              ;
-    lda storeByteX + 2              ;
-    adc #2                          ;
-    sta storeByteX + 2              ;
-    rts                             ;
-
-; ***************************************************************************************
-kongTriggered
-    jsr updateKongFalling           ;
-    jmp loseAirCheck                ;
-
-; ***************************************************************************************
 updateAir
     lda kongBeastSwitchTriggered    ;
-    cmp #1                          ;
-    beq kongTriggered               ;
-loseAirCheck
+    beq +                           ;
+    jsr updateKongFalling           ;
++
     inc airRemainingDelayCounter    ;
     lda airRemainingDelayCounter    ;
-    and #$1f                        ;
+    and #$07                        ;
     cmp #0                          ;
     beq loseAir                     ;
     rts                             ;
 
 ; ***************************************************************************************
+byteMaskGreen
+    !byte $f0, $f8, $fc, $fe
+
+; ***************************************************************************************
+byteMaskRed
+    !byte $0f, $8f, $cf, $ef
+
+
+airStartAddress = $5d82
+
+; ***************************************************************************************
 loseAir
     lda airRemaining                    ;
-    beq +                               ;
+    beq return14                        ;
     dec airRemaining                    ;
-+
-    inc airRemainingOffsetWithinCell    ;
-    lda airRemainingOffsetWithinCell    ;
-    and #7                              ;
-    cmp #0                              ;
-    beq airAtEndOfCell                  ;
 
-readAirByte
-    lda #$bd                            ; opcode for 'LDA abs, x'
-    sta storeByteX                      ;
-    ldx airRemainingOffsetWithinCell    ;
-    jsr storeByteX                      ;
-    cmp #$f3                            ;
-    bne setByteToWrite                  ;
-    lda #$f0                            ;
+    ; draw a single vertical line to remove air from bar
+    lda #0                              ;
+    sta airScreenAddressHigh            ;
+    lda airRemaining                    ; }
+    and #$fc                            ; } cell X
 
-writeTwoBytesToScreenForAir
-    ldy #$9d                            ; opcode for 'STA abs, x'
-    sty storeByteX                      ;
-    ldx airRemainingOffsetWithinCell    ;
-    jsr storeByteX                      ; store left byte of air
-    tay                                 ; store A
-    txa                                 ; }
+    asl                                 ; }
+    rol airScreenAddressHigh            ; }
     clc                                 ; }
-    adc #8                              ; } X += 8
-    tax                                 ; }
-    tya                                 ; recall A
-    jsr storeByteX                      ; store right byte of air
+    adc #<airStartAddress               ; }
+    sta airScreenAddressLow             ; } start + cellX
+    lda #>airStartAddress               ; }
+    adc airScreenAddressHigh            ; }
+    sta airScreenAddressHigh            ; }
+
+    lda airRemaining                    ;
+    and #3                              ; X offset within cell
+    tax                                 ;
+
+    lda airRemaining                    ;
+    cmp #48                             ;
+    bcc red                             ;
+    lda byteMaskGreen, x                ;
+    jmp writeAir                        ;
+red
+    lda byteMaskRed, x                  ;
+
+writeAir
+    ldy #0                              ;
+-
+    sta (airScreenAddressLow),y         ;
+    iny                                 ;
+    cpy #4                              ;
+    bne -                               ;
+return14
     rts                                 ;
 
 ; ***************************************************************************************
-airAtEndOfCell
-    lda #0                          ;
-    sta airRemainingOffsetWithinCell;
-    jsr gotoNextRow                 ;
-    jmp readAirByte                 ;
-
-; ***************************************************************************************
-setByteToWrite
-    lda #$0f                        ;
-    jmp writeTwoBytesToScreenForAir ;
-
 updateKongFalling
     lda kongYCoordinate             ;
     cmp #112                        ;
@@ -13380,11 +13290,22 @@ crtcSetupEnd
 
 ; ***************************************************************************************
 airMessage
-    !byte $11, 2                    ; COLOUR 2
-    !byte $1f, 2, 15                ; TAB(2,15)
-    !byte 'A', 10, 8                ; VDU $41, down, left
-    !byte 'I', 10, 8                ; VDU $49, down, left
-    !byte 'R'                       ; VDU $52
+    !byte $11, 3                    ; COLOUR 2
+    !byte $1f, 4, 18                ; TAB(4,18)
+    !byte $11, 129                  ; COLOUR 129
+    !text "AIR"                     ;
+    !text "       "                 ;
+    !byte $11, 130                  ; COLOUR 130
+    !text "                      "  ;
+    !byte $11, 128                  ; COLOUR 128
+    !byte 25, 4                     ;
+    !word           256,  436        ; MOVE
+    !byte 25, 5                     ;
+    !word           1144, 436       ; MOVE
+    !byte 25, $55                   ;
+    !word           256, 424        ; DRAW
+    !byte 25, $55                   ;
+    !word           1144, 424       ; DRAW
 airMessageEnd
 
 ; ***************************************************************************************

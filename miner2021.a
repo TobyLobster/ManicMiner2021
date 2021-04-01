@@ -959,7 +959,8 @@ allOtherSpikes
     !byte %...#....
     !byte %...#....
 
-    ; key
+keySprites
+    ; key 0
     !byte %..##....
     !byte %.#..#...
     !byte %#...#...
@@ -969,6 +970,7 @@ allOtherSpikes
     !byte %....#.#.
     !byte %.....#..
 
+    ; key 1
     ; ice lolly
     !byte %.#.#....
     !byte %#.#.#...
@@ -979,6 +981,7 @@ allOtherSpikes
     !byte %......#.
     !byte %.......#
 
+    ; key 2
     ; cube
     !byte %...#####
     !byte %..#...##
@@ -989,6 +992,7 @@ allOtherSpikes
     !byte %#...##..
     !byte %#####...
 
+    ; key 3
     ; banana
     !byte %#.......
     !byte %##......
@@ -999,6 +1003,7 @@ allOtherSpikes
     !byte %#...#.#.
     !byte %#....###
 
+    ; key 4
     ; apple
     !byte %....#...
     !byte %....#...
@@ -1009,6 +1014,7 @@ allOtherSpikes
     !byte %.#.....#
     !byte %..#####.
 
+    ; key 5
     !byte %...##...
     !byte %.##..##.
     !byte %.#....#.
@@ -1018,6 +1024,7 @@ allOtherSpikes
     !byte %.######.
     !byte %...##...
 
+    ; key 6
     !byte %..####..
     !byte %.#.##.#.
     !byte %#..#.#.#
@@ -1027,6 +1034,7 @@ allOtherSpikes
     !byte %.#.##.#.
     !byte %..####..
 
+    ; key 7
     !byte %#.#.#.#.
     !byte %#.#.#.#.
     !byte %#######.
@@ -1036,6 +1044,7 @@ allOtherSpikes
     !byte %#.#.#.#.
     !byte %#.#.#.#.
 
+    ; key 8
     !byte %.#####..
     !byte %..###...
     !byte %.##..#..
@@ -1045,6 +1054,7 @@ allOtherSpikes
     !byte %#.....#.
     !byte %.#####..
 
+    ; key 9
     !byte %....####
     !byte %....#..#
     !byte %..######
@@ -1126,6 +1136,8 @@ allOtherSpikes
     !byte %.....##.
     !byte %.....##.
 
+wallSprites
+    ; wall 0
     !byte %..#...#.
     !byte %########
     !byte %#...#...
@@ -1135,6 +1147,7 @@ allOtherSpikes
     !byte %#...#...
     !byte %########
 
+    ; wall 1
     !byte %#......#
     !byte %##....##
     !byte %#.#..#.#
@@ -1144,6 +1157,7 @@ allOtherSpikes
     !byte %##....##
     !byte %#......#
 
+    ; wall 2
     !byte %#######.
     !byte %.#####.#
     !byte %..###.##
@@ -1153,6 +1167,7 @@ allOtherSpikes
     !byte %.#....##
     !byte %#......#
 
+    ; wall 3
     !byte %#.##.#.#
     !byte %#.##.#.#
     !byte %#.##.#.#
@@ -1162,6 +1177,7 @@ allOtherSpikes
     !byte %##.#.#.#
     !byte %##.#.#.#
 
+    ; wall 4
     !byte %########
     !byte %#......#
     !byte %#......#
@@ -1171,6 +1187,7 @@ allOtherSpikes
     !byte %#......#
     !byte %########
 
+    ; wall 5
     !byte %########
     !byte %#..##..#
     !byte %#.###.##
@@ -1180,6 +1197,7 @@ allOtherSpikes
     !byte %#.###.##
     !byte %########
 
+    ; wall 6
     !byte %########
     !byte %#.#..#.#
     !byte %#.#..#.#
@@ -1189,6 +1207,7 @@ allOtherSpikes
     !byte %#.#..#.#
     !byte %########
 
+    ; wall 7
     !byte %#.#.#.#.
     !byte %.#.#.#.#
     !byte %#.#.#.#.
@@ -1198,6 +1217,7 @@ allOtherSpikes
     !byte %#.#.#.#.
     !byte %.#.#.#.#
 
+    ; wall 8
     !byte %########
     !byte %##.##.##
     !byte %#.#..#..
@@ -1207,6 +1227,7 @@ allOtherSpikes
     !byte %....#...
     !byte %........
 
+    ; wall 9
     !byte %########
     !byte %########
     !byte %..##..##
@@ -1216,6 +1237,7 @@ allOtherSpikes
     !byte %###..#.#
     !byte %........
 
+    ; wall 10
     !byte %.#####..
     !byte %########
     !byte %#....###
@@ -1225,6 +1247,7 @@ allOtherSpikes
     !byte %....#...
     !byte %........
 
+    ; wall 11
     !byte %########
     !byte %#.#.#.#.
     !byte %.#.#.#.#
@@ -1234,6 +1257,7 @@ allOtherSpikes
     !byte %.#.#.#.#
     !byte %#.#.#.#.
 
+conveyorSprites
     !byte %#######.                 ; conveyor 1
     !byte %.##..##.
     !byte %#######.
@@ -5183,11 +5207,9 @@ storeAddressLow = * + 1
     bne tempLoop                    ;
 
     ; ($84) bottom three bits contain the conveyor sprite to use
-    ;       this also determines the side walls sprite
     ;
-    ; We transform abcdefgh -> fgh00bcd, but in practice bcd = 000 so -> fgh00000
+    ; We transform abcdefgh -> fgh00000
     lda $84                         ;
-    and #$7f                        ;
     asl                             ;
     asl                             ;
     asl                             ;
@@ -5198,30 +5220,30 @@ storeAddressLow = * + 1
     ; copy conveyor sprite from $0ba0+X to $0c58 for 32 bytes
     ldy #0                          ;
 -
-    lda $0ba0,x                     ;
+    lda conveyorSprites,x           ;
     sta $0c58,y                     ;
     inx                             ;
     iny                             ;
     cpy #$20                        ;
     bne -                           ;
 
+    ; ($85) upper nybble is the side wall sprite to use
     lda $85                         ;
     and #$f0                        ; get upper nybble
-    clc                             ;
-    ror                             ; divide by two
+    lsr                             ; divide by 2
     tax                             ;
 
     ; copy side wall sprite from $0b40+X to $0c78 for 8 bytes
     ldy #0                          ;
 -
-    lda $0b40,x                     ;
+    lda wallSprites,x               ;
     sta $0c78,y                     ;
     iny                             ;
     inx                             ;
     cpy #8                          ;
     bne -                           ;
 
-    ; $85 holds the key sprite
+    ; ($85) lower nybble holds the key sprite
     lda $85                         ;
     and #$0f                        ; get lower nybble
     asl                             ;
@@ -5232,7 +5254,7 @@ storeAddressLow = * + 1
     ; copy key sprite from $0ab0+X to $0c80 for 8 bytes
     ldy #0                          ;
 -
-    lda $0ab0,x                     ;
+    lda keySprites,x                ;
     sta $0c80,y                     ;
     iny                             ;
     inx                             ;
@@ -5546,6 +5568,15 @@ drawPlatform
 
     ldx levelFeatureIndex               ;
     lda levelFeatureArray,x             ;
+    cmp #$8f                            ;
+    beq setColour129                    ;
+    lda #128                            ;
+    jmp +                               ;
+setColour129
+    lda #129                            ;
++
+    jsr setTextColour                   ;
+    lda levelFeatureArray,x             ;
     ldy #0                              ;
 -
     jsr OSWRCH                          ;
@@ -5679,7 +5710,6 @@ oldIrq1RoutineHigh = * + 2
 
     cmp #13                             ;
     bne handledInterrupt                ;
-    inc clock                           ;
     lda #0                              ;
     sta rasterArea                      ;
     beq handledInterrupt                ; ALWAYS branch
@@ -5688,6 +5718,7 @@ oldIrq1RoutineHigh = * + 2
 changePalette
     LDX #footerPalette - startOfPalettes + 3    ; }
     JSR definePaletteAX                         ; } Set palette for header
+    inc clock                                   ;
     jmp handledInterrupt                        ;
 
 ; ***************************************************************************************
@@ -7522,10 +7553,22 @@ readCharacter
     ldx #7                                              ; x=7
 -
     lda characterFromScreen,x                           ; get byte in workspaceA-H copy
-    bne checkUserDefinedCharacters                      ; if (not the same) then branch (to skip to next character)
+    bne checkFullCharacter                              ; if (not the same) then branch (to skip to next character)
     dex                                                 ; x--
     bpl -                                               ; if (still non-negative) then branch (back to loop eight times, to check each row of the character)
     ldx #charSPACE                                      ;
+    rts                                                 ;
+
+    ; check for special 'filled in' wall
+checkFullCharacter
+    ldx #7                                              ; x=7
+-
+    lda characterFromScreen,x                           ; get byte in workspaceA-H copy
+    cmp #255                                            ;
+    bne checkUserDefinedCharacters                      ; if (not full) then branch (to skip to next character)
+    dex                                                 ; x--
+    bpl -                                               ; if (still non-negative) then branch (back to loop eight times, to check each row of the character)
+    ldx #$8f                                            ; wall
     rts                                                 ;
 
 checkUserDefinedCharacters
@@ -7861,7 +7904,7 @@ creditsMessage
     !byte 18, 0, 128                ; GCOL 0,128
     !byte 26                        ; reset text window
 
-    !byte 17, 1                     ; COLOUR 1
+    !byte 17, 2                     ; COLOUR 1
     !byte 31, 1, 18                 ; TAB(19,17)
     !text "2021 Edition"
     !byte 31, 1, 19
@@ -7876,17 +7919,17 @@ creditsMessage
     !word 780, 864                  ;
     !text "Presents"                ;
     !byte 25, 4                     ;
-    !word 656, 528                  ;
-    !text "ORIGINAL PROGRAM"        ;
+    !word 656, 512                  ;
+    !text "Original program"        ;
     !byte 25, 4                     ;
-    !word 656, 464                  ;
-    !text "BY MATTHEW SMITH"        ;
+    !word 656, 460                  ;
+    !text "by Matthew Smith"        ;
     !byte 25, 4                     ;
     !word 876, 700                  ;
-    !text "BY"                      ;
+    !text "by"                      ;
     !byte 25, 4                     ;
     !word 720, 700-32*2             ;
-    !text "D.J.COATHUPE"
+    !text "D.J.COATHUPE"            ;
 
     !byte 4                         ; VDU 4
     !byte 23, 1, 0, 0,0,0,0,0,0,0,0 ; cursor off
@@ -7914,10 +7957,7 @@ guardianSetForEachLevel
     ; level 1,   2,   3,   4,   5,   6,   7,  8,    9,  10,  11,  12,  13,  14,  15,  16,  17,  18,  19,  20
     !byte $01, $02, $03, $04, $05, $06, $07, $08, $09, $0a, $0b, $08, $0c, $00, $0d, $0e, $0f, $09, $10, $01
 
-meteorPositions
-    !byte $64, $1b, $28, $a9, $16, $1d, $02, $58, $65, $57, $27, $d9, $aa, $1c, $15, $63
-
-penOffsetX = 2
+penOffsetX = 4
 penOffsetY = -10
     ; A Penrose triangle as encoded PLOT statements
 penroseTriangle
@@ -7979,14 +8019,6 @@ roomTitleBackgroundEnd
 airOffsetY = -4
 ; ***************************************************************************************
 airMessage
-;    !byte $11, 3                    ; COLOUR 2
-;    !byte $1f, 4, 18                ; TAB(4,18)
-;    !byte $11, 129                  ; COLOUR 129
-;    !text "AIR"                     ;
-;    !text "       "                 ;
-;    !byte $11, 130                  ; COLOUR 130
-;    !text "                      "  ;
-;    !byte $11, 128                  ; COLOUR 128
 
     ; draw red bar (colour 1)
     !byte 18, 0, 1                  ; GCOL 0,1
@@ -8986,6 +9018,9 @@ levelDefinitions
     ; ***********************************************************************************
     ; terminator
     !byte $ff, $ff, $ff
+
+meteorPositions
+    !byte $64, $1b, $28, $a9, $16, $1d, $02, $58, $65, $57, $27, $d9, $aa, $1c, $15, $63
 
 !if * > $6ba0 {
     !error "space is wrong, ", *
@@ -13479,15 +13514,15 @@ zeroBasedLevel
 ; sprite numbers to draw (level specific)
 levelFeatureArray
 levelFeature0
-    !byte $e0                           ;
+    !byte $80                           ; platform
 levelFeature1
-    !byte $e2                           ;
+    !byte $82                           ; crumble
 levelFeature2
-    !byte $ef                           ;
+    !byte $8f                           ; wall
 levelFeature3
-    !byte $eb                           ;
+    !byte $8b                           ; conveyor
 levelFeature4
-    !byte $ea                           ;
+    !byte $8a                           ; ?
 
 ; ***************************************************************************************
 levelColourArray

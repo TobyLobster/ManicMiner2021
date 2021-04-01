@@ -3283,6 +3283,7 @@ drawVerticalGuardians
 drawRegularVerticalGuardians
     inc verticalAnimationCounter        ;
     lda verticalAnimationCounter        ;
+    lsr                                 ;
     and #3                              ;
     sta eugenePositionY                 ; animation state: here 'eugenePositionY' used as temporary storage
     ldx #0                              ;
@@ -5293,17 +5294,12 @@ getExit8x16
 +
 
     ; copy 16 bytes
-    ldy #0                          ; loop counter
+    ldy #15                          ; loop counter
 getExitSourceByte
-    lda exitSprites1x2              ;
+    lda exitSprites1x2,y            ;
     sta $0c88,y                     ;
-    inc getExitSourceByte + 1       ; }
-    bne +                           ; } increment source address
-    inc getExitSourceByte + 2       ; }
-+
-    iny                             ;
-    cpy #16                         ;
-    bne getExitSourceByte           ;
+    dey                             ;
+    bpl getExitSourceByte           ;
 
     ; reverse the left hand side of the exit to get the right hand side
     ldx #7                          ;
@@ -13741,15 +13737,15 @@ cacheOffsetY
 
 ; ***************************************************************************************
 debugChangePalette
-    ORA paletteLookupTable                  ;
-    STA videoULAPaletteRegister             ; store actual colour in register
-    EOR #$10                                ;
-    STA videoULAPaletteRegister             ; store actual colour in register
-    EOR #$50                                ;
-    STA videoULAPaletteRegister             ; store actual colour in register
-    EOR #$10                                ;
-    STA videoULAPaletteRegister             ; store actual colour in register
-    RTS
+    ora paletteLookupTable                  ;
+    sta videoULAPaletteRegister             ; store actual colour in register
+    eor #$10                                ;
+    sta videoULAPaletteRegister             ; store actual colour in register
+    eor #$50                                ;
+    sta videoULAPaletteRegister             ; store actual colour in register
+    eor #$10                                ;
+    sta videoULAPaletteRegister             ; store actual colour in register
+    rts
 paletteLookupTable
     !byte $00, $20, $80, $A0
 

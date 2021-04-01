@@ -71,6 +71,99 @@ cellScreenAddressLow            = $0a       ;
 cellScreenAddressHigh           = $0b       ;
 airScreenAddressLow             = $0c       ;
 airScreenAddressHigh            = $0d       ;
+
+airRemainingOffsetWithinCell    = $0e       ;
+airRemainingDelayCounter        = $0f       ;
+score                           = $10       ; three bytes for the BCD score
+score2                          = $11       ;
+score3                          = $12       ;
+
+lives                           = $13       ;
+level20EnergyFieldsTimer        = $14       ;
+willyHighestPointReachedOnCurrentJump = $15 ;
+willyIsOnGround                 = $16       ;
+willyOffsetWithinCellY          = $17       ;
+airRemaining                    = $18       ;
+playerPixelX                    = $19       ;
+playerPixelY                    = $1a       ;
+newPlayerPixelX                 = $1b       ;
+newPlayerPixelY                 = $1c       ;
+hasDrawnConveyors               = $1d       ;
+tempHigh                        = $1e       ;
+saveX                           = $1f       ;
+characterFromScreen             = $20       ;
+characterFromScreen2            = $21       ;
+characterFromScreen3            = $22       ;
+characterFromScreen4            = $23       ;
+characterFromScreen5            = $24       ;
+characterFromScreen6            = $25       ;
+characterFromScreen7            = $26       ;
+characterFromScreen8            = $27       ;
+exitPositionX                   = $28       ;
+exitPositionY                   = $29       ;
+verticalAnimationCounter        = $2a       ; animation for vertical guardinas
+currentGuardianX                = $2b       ;
+currentGuardianY                = $2c       ;
+currentGuardianExtent1          = $2d       ;
+currentGuardianExtent2          = $2e       ;
+currentGuardianIndex            = $2f       ;
+tempGuardianSpriteOffset        = $30       ;
+guardianSpriteOffsets           = $31       ;
+guardianSpriteOffsets2          = $32       ;
+guardianSpriteOffsets3          = $33       ;
+tempGuardianSpriteAddrLow       = $34       ;
+tempGuardianSpriteAddrHigh      = $35       ;
+currentGuardianSpeed            = $36       ;
+screenCharacterAPrime           = $37       ;
+willyDeltaX                     = $38       ;
+willyAnimationEOR               = $39       ; 0 if pointing right; 3 if pointing left
+willyGraphicsPage               = $3a       ;
+willyChangedDirection           = $3b       ;
+
+; reading a character from the screen
+tempLoopCounter                 = $3c       ;
+tempByte                        = $3d       ;
+tempMask                        = $3e       ;
+plotColourMask                  = $3f       ;
+tempScreenAddressLow            = $40       ;
+tempScreenAddressHigh           = $41       ;
+
+keyCounter                      = $42       ;
+flashingExitCounter             = $43       ;
+
+willyFalling                    = $44       ;
+willyJustLandedOnConveyor       = $45       ;
+screenCharacterA                = $46       ;
+screenCharacterB                = $47       ;
+isJumping                       = $48       ;
+playerHeightOnTakeOff           = $49       ;
+jumpPhase                       = $4a       ;
+jumpDirection                   = $4b       ;
+spriteRowCounter                = $4c       ;
+playerXOffsetWithinCell         = $4d       ;
+playerYNegativeOffsetWithinCell = $4e       ;
+willyIsOnConveyor               = $4f       ;
+willyDirectionAgainstFlowOfConveyor = $50   ; $01 or $ff when moving against the flow of the conveyor
+spriteColourMask                = $51       ;
+currentGuardianColour           = $52       ;
+currentGuardianXPosition        = $53       ;
+drawGuardianLoopCounter         = $54       ;
+conveyorX                       = $55       ;
+conveyorY                       = $56       ;
+conveyorLength                  = $57       ;
+conveyorSpriteOffset            = $58       ;
+tempA                           = $59       ;
+tempX                           = $5a       ;
+tempY                           = $5b       ;
+byteToReverse                   = $5c       ;
+keysLeft                        = $5d       ;
+vsyncCounter                    = $5e       ;
+musicCounter                    = $5f       ;
+channel2Frequency               = $60       ;
+previousNoteByte                = $61       ;
+rememberCharacterToDraw         = $62       ;
+
+
 levelDataOffset                 = $70       ;
 
 plotMode                        = $70       ;
@@ -336,43 +429,6 @@ guardianPositions
     !byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
 guardianPositionsCopy
     !byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-
-; ***************************************************************************************
-airRemainingOffsetWithinCell
-    !byte $ea                                       ;
-airRemainingDelayCounter
-    !byte $ea                                       ;
-
-score
-    !byte $00, $00, $00                             ;
-
-lives
-    !byte $ea                                       ;
-
-level20EnergyFieldsTimer
-    !byte $ea                                       ;
-
-willyHighestPointReachedOnCurrentJump
-    !byte $ea                                       ;
-willyIsOnGround
-    !byte $ea                                       ;
-willyOffsetWithinCellY
-    !byte $ea                                       ;
-
-airRemaining
-    !byte $ea                                       ;
-
-; ***************************************************************************************
-playerPixelX
-    !byte $18                                       ;
-playerPixelY
-    !byte $20                                       ;
-newPlayerPixelX
-    !byte $18                                       ;
-newPlayerPixelY
-    !byte $20                                       ;
-hasDrawnConveyors
-    !byte $ea                                       ;
 
 !if * > $0800 {
     !error "space is wrong, ", *
@@ -1647,8 +1703,6 @@ screenRowAddressHigh
     !byte >(logicalScreenStart + 28 * $280)
     !byte >(logicalScreenStart + 29 * $280)
     !byte >(logicalScreenStart + 30 * $280)
-tempHigh
-    !byte 0
 
 ; ***************************************************************************************
 ;
@@ -1711,12 +1765,6 @@ plotGetScreenAddress
     inc plotScreenAddressHigh           ; }
 +
     rts                                 ;
-
-yOffsetsTable
-    !byte $ff,0,0,0,0,0,0,0
-    !byte 0,0,0,0,0,0,0,0
-    !byte 8,0,0,0,0,0,0,0
-    !byte 16
 
 ; ***************************************************************************************
 ;
@@ -3419,7 +3467,7 @@ drawVerticalGuardian
     sta plotSourceSpriteAddressHigh ;
 drawGuardianPlotType = * + 1
     lda #4                          ;
-    jsr plot                        ; draw vertical guardian (mode 4)
+    jsr plot                        ; draw vertical guardian (mode 4, or mode 3 on level 19)
 
     lda currentGuardianY            ;
     cmp currentGuardianExtent1      ;
@@ -4684,9 +4732,6 @@ setTextPos
 ;    !byte %11110000                                     ;
 ;    !byte %11111111                                     ;
 
-toFullColour
-    !byte $00, $11, $22, $33, $44, $55, $66, $77, $88, $99, $aa, $bb, $cc, $dd, $ee, $ff
-
 ; ***************************************************************************************
 ;
 ; On Entry:
@@ -5369,8 +5414,8 @@ setRoomColours
     jsr OSWRCH                      ;
     jsr drawInitialAirMeter         ;
 
-    lda #2                          ; COLOUR 2
-    jsr setTextColour               ;
+;    lda #2                          ; COLOUR 2
+;    jsr setTextColour               ;
 
     jsr updateAirAndCheckExit       ;
     jsr drawConveyor                ;
@@ -5383,11 +5428,10 @@ setRoomColours
 
     lda levelColours                ;
     and #$f0                        ;
-    clc                             ;
-    ror                             ;
-    ror                             ;
-    ror                             ;
-    ror                             ;
+    lsr                             ;
+    lsr                             ;
+    lsr                             ;
+    lsr                             ;
     ldx #1                          ;
     jsr setPalette                  ; set palette from upper nybble
 
@@ -5709,6 +5753,7 @@ silenceChannel2
 
 ; ***************************************************************************************
 updateMusic
+updateMusicOpcode = *
     inc vsyncCounter                ; This first instruction MUST be an INC (this byte is modified elsewhere)
     lda vsyncCounter                ;
     and #7                          ;
@@ -5757,9 +5802,6 @@ quietChannel3
     jmp soundDirect                 ; set zero volume on channel 3
 
 
-soundX
-    !byte 0
-
 ; ***************************************************************************************
 ; send a byte to the sound chip (as seen in the advanced user guide)
 soundDirect
@@ -5767,7 +5809,7 @@ soundDirect
     sei                             ;
     pha                             ; remember A
 
-    stx soundX                      ;
+    stx saveX                       ;
 
     lda #151                        ;
     ldx #$43                        ; Data direction register A
@@ -5787,7 +5829,7 @@ soundDirect
     ldy #8                          ; Set sound chip write pin high
     jsr OSBYTE                      ;
 
-    ldx soundX                      ;
+    ldx saveX                       ;
 
     plp                             ; Restore interrupt enabled as needed
     rts                             ;
@@ -6512,6 +6554,14 @@ ShortTimerValue = 24*62 + 46
 
 ; ***************************************************************************************
 initialize
+    lda #$ff                                ;
+    sta musicCounter                        ;
+    sta vsyncCounter                        ;
+    sta rasterArea                          ;
+    sta channel2Frequency                   ;
+    sta previousNoteByte                    ;
+    jsr pauseMusic                          ;
+
     ; install irq code
     sei
     lda #$7F                                ; }
@@ -6737,13 +6787,13 @@ showLevel
     jmp initializeLevelSprites              ;
 
 resumeMusic
-    lda #$ee                                ; opcode for 'INC abs'
-    sta updateMusic                         ; store INC opcode in the code that updates music
+    lda #$e6                                ; opcode for 'INC zp'
+    sta updateMusicOpcode                   ; store INC opcode in the code that updates music
     rts                                     ;
 
 pauseMusic
     lda #$60                                ; opcode for 'RTS'
-    sta updateMusic                         ; store RTS opcode in the code that updates music
+    sta updateMusicOpcode                   ; store RTS opcode in the code that updates music
     lda #$9f                                ;
     jmp soundDirect                         ; silence sound channel 3
 
@@ -6798,8 +6848,8 @@ storeLevelNumber
     beq .return1                        ;
 
     lda currentLevel                    ;
-    cmp #19                             ;
-    bcc .return1                        ; if (current level < 19)
+    cmp #21                             ;
+    bcc .return1                        ; if (current level < 21)
     lda #1                              ; set level 1 - Central Cavern
     sta currentLevel                    ;
     lda #0                              ; zero based level number is zero
@@ -6960,9 +7010,8 @@ checkExit
     lsr                             ;
     cmp exitPositionX               ;
     bne notAtExit                   ;
+
     lda newPlayerPixelY             ;
-    sec                             ;
-    sbc #0                          ;
     lsr                             ;
     lsr                             ;
     lsr                             ;
@@ -7119,15 +7168,6 @@ updateAir
     cmp #0                          ;
     beq loseAir                     ;
     rts                             ;
-
-; ***************************************************************************************
-byteMaskGreen
-    !byte $f0, $f8, $fc, $fe
-
-; ***************************************************************************************
-byteMaskRed
-    !byte $0f, $8f, $cf, $ef
-
 
 airStartAddress = $5d82
 
@@ -7437,9 +7477,6 @@ death
 guardianSpriteCache
     * = * + 256
 
-characterFromScreen
-    !byte 0, 0, 0, 0, 0, 0, 0, 0
-
 ; ***************************************************************************************
 ;
 ; Like OSBYTE 135, this reads a character from the screen and returns it's ASCII code in X
@@ -7452,45 +7489,45 @@ readCharacter
                                                         ; each character, in workspaceA-H
 
     ; check for a SPACE character first
-    ldy #7                                              ; Y=7
---
-    lda characterFromScreen,Y                           ; get byte in workspaceA-H copy
+    ldx #7                                              ; x=7
+-
+    lda characterFromScreen,x                           ; get byte in workspaceA-H copy
     bne checkUserDefinedCharacters                      ; if (not the same) then branch (to skip to next character)
-    dey                                                 ; Y--
-    bpl --                                              ; if (still non-negative) then branch (back to loop eight times, to check each row of the character)
+    dex                                                 ; x--
+    bpl -                                               ; if (still non-negative) then branch (back to loop eight times, to check each row of the character)
     ldx #charSPACE                                      ;
     rts                                                 ;
 
 checkUserDefinedCharacters
-    ldx #0                                              ; Start with the space character (loop counter)
-    stx characterAddrLow                                ;
+    ldy #0                                              ; loop counter
+    sty characterAddrLow                                ;
     lda #$0c                                            ;
     sta characterAddrHigh                               ;
 readCharLoop
-    ldy #7                                              ; Y=7
---
-    lda characterFromScreen,Y                           ; get byte in workspaceA-H copy
+    ldx #7                                              ; x=7
+-
+    lda characterFromScreen,x                           ; get byte in workspaceA-H copy
 characterAddrLow = * + 1
 characterAddrHigh = * + 2
-    cmp $ffff,Y                                         ; check against character definition
+    cmp $ffff,x                                         ; check against character definition
     bne gotoNextCharacter                               ; if (not the same) then branch (to skip to next character)
-    dey                                                 ; Y--
-    bpl --                                              ; if (still non-negative) then branch (back to loop eight times, to check each row of the character)
+    dex                                                 ; x--
+    bpl -                                               ; if (still non-negative) then branch (back to loop eight times, to check each row of the character)
 finishUp
-    txa                                                 ; At this point the character matches
+    tya                                                 ; At this point the character matches
     ora #$80                                            ; Add 128 to the code returned
     tax                                                 ;
     rts                                                 ;
 
 gotoNextCharacter
-    inx                                                 ; no match on this character so increment to next character
+    iny                                                 ; no match on this character so increment to next character
     lda characterAddrLow                                ; }
     clc                                                 ; } Add 8 to address of character definition to move on to the next character
     adc #8                                              ; } Affects low byte only as we check one page of characters at a time
     sta characterAddrLow                                ; }
     bne readCharLoop                                    ; if (we have not reached the end of the page) then branch (back to check the character)
 
-    cpx #32                                             ; check for end of page
+    cpy #32                                             ; check for end of page
     bne readCharLoop                                    ; if (not done with all characters) then branch (loop back)
     ldx #0                                              ; nothing found
     rts                                                 ;
@@ -7570,16 +7607,6 @@ setupPatternLoop
 free2 = $3280 - *
     * = $3280                       ; start of visible screen
 !pseudopc $6200 {
-
-energyFieldString
-    !byte $1f, 15, 5                    ; TAB(15, 5)
-    !byte $2a                           ;
-    !byte $1f, 15, 9                    ; TAB(15, 9)
-    !byte $2a                           ;
-    !byte $1f, 24, 5                    ;
-    !byte $2a                           ;
-    !byte $1f, 24, 9                    ; TAB(24, 9)
-    !byte $2a                           ;
 
 ; ***************************************************************************************
 gameOver
@@ -7867,7 +7894,8 @@ checkOneVerticalCollision
     clc                                 ;
     adc #4                              ;
     sec                                 ;
-    sbc tempScreenByte                  ; playerX + 4 - (guardianX + 5) * 4
+tempScreenByte = * + 1
+    sbc #$ff                            ; playerX + 4 - (guardianX + 5) * 4
     cmp #0                              ;
     beq checkVerticalCollision          ;
     cmp #7                              ;
@@ -13136,15 +13164,6 @@ exitMessage
     !byte $f3, $f4, $00             ; $f3, $f4
 
 ; ***************************************************************************************
-show14Rows
-    !byte $17, $00, $06, $0e            ;
-show14RowsEnd
-
-setTextWindow
-    !byte 28, 12, 13, 26, 10            ; VDU 28,left,bottom,right,top
-setTextWindowEnd
-
-; ***************************************************************************************
 ;
 ; Later levels (9 and 11 upwards) can have up to four vertical guardians
 ;
@@ -13181,12 +13200,6 @@ cheatCodeEnd
 
 ; ***************************************************************************************
 music
-    ; OLD tune frequencies
-;    !byte $23, $1f, $1d, $1a, $17, $1d, $17, $17, $16, $1a, $16, $16, $17, $1d, $17, $17
-;    !byte $23, $1f, $1d, $1a, $17, $1d, $17, $17, $16, $1a, $16, $16, $17, $17, $17, $17
-;    !byte $23, $1f, $1d, $1a, $17, $1d, $17, $17, $16, $1a, $16, $16, $17, $1d, $17, $17
-;    !byte $23, $1f, $1d, $1a, $17, $1d, $17, $11, $13, $17, $1d, $17, $13, $13, $13, $13, $00
-
     ;     B2, C#3, D3, E3, F#3, D3, F#3,    E#3, C#3, E#3,    E3, B#2, E3
     !byte  0,   2,  3,  5,   7,  3,   7,7,    6,   2,   6,6,   5,   1,  5, 5
     ;     B2, C#3, D3, E3, F#3, D3, F#3,     B3,  A3, F#3,    D3, F#3, A3
@@ -13299,7 +13312,7 @@ airMessage
     !text "                      "  ;
     !byte $11, 128                  ; COLOUR 128
     !byte 25, 4                     ;
-    !word           256,  436        ; MOVE
+    !word           256,  436       ; MOVE
     !byte 25, 5                     ;
     !word           1144, 436       ; MOVE
     !byte 25, $55                   ;
@@ -13323,11 +13336,6 @@ level20EnergyFieldsString
     !byte $1f, $1c, $02                             ; TAB(28, 2)
 
 ; ***************************************************************************************
-flashingExit
-    !byte $91, $92, $0a, $08, $08, $93, $94
-flashingExitEnd
-
-; ***************************************************************************************
 keysToRead
     ;      f0,  f1,  f2,  f3,  f4,  f5,  f6,  f7,  f8,  f9
     !byte $df, $8e, $8d, $8c, $eb, $8b, $8a, $e9, $89, $88
@@ -13346,12 +13354,6 @@ footPositionY
 
 cheatModeEnabled
     !byte $00                                       ;
-
-; ***************************************************************************************
-exitPositionX
-    !byte $13                       ;
-exitPositionY
-    !byte $07                       ;
 
 ; ***************************************************************************************
 levelNumberCounter
@@ -13385,6 +13387,107 @@ roomNumberReached
     !byte $00                           ;
 
 ; ***************************************************************************************
+screenAreaMinY
+    !byte $18,$30,$48,$60,$78,$90,$A8,$C0
+dangerAreas
+    !byte  7, 8, 9, 10, 11, 12, 0, 1, 2, 3, 4, 5, 6, 7
+
+; ***************************************************************************************
+cacheOffsetX
+    !byte 0, 1, 0, 1, 0, 1
+cacheOffsetY
+    !byte 0, 0, 1, 1, 2, 2
+
+; ***************************************************************************************
+yOffsetsTable
+    !byte $ff,0,0,0,0,0,0,0
+    !byte 0,0,0,0,0,0,0,0
+    !byte 8,0,0,0,0,0,0,0
+    !byte 16
+
+; ***************************************************************************************
+toFullColour
+    !byte $00, $11, $22, $33, $44, $55, $66, $77, $88, $99, $aa, $bb, $cc, $dd, $ee, $ff
+
+; ***************************************************************************************
+byteMaskGreen
+    !byte $f0, $f8, $fc, $fe
+
+; ***************************************************************************************
+byteMaskRed
+    !byte $0f, $8f, $cf, $ef
+
+; ***************************************************************************************
+debugChangePalette
+    ora paletteLookupTable                  ;
+    sta videoULAPaletteRegister             ; store actual colour in register
+    eor #$10                                ;
+    sta videoULAPaletteRegister             ; store actual colour in register
+    eor #$50                                ;
+    sta videoULAPaletteRegister             ; store actual colour in register
+    eor #$10                                ;
+    sta videoULAPaletteRegister             ; store actual colour in register
+    rts
+paletteLookupTable
+    !byte $00, $20, $80, $A0
+
+energyFieldString
+    !byte $1f, 15, 5                    ; TAB(15, 5)
+    !byte $2a                           ;
+    !byte $1f, 15, 9                    ; TAB(15, 9)
+    !byte $2a                           ;
+    !byte $1f, 24, 5                    ;
+    !byte $2a                           ;
+    !byte $1f, 24, 9                    ; TAB(24, 9)
+    !byte $2a                           ;
+
+guardianColourMasks
+    !byte $f0, $ff, $0f, $f0        ;
+
+; ***************************************************************************************
+keyXPositions
+    !byte $ea, $ea, $ea, $ea, $ea   ;
+keyYPositions
+    !byte $ea, $ea, $ea, $ea, $ea   ;
+keyGot
+    !byte $00, $00, $00, $00, $00   ;
+
+keyPositionCounter
+    !byte $0f                       ;
+currentKeyIndex
+    !byte $00                       ;
+keyColourCounter
+    !byte $00                       ;
+
+; ***************************************************************************************
+attractModeTimer
+    !byte $ea                       ;
+
+cheatCodeCounter
+    !byte $00                       ;
+
+; ***************************************************************************************
+; level decode
+singleItemSprite
+    !byte $ea                       ;
+decodeLevelByte
+    !byte $ea                       ;
+singleItemX
+    !byte $ea                       ;
+singleItemY
+    !byte $ea                       ;
+singleItemOffsetX
+    !byte $ea                       ;
+singleItemType
+    !byte $ea                       ;
+singleItemSpriteOffset
+    !byte $ea                       ;
+
+musicEnabled
+    !byte $ea                       ;
+
+
+; ***************************************************************************************
 ; ***************************************************************************************
 ; ***************************************************************************************
 ; ***************************************************************************************
@@ -13404,58 +13507,29 @@ roomNumberReached
 ; ***************************************************************************************
 ; ***************************************************************************************
 ; ***************************************************************************************
+; ***************************************************************************************
+
 energyFieldTimer
     !byte $ea                                       ;
 
 ; ***************************************************************************************
-tempScreenByte
-    !byte $ea                                       ;
-
 kongYCoordinate
     !byte $ea                                       ;
+kongBeastSwitchTriggered
+    !byte $00                       ;
+kongAnimationCounter
+    !byte $ea
 
 ; ***************************************************************************************
 eugenePositionY
     !byte $ea                       ; top bit indicates current direction
-kongAnimationCounter
-    !byte $ea
-verticalAnimationCounter
-    !byte $ea                       ; animation for vertical guardinas
 
-currentGuardianX
+copyEugeneSourceByte
     !byte $ea                       ;
-currentGuardianY
-    !byte $ea                       ;
-currentGuardianExtent1
-    !byte $ea                       ;
-currentGuardianExtent2
-    !byte $ea                       ;
-currentGuardianIndex
-    !byte $ea
-
-tempGuardianSpriteOffset
-    !byte $ea                       ;
-guardianSpriteOffsets
-    !byte $ea, $ea, $ea             ;
-tempGuardianSpriteAddrLow
-    !byte $ea                       ;
-tempGuardianSpriteAddrHigh
+copyEugeneTempByte
+copyWhichSprite
     !byte $ea                       ;
 
-currentGuardianSpeed
-    !byte $ea                       ;
-
-screenCharacterAPrime
-    !byte $ea
-
-willyDeltaX
-    !byte $ea
-willyAnimationEOR
-    !byte $03                       ; 0 if pointing right; 3 if pointing left
-willyGraphicsPage
-    !byte $06
-willyChangedDirection
-    !byte $ea
 
 willySpriteAddressLow
     !byte $00
@@ -13464,36 +13538,7 @@ willySpriteAddressHigh
 
     !byte $00                       ; [UNUSED, but copied in and out of cache]
     !byte $00                       ; [UNUSED, but copied in and out of cache]
-
-willyFalling
-    !byte $ea                       ;
-willyJustLandedOnConveyor
-    !byte $ea                       ;
-
-screenCharacterA
-    !byte $ea                       ;
-screenCharacterB
-    !byte $ea                       ;
-
-isJumping
-    !byte $ea                       ;
-playerHeightOnTakeOff
-    !byte $ea                       ;
-jumpPhase
-    !byte $ea                       ;
-jumpDirection
-    !byte $ea                       ;
-spriteRowCounter
-    !byte $ea                       ;
-
-playerXOffsetWithinCell
-    !byte $ea                       ;
-playerYNegativeOffsetWithinCell
-    !byte $ea                       ;
-willyIsOnConveyor
-    !byte $ea                       ;
-willyDirectionAgainstFlowOfConveyor
-    !byte $ea                       ; $01 or $ff when moving against the flow of the conveyor
+    !byte $00                       ; [UNUSED, but copied in and out of cache]
 
 conveyorDirection
     !byte $ff                       ;
@@ -13504,34 +13549,6 @@ textCursorX
 textCursorY
     !byte $ea
 
-; ***************************************************************************************
-kongBeastSwitchTriggered
-    !byte $00                       ;
-
-; ***************************************************************************************
-spriteColourMask
-    !byte $ff                       ;
-
-; ***************************************************************************************
-copyEugeneSourceByte
-    !byte $ea                       ;
-copyEugeneTempByte
-copyWhichSprite
-    !byte $ea                       ;
-
-; ***************************************************************************************
-currentGuardianColour
-    !byte $ea                        ;
-
-; ***************************************************************************************
-currentGuardianXPosition
-    !byte $ea                       ;
-drawGuardianLoopCounter
-    !byte $ea                       ;
-
-; ***************************************************************************************
-rememberCharacterToDraw
-    !byte $ea                       ;
 ; ***************************************************************************************
 meteorLandingY
     !byte $06                       ;
@@ -13545,137 +13562,15 @@ meteorIndex
     !byte $00                       ;
 
 ; ***************************************************************************************
-conveyorX
-    !byte $ea                       ;
-conveyorY
-    !byte $ea                       ;
-conveyorLength
-    !byte $ea                       ;
-conveyorSpriteOffset
-    !byte $ea                       ;
-
-tempA
-    !byte $ea                       ;
-tempX
-    !byte $ea                       ;
-tempY
-    !byte $ea                       ;
-
-byteToReverse
-    !byte $ea                       ;
-
-keysLeft
-    !byte $00                       ;
-
-; ***************************************************************************************
-vsyncCounter
-    !byte $10                       ;
-musicCounter
-    !byte $00                       ;
-channel2Frequency
-    !byte $ff                       ;
-previousNoteByte
-    !byte $ff
-
-; ***************************************************************************************
     ; Each vertical guardian has four bytes in this table
     ; <x coord + top bit for direction + bit 6 for speed>, <y coord>, <Y extent 1>, <Y extent 2>
 currentVerticalGuardians
-    !byte $ea, $ea, $ea, $ea            ; first  guardian
+    !byte $ea, $ea, $ea, $ea        ; first  guardian
 verticalGuardian2
-    !byte $ea, $ea, $ea, $ea            ; second guardian
-    !byte $ea, $ea, $ea, $ea            ; third  guardian
-    !byte $ea, $ea, $ea, $ea            ; fourth guardian
-guardianColourMasks
-    !byte $f0, $ff, $0f, $f0
-
-attractModeTimer
-    !byte $ea                       ;
-
-cheatCodeCounter
-    !byte $00
-; ***************************************************************************************
-singleItemSprite
-    !byte $ea                       ;
-decodeLevelByte
-    !byte $ea                       ;
-singleItemX
-    !byte $ea                       ;
-singleItemY
-    !byte $ea                       ;
-singleItemOffsetX
-    !byte $ea                       ;
-singleItemType
-    !byte $ea                       ;
-singleItemSpriteOffset
-    !byte $ea                       ;
-
-keyXPositions
-    !byte $ea, $ea, $ea, $ea, $ea
-keyYPositions
-    !byte $ea, $ea, $ea, $ea, $ea
-keyGot
-    !byte $00, $00, $00, $00, $00
-
-
-keyPositionCounter
-    !byte $0f                       ;
-currentKeyIndex
-    !byte $00                       ;
-keyColourCounter
-    !byte $00                       ;
-
-musicEnabled
-    !byte $ea                       ;
-
-keyCounter
-    !byte $ea                       ;
-
-flashingExitCounter
-    !byte $ea                       ;
-
-; reading a character from the screen
-tempLoopCounter
-    !byte 0                         ;
-tempByte
-    !byte 0                         ;
-tempMask
-    !byte 0                         ;
-plotColourMask
-    !byte 0                         ;
-
-; ***************************************************************************************
-screenAreaMinY
-    !byte $18,$30,$48,$60,$78,$90,$A8,$C0
-dangerAreas
-    !byte  7, 8, 9, 10, 11, 12, 0, 1, 2, 3, 4, 5, 6, 7
-
-; ***************************************************************************************
-cacheOffsetX
-    !byte 0, 1, 0, 1, 0, 1
-cacheOffsetY
-    !byte 0, 0, 1, 1, 2, 2
-
-; ***************************************************************************************
-debugChangePalette
-    ora paletteLookupTable                  ;
-    sta videoULAPaletteRegister             ; store actual colour in register
-    eor #$10                                ;
-    sta videoULAPaletteRegister             ; store actual colour in register
-    eor #$50                                ;
-    sta videoULAPaletteRegister             ; store actual colour in register
-    eor #$10                                ;
-    sta videoULAPaletteRegister             ; store actual colour in register
-    rts
-paletteLookupTable
-    !byte $00, $20, $80, $A0
-
-
-tempScreenAddressLow
-    !byte $00                       ;
-tempScreenAddressHigh
-    !byte $05                       ;
-
+    !byte $ea, $ea, $ea, $ea        ; second guardian
+    !byte $ea, $ea, $ea, $ea        ; third  guardian
+    !byte $ea, $ea, $ea, $ea        ; fourth guardian
+endOfEverything
 }
-free4 = $8000 - tempScreenAddressHigh
+free4 = $8000 - endOfEverything
 allFree = free1 + free2 + free3 + free4

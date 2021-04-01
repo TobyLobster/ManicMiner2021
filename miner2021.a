@@ -282,164 +282,155 @@ manicMinerGraphic
     !byte %........    ;              ####   ###
     !byte %........    ;               ###  ###      ###     ###   #### ####    #####
     !byte %........    ;              ## # ####     ## ##     ###   ##   ##    ##   ##
-    !byte %......##    ;       ##    ##  ### ##    ##   ##    ####  ##   ##   ##
-    !byte %.....#..    ;      #  #  ##   ##  ##    ##   ##    ## ## ##   ##   ##
-    !byte %.....#..    ;      #    ##        ##   #########   ##  ####   ##   ##
-    !byte %.....#..    ;      #   ##         ##   ##     ##   ##   ###   ##    ##   ##
-    !byte %......##    ;       ####         #### ####   #### ####   ##  ####    #####
+    !byte %....##..    ;       ##    ##  ### ##    ##   ##    ####  ##   ##   ##
+    !byte %...#..#.    ;      #  #  ##   ##  ##    ##   ##    ## ## ##   ##   ##
+    !byte %...#....    ;      #    ##        ##   #########   ##  ####   ##   ##
+    !byte %...#...#    ;      #   ##         ##   ##     ##   ##   ###   ##    ##   ##
+    !byte %....####    ;       ####         #### ####   #### ####   ##  ####    #####
 
-    !byte %.....###    ;        #######    ####                                           ####
-    !byte %......##    ;       #    ####  ####  #### ###   #### ######## ########        #    #
-    !byte %.....##.    ;       #  # ## #### ##   ##   ###   ##   ##   ##  ##    ##      #  ##  #
-    !byte %....##..    ;        ##  ##  ##  ##   ##   ####  ##   ## #     ##    ##      # #    #
-    !byte %#..##...    ;            ##      ##   ##   ## ## ##   ####     #######       # #    #
-    !byte %..##....    ;            ##      ##   ##   ##  ####   ## #     ##   ##       #  ##  #
-    !byte %.##.....    ;            ##      ##   ##   ##   ###   ##   ##  ##    ##  #    #    #
-    !byte %##......    ;           ####    #### #### ####   ##  ######## ####    ###      ####
+    !byte %...####.    ;        #######    ####                                           ####
+    !byte %....###.    ;       #    ####  ####  #### ###   #### ######## ########        #    #
+    !byte %...##.#.    ;       #  # ## #### ##   ##   ###   ##   ##   ##  ##    ##      #  ##  #
+    !byte %..##..##    ;        ##  ##  ##  ##   ##   ####  ##   ## #     ##    ##      # #    #
+    !byte %.##...##    ;            ##      ##   ##   ## ## ##   ####     #######       # #    #
+    !byte %##......    ;            ##      ##   ##   ##  ####   ## #     ##   ##       #  ##  #
+    !byte %#.......    ;            ##      ##   ##   ##   ###   ##   ##  ##    ##  #    #    #
+    !byte %........    ;           ####    #### #### ####   ##  ######## ####    ###      ####
 
-    !byte %#...###.
-    !byte %#..###..
-    !byte %#.####..
-    !byte %###.##..
-    !byte %##..##..
-    !byte %....##..
-    !byte %....##..
-    !byte %...####.
-
-    !byte %........
-    !byte %....###.
-    !byte %...##.##
-    !byte %..##...#
-    !byte %..##...#
-    !byte %.#######
-    !byte %.##.....
-    !byte %####...#
-
-    !byte %........
-    !byte %....###.
-    !byte %.....###
-    !byte %#....###
-    !byte %#....##.
-    !byte %##...##.
-    !byte %##...##.
-    !byte %###.####
-
-    !byte %........
-    !byte %..####.#
-    !byte %...##...
-    !byte %#..##...
-    !byte %##.##...
-    !byte %.####...
     !byte %..###...
-    !byte %...##..#
-
-    !byte %........
-    !byte %###....#
-    !byte %##....##
-    !byte %##...##.
-    !byte %##...##.
-    !byte %##...##.
-    !byte %##....##
-    !byte %###....#
-
-    !byte %........
-    !byte %####....
-    !byte %...##...
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %...##...
-    !byte %####....
-
-    !byte %........
-    !byte %.......#
-    !byte %.......#
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-
-    !byte %#######.
-    !byte %....####
-    !byte %..#.##.#
-    !byte %##..##..
-    !byte %....##..
-    !byte %....##..
-    !byte %....##..
-    !byte %...####.
-
-    !byte %...####.
-    !byte %..####..
-    !byte %###.##..
-    !byte %##..##..
-    !byte %....##..
-    !byte %....##..
-    !byte %....##..
-    !byte %...####.
-
-    !byte %........
-    !byte %####.###
-    !byte %.##...##
-    !byte %.##...##
-    !byte %.##...##
-    !byte %.##...##
-    !byte %.##...##
-    !byte %####.###
-
-    !byte %........
-    !byte %...####.
-    !byte %#...##..
-    !byte %##..##..
-    !byte %.##.##..
-    !byte %..####..
-    !byte %...###..
-    !byte %#...##..
-
-    !byte %........
-    !byte %########
-    !byte %.##...##
-    !byte %.##.#...
-    !byte %.####...
-    !byte %.##.#...
-    !byte %.##...##
-    !byte %########
-
-    !byte %........
-    !byte %.#######
-    !byte %..##....
-    !byte %..##....
-    !byte %..######
-    !byte %..##...#
-    !byte %..##....
-    !byte %.####...
-
-    !byte %........
-    !byte %#.......
-    !byte %##......
-    !byte %##......
-    !byte %#.......
-    !byte %#.......
-    !byte %##..#...
     !byte %.###....
-
-    !byte %..####..
-    !byte %.#....#.
-    !byte %#..##..#
-    !byte %#.#....#
-    !byte %#.#....#
-    !byte %#..##..#
-    !byte %.#....#.
-    !byte %..####..
+    !byte %####....
+    !byte %#.##....
+    !byte %..##....
+    !byte %..##...#
+    !byte %..##...#
+    !byte %.####.##
 
     !byte %........
+    !byte %..###...
+    !byte %.##.##..
+    !byte %##...##.
+    !byte %##...##.
+    !byte %########
+    !byte %#.....##
+    !byte %##...###
+
+    !byte %........
+    !byte %..###...
+    !byte %...###..
+    !byte %...####.
+    !byte %...##.##
+    !byte %...##..#
+    !byte %...##...
+    !byte %#.####..
+
+    !byte %........
+    !byte %####.###
+    !byte %.##...##
+    !byte %.##...##
+    !byte %.##...##
+    !byte %###...##
+    !byte %###...##
+    !byte %.##..###
+
+    !byte %........
+    !byte %#....###
+    !byte %....##..
+    !byte %...##...
+    !byte %...##...
+    !byte %...##...
+    !byte %....##..
+    !byte %#....###
+
+    !byte %........
+    !byte %##......
+    !byte %.##.....
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %.##.....
+    !byte %##......
+
+    !byte %......##
+    !byte %.....#..
+    !byte %.....#..
+    !byte %......##
     !byte %........
     !byte %........
     !byte %........
     !byte %........
+
+    !byte %#####...
+    !byte %..####..
+    !byte %#.##.###
+    !byte %..##..##
+    !byte %..##....
+    !byte %..##....
+    !byte %..##....
+    !byte %.####...
+
+    !byte %.####...
+    !byte %####..##
+    !byte %#.##...#
+    !byte %..##...#
+    !byte %..##...#
+    !byte %..##...#
+    !byte %..##...#
+    !byte %.####.##
+
     !byte %........
+    !byte %##.###..
+    !byte %#...###.
+    !byte %#...####
+    !byte %#...##.#
+    !byte %#...##..
+    !byte %#...##..
+    !byte %##.####.
+
     !byte %........
+    !byte %.####.##
+    !byte %..##...#
+    !byte %..##...#
+    !byte %#.##...#
+    !byte %####...#
+    !byte %.###...#
+    !byte %..##..##
+
     !byte %........
+    !byte %######.#
+    !byte %#...##..
+    !byte %#.#.....
+    !byte %###.....
+    !byte %#.#.....
+    !byte %#...##..
+    !byte %######.#
+
+    !byte %........
+    !byte %#######.
+    !byte %##....##
+    !byte %##....##
+    !byte %#######.
+    !byte %##...##.
+    !byte %##....##
+    !byte %###....#
+
+    !byte %........
+    !byte %.......#
+    !byte %......#.
+    !byte %......#.
+    !byte %......#.
+    !byte %......#.
+    !byte %..#....#
+    !byte %##......
+
+    !byte %####....
+    !byte %....#...
+    !byte %.##..#..
+    !byte %#....#..
+    !byte %#....#..
+    !byte %.##..#..
+    !byte %....#...
+    !byte %####....
 
 ; ***************************************************************************************
 guardianPositions
@@ -830,22 +821,22 @@ exitSprites1x2
     !byte %#.......
     !byte %########
 
-    !byte %....####
-    !byte %...#####
-    !byte %..######
-    !byte %..####..
-    !byte %..###...
-    !byte %..###...
-    !byte %..###...
-    !byte %..###...
+    !byte %........
+    !byte %.....###
+    !byte %...##...
+    !byte %..#...##
+    !byte %.#...#..
+    !byte %.#..#...
+    !byte %.#..#...
+    !byte %.#..#...
 
-    !byte %..###...
-    !byte %...###..
-    !byte %....###.
-    !byte %....###.
-    !byte %##..###.
-    !byte %#######.
-    !byte %######..
+    !byte %.#...#..
+    !byte %..#...#.
+    !byte %...##.#.
+    !byte %.#..#.#.
+    !byte %.####.#.
+    !byte %.#....#.
+    !byte %.######.
     !byte %........
 
     !byte %..###...
@@ -6028,7 +6019,7 @@ showTitleScreen
     ; plot triangle logo
     ldx #$ff                        ;
 plotLoop
-    jsr getNextByte                 ;
+    jsr getNextPenroseByte          ;
     cmp #$ff                        ;
     beq finishPlot                  ;
     cmp #$fe                        ;
@@ -6037,13 +6028,13 @@ plotLoop
     lda #0                          ;
     sta plotXHigh                   ;
     sta plotYHigh                   ;
-    jsr getNextByte                 ; Y coordinate low (top 2 bits) and X low (top two bits)
+    jsr getNextPenroseByte          ; Y coordinate low (top 2 bits) and X low (top two bits)
     asl                             ;
     rol plotXHigh                   ;
     asl                             ;
     rol plotXHigh                   ;
     sta plotXLow                    ;
-    jsr getNextByte                 ;
+    jsr getNextPenroseByte          ;
     asl                             ;
     rol plotYHigh                   ;
     asl                             ;
@@ -6073,12 +6064,12 @@ gcol
     jsr OSWRCH                      ;
     lda #0                          ; GCOL 0,next byte
     jsr OSWRCH                      ;
-    jsr getNextByte                 ;
+    jsr getNextPenroseByte          ;
     jsr OSWRCH                      ;
     jmp plotLoop                    ;
 
 ; ***************************************************************************************
-getNextByte
+getNextPenroseByte
     inx                             ;
     lda penroseTriangle,x           ;
     rts                             ;
@@ -7859,29 +7850,49 @@ soundFrequenciesSecond
 
 ; ***************************************************************************************
 creditsMessage
-    !byte 31, 19, 2                 ; TAB(19,2)
-    !text "SOFTWARE PROJECTS"
-    !byte 31, 23, 4                 ; TAB(23,4)
-    !text "Presents"
-    !byte 31, 19, 15                ; TAB(19,15)
-    !text "ORIGINAL PROGRAM"
-    !byte 31, 19, 17                ; TAB(19,17)
-    !text "BY MATTHEW SMITH"
-    !byte 18, 0, 130                ; GCOL 0,130
+    !byte 18, 0, 129                ; GCOL 0,129
     !byte 24                        ; define graphics window
-    !word 19 * 32                   ; left
-    !word 19 * 32                   ; bottom
-    !word 36 * 32 + 12              ; right
-    !word (32-6)*32                 ; top
+    !word 20 * 32 - 8               ; left
+    !word 18 * 32                   ; bottom
+    !word 37 * 32 + 8               ; right
+    !word (32-7)*32                 ; top
     !byte 16                        ; clear graphics area
+
     !byte 18, 0, 128                ; GCOL 0,128
     !byte 26                        ; reset text window
-    !byte 17, 130                   ; COLOUR 130
-    !byte 31, 26, 9                 ; TAB(26,9)
-    !text "BY"
-    !byte 31, 21, 11                ; TAB(21,11)
+
+    !byte 17, 1                     ; COLOUR 1
+    !byte 31, 1, 18                 ; TAB(19,17)
+    !text "2021 Edition"
+    !byte 31, 1, 19
+    !text "by TobyLobster"
+    !byte 17, 3
+    !byte 31, 20, 3                 ; TAB(19,2)
+    !text "SOFTWARE PROJECTS"
+;    !byte 31, 24, 5                 ; TAB(23,4)
+    !byte 5
+    !byte 18, 0, 3                  ; GCOL 0,3
+    !byte 25, 4                     ;
+    !word 780, 864                  ;
+    !text "Presents"                ;
+    !byte 25, 4                     ;
+    !word 656, 528                  ;
+    !text "ORIGINAL PROGRAM"        ;
+    !byte 25, 4                     ;
+    !word 656, 464                  ;
+    !text "BY MATTHEW SMITH"        ;
+    !byte 25, 4                     ;
+    !word 876, 700                  ;
+    !text "BY"                      ;
+    !byte 25, 4                     ;
+    !word 720, 700-32*2             ;
     !text "D.J.COATHUPE"
-    !byte 31, 19, 7                 ; TAB(19,7)
+
+    !byte 4                         ; VDU 4
+    !byte 23, 1, 0, 0,0,0,0,0,0,0,0 ; cursor off
+    !byte 17, 129                   ; COLOUR 129
+    !byte 31, 22, 12                ; TAB(21,11)
+    !byte 31, 20, 8                 ; TAB(19,7)
 creditsMessageEnd
 
 ; ***************************************************************************************
@@ -7906,40 +7917,42 @@ guardianSetForEachLevel
 meteorPositions
     !byte $64, $1b, $28, $a9, $16, $1d, $02, $58, $65, $57, $27, $d9, $aa, $1c, $15, $63
 
+penOffsetX = 2
+penOffsetY = -10
     ; A Penrose triangle as encoded PLOT statements
 penroseTriangle
-    !byte $FE, 1                        ; GCOL 0,1
-    !byte $04, $12, $AC-6               ; MOVE
-    !byte $04, $12, $B8-6               ; MOVE
-    !byte $55, $78, $79-6               ; TRI
-    !byte $55, $6C, $8B-6               ; TRI
-    !byte $55, $78, $D3-6               ; TRI
-    !byte $55, $6C, $CD-6               ; TRI
-    !byte $FE, 2                        ; GCOL 0,2
-    !byte $04, $78, $79-6               ; MOVE
-    !byte $04, $83, $7F-6               ; MOVE
-    !byte $55, $78, $D3-6               ; TRI
-    !byte $55, $83, $E4-6               ; TRI
-    !byte $55, $37, $B3-6               ; TRI
-    !byte $55, $2D, $B8-6               ; TRI
-    !byte $FE, 3                        ; GCOL 0,3
-    !byte $04, $6C, $CC-6               ; MOVE
-    !byte $05, $6C, $98-6               ; DRAW
-    !byte $05, $2C, $B8-6               ; DRAW
-    !byte $05, $83, $E4-6               ; DRAW
-    !byte $05, $77, $EA-6               ; DRAW
-    !byte $05, $12, $B8-6               ; DRAW
-    !byte $05, $12, $AC-6               ; DRAW
-    !byte $05, $78, $79-6               ; DRAW
-    !byte $05, $83, $7F-6               ; DRAW
-    !byte $05, $83, $E4-6               ; DRAW
-    !byte $04, $78, $79-6               ; MOVE
-    !byte $05, $78, $D3-6               ; DRAW
-    !byte $05, $37, $B3-6               ; DRAW
-    !byte $04, $6C, $99-6               ; MOVE
-    !byte $05, $6C, $8B-6               ; DRAW
-    !byte $05, $12, $B8-6               ; DRAW
-    !byte $FF                           ; TERMINATOR
+    !byte $FE, 1                                    ; GCOL 0,1
+    !byte $04, $12 + penOffsetX, $AC+penOffsetY     ; MOVE
+    !byte $04, $12 + penOffsetX, $B8+penOffsetY     ; MOVE
+    !byte $55, $78 + penOffsetX, $79+penOffsetY     ; TRI
+    !byte $55, $6C + penOffsetX, $8B+penOffsetY     ; TRI
+    !byte $55, $78 + penOffsetX, $D3+penOffsetY     ; TRI
+    !byte $55, $6C + penOffsetX, $CD+penOffsetY     ; TRI
+    !byte $FE, 2                                    ; GCOL 0,2
+    !byte $04, $78 + penOffsetX, $79+penOffsetY     ; MOVE
+    !byte $04, $83 + penOffsetX, $7F+penOffsetY     ; MOVE
+    !byte $55, $78 + penOffsetX, $D3+penOffsetY     ; TRI
+    !byte $55, $83 + penOffsetX, $E4+penOffsetY     ; TRI
+    !byte $55, $37 + penOffsetX, $B3+penOffsetY     ; TRI
+    !byte $55, $2D + penOffsetX, $B8+penOffsetY     ; TRI
+    !byte $FE, 3                                    ; GCOL 0,3
+    !byte $04, $6C + penOffsetX, $CC+penOffsetY     ; MOVE
+    !byte $05, $6C + penOffsetX, $98+penOffsetY     ; DRAW
+    !byte $05, $2C + penOffsetX, $B8+penOffsetY     ; DRAW
+    !byte $05, $83 + penOffsetX, $E4+penOffsetY     ; DRAW
+    !byte $05, $77 + penOffsetX, $EA+penOffsetY     ; DRAW
+    !byte $05, $12 + penOffsetX, $B8+penOffsetY     ; DRAW
+    !byte $05, $12 + penOffsetX, $AC+penOffsetY     ; DRAW
+    !byte $05, $78 + penOffsetX, $79+penOffsetY     ; DRAW
+    !byte $05, $83 + penOffsetX, $7F+penOffsetY     ; DRAW
+    !byte $05, $83 + penOffsetX, $E4+penOffsetY     ; DRAW
+    !byte $04, $78 + penOffsetX, $79+penOffsetY     ; MOVE
+    !byte $05, $78 + penOffsetX, $D3+penOffsetY     ; DRAW
+    !byte $05, $37 + penOffsetX, $B3+penOffsetY     ; DRAW
+    !byte $04, $6C + penOffsetX, $99+penOffsetY     ; MOVE
+    !byte $05, $6C + penOffsetX, $8B+penOffsetY     ; DRAW
+    !byte $05, $12 + penOffsetX, $B8+penOffsetY     ; DRAW
+    !byte $FF                                       ; TERMINATOR
 
 yOffsetToTitle = 11 * 4
 

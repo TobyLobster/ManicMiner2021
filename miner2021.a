@@ -12,37 +12,32 @@ interruptAccumulator            = $FC       ; RESERVED for INTERRUPTS
 irqv1                           = $204      ;
 irqv2                           = $206      ;
 
-vduForegroundTextColour         = $0357     ; } Current colours. Stored as the byte value
-vduBackgroundTextColour         = $0358     ; } to colour the whole byte the given colour
+;vduBackgroundTextColour         = $0358     ; Current colour stored as the byte value to colour the whole byte the given colour
 softCharacterDefinitions        = $0c00     ;
 
 logicalScreenStart              = $3000     ;
-screenStartAddress              = $3280     ; start of visible screen
-blankAreaOfScreen               = $34d0     ; empty screen area to the right of the play area
-screenEndAddress                = $6200     ; end of visible screen
-backgroundCache                 = $6ba0     ; six cells copied from the screen before the player is drawn
 
-videoULAPaletteRegister             = $FE21     ; Video ULA palette register
+videoULAPaletteRegister             = $fe21     ; Video ULA palette register
 
 ; System timer 1
-systemVIATimer1CounterLow           = $FE44     ;
-systemVIATimer1CounterHigh          = $FE45     ;
-systemVIATimer1LatchLow             = $FE46     ;
-systemVIATimer1LatchHigh            = $FE47     ;
+systemVIATimer1CounterLow           = $fe44     ;
+systemVIATimer1CounterHigh          = $fe45     ;
+systemVIATimer1LatchLow             = $fe46     ;
+systemVIATimer1LatchHigh            = $fe47     ;
 
-systemVIAAuxiliaryControlRegister   = $FE4B     ;
-systemVIAInterruptFlagRegister      = $FE4D     ;
-systemVIAInterruptEnableRegister    = $FE4E     ;
+systemVIAAuxiliaryControlRegister   = $fe4b     ;
+systemVIAInterruptFlagRegister      = $fe4d     ;
+systemVIAInterruptEnableRegister    = $fe4e     ;
 
 ; User timer 1
-userVIATimer1CounterLow             = $FE64     ;
-userVIATimer1CounterHigh            = $FE65     ;
-userVIATimer1LatchLow               = $FE66     ;
-userVIATimer1LatchHigh              = $FE67     ;
+userVIATimer1CounterLow             = $fe64     ;
+userVIATimer1CounterHigh            = $fe65     ;
+userVIATimer1LatchLow               = $fe66     ;
+userVIATimer1LatchHigh              = $fe67     ;
 
-userVIAAuxiliaryControlRegister     = $FE6B     ;
-userVIAInterruptFlagRegister        = $FE6D     ;
-userVIAInterruptEnableRegister      = $FE6E     ;
+userVIAAuxiliaryControlRegister     = $fe6b     ;
+userVIAInterruptFlagRegister        = $fe6d     ;
+userVIAInterruptEnableRegister      = $fe6e     ;
 
 OSWRCH                          = $ffee     ;
 OSWORD                          = $fff1     ;
@@ -195,6 +190,11 @@ verticalGuardianMODE1Address    = $0400     ;
 verticalGuardianMODE1Address1   = $0440     ;
 verticalGuardianMODE1Address2   = $0480     ;
 verticalGuardianMODE1Address3   = $04c0     ;
+
+screenStartAddress              = $3280     ; start of visible screen
+blankAreaOfScreen               = $34d0     ; empty screen area to the right of the play area
+screenEndAddress                = $6480     ; end of visible screen
+backgroundCache                 = $6ba0     ; six character cells copied from the screen before the player is drawn
 
 * = $0500
 
@@ -4652,8 +4652,8 @@ nonLevel10
 
 drawFixedString
     ldx #4                          ;
-    ldy #19                         ;
-    jsr setTextPos                  ; TAB(4,19)
+    ldy #20                         ;
+    jsr setTextPos                  ; TAB(4,20)
 
     ; draw fixed text below play area
     ldy #0                          ;
@@ -4699,38 +4699,6 @@ setTextPos
     jsr OSWRCH                                          ;
     tya                                                 ;
     jmp OSWRCH                                          ;
-
-;    sta tempA
-;    stx tempX                                           ;
-;    sty tempY                                           ;
-;    ldy #0                                              ;
-;    tax                                                 ;
-;    bpl +                                               ; check top bit
-;    iny                                                 ;
-;+
-;    and #3                                              ; ensure colour is at most 'number of logical colours less 1'
-;    tax                                                 ; X is the offset into the tables of colours.
-;    lda fourColourMODEParameterTable,X                  ; get plot options from table
-;    sta vduForegroundTextColour,Y                       ; store current colour:
-;                                                        ;
-;                                                        ;       Y=0 means text foreground
-;                                                        ;       Y=1 means text background
-;                                                        ;
-;    lda vduForegroundTextColour                         ; foreground text colour
-;    eor #$FF                                            ; invert
-;    sta vduTextColourByteEOR                            ; text colour byte to EOR-ed into memory
-;    eor vduBackgroundTextColour                         ; background text colour
-;    sta vduTextColourByteOR                             ; text colour byte to OR-ed into memory
-;    ldx tempX                                           ;
-;    ldy tempY                                           ;
-;    lda tempA                                           ;
-;    rts                                                 ;
-;
-;fourColourMODEParameterTable
-;    !byte %00000000                                     ;
-;    !byte %00001111                                     ;
-;    !byte %11110000                                     ;
-;    !byte %11111111                                     ;
 
 ; ***************************************************************************************
 ;
@@ -4861,9 +4829,9 @@ showScoreLivesAndLevel
     ; show lives
     lda #31                         ; }
     jsr OSWRCH                      ; }
-    lda #$22                        ; } TAB(34,19)
+    lda #34                         ; } TAB(34,20)
     jsr OSWRCH                      ; }
-    lda #$13                        ; }
+    lda #20                         ; }
     jsr OSWRCH                      ; }
 
     lda currentLevel                ; show current level
@@ -4956,7 +4924,7 @@ injectAddressHigh = * + 2
     dey                             ;
     bpl -                           ;
 
-    ldx #19                             ; set 19 character rows
+    ldx #20                             ; set 20 character rows
     jmp setVerticalDisplayedCharacters  ;
 
 ; ***************************************************************************************
@@ -7337,9 +7305,9 @@ printScoreAndLives
     cld
     lda #31                         ; }
     jsr OSWRCH                      ; }
-    lda #10                         ; } TAB(10,19)
+    lda #10                         ; } TAB(10,20)
     jsr OSWRCH                      ; }
-    lda #19                         ; }
+    lda #20                         ; }
     jsr OSWRCH                      ; }
 
     lda #3                          ; COLOUR 3
@@ -7576,7 +7544,7 @@ setupPatternLoop
     lda #$88                                            ; A=left colour mask
     sta tempMask                                        ; store in tempMask
     lda (readCharScreenAddressLow),Y                    ; get a byte from screen
-    eor vduBackgroundTextColour                         ; EOR with text background colour
+;    eor vduBackgroundTextColour                         ; EOR with text background colour
     clc                                                 ; clear carry
 -
     bit tempMask                                        ; and check bits of colour mask
@@ -7600,338 +7568,318 @@ setupPatternLoop
     bpl setupPatternLoop                                ; until 8 bytes copied
     rts                                                 ;
 
+energyFieldSprites
+    !byte %########
+    !byte %.##..##.
+    !byte %........
+    !byte %..#..#..
+    !byte %.#....#.
+    !byte %..#..#..
+    !byte %.#....#.
+    !byte %..#..#..
+    !byte %.#....#.
+    !byte %..#..#..
+    !byte %.#....#.
+    !byte %..#..#..
+    !byte %.#....#.
+    !byte %........
+    !byte %.##..##.
+    !byte %########
+
+    !byte %########
+    !byte %.##..##.
+    !byte %........
+    !byte %.#....#.
+    !byte %..#..#..
+    !byte %.#....#.
+    !byte %..#..#..
+    !byte %.#....#.
+    !byte %..#..#..
+    !byte %.#....#.
+    !byte %..#..#..
+    !byte %.#....#.
+    !byte %..#..#..
+    !byte %........
+    !byte %.##..##.
+    !byte %########
+
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+
+meteorAndTailSprites
+    !byte %........
+    !byte %........
+    !byte %..#...#.
+    !byte %#..#...#
+    !byte %.#..#.#.
+    !byte %#..#...#
+    !byte %.#..#.#.
+    !byte %...#..#.
+
+    !byte %........
+    !byte %..#.....
+    !byte %..#.#.#.
+    !byte %.#..#.#.
+    !byte %.#..#.#.
+    !byte %.#.#...#
+    !byte %..#...#.
+    !byte %...#.#..
+
+    !byte %.#..#...
+    !byte %...###..
+    !byte %..#.###.
+    !byte %.#####.#
+    !byte %.#.#.###
+    !byte %.#####.#
+    !byte %..##.##.
+    !byte %...###..
+
+    !byte %.#....#.
+    !byte %..####..
+    !byte %..##.##.
+    !byte %.#.#####
+    !byte %.#####.#
+    !byte %.##.####
+    !byte %..###.#.
+    !byte %...###..
+
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %..#...#.
+    !byte %#..#...#
+    !byte %.#..#.#.
+
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %.#......
+
+    !byte %#..#...#
+    !byte %.#..#.#.
+    !byte %...#..#.
+    !byte %.#..#...
+    !byte %...###..
+    !byte %..#.###.
+    !byte %.#####.#
+    !byte %.#.#.###
+
+    !byte %....#..#
+    !byte %..#.....
+    !byte %...#.#..
+    !byte %.#......
+    !byte %..#.#...
+    !byte %......#.
+    !byte %..#...#.
+    !byte %.#.###.#
+
+; ***************************************************************************************
+;
+; Later levels (9 and 11 upwards) can have up to four vertical guardians
+;
+; Guardian position data is packed into two bytes:
+;
+; <x coordinate>    x position in cells, top bit specifies initial direction, (clear = up, set = down)
+; <y coordinates>   top nybble is the initial Y and also the second extent, bottom nybble is the first extent
+;
+; ***************************************************************************************
+verticalGuardians
+    !byte $00, $00, $00, $00, $00, $00, $00, $00    ; [UNUSED]
+    !byte $85, $0d, $cb, $0d, $94, $0d, $d9, $0d    ; level 9 - Wacky Amoebatrons
+    !byte $00, $00, $00, $00, $00, $00, $00, $00    ; [UNUSED]
+    !byte $83, $4d, $8c, $07, $95, $6d, $da, $0d    ; level 11 - Attack of the Mutant Telephones
+    !byte $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff    ; level 12 - Return of the Alien Kong Beast
+    !byte $85, $1d, $ff, $ff, $ff, $ff, $ff, $ff    ; level 13 - Ore Refinery
+    !byte $c1, $09, $8b, $04, $d5, $07, $ff, $ff    ; level 14 - Skylab Landing Bay
+    !byte $89, $4d, $8f, $5d, $d5, $4d, $ff, $ff    ; level 15 - The Bank
+    !byte $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff    ; level 16 - The Sixteenth Cavern
+    !byte $83, $8d, $4a, $c0, $13, $80, $db, $0c    ; level 17 - The Warehouse
+    !byte $c5, $1d, $8a, $1d, $d4, $1d, $99, $1d    ; level 18 - Amoebatrons' Revenge
+    !byte $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff    ; level 19 - The Meteor Storm
+    !byte $82, $06, $da, $4d, $ff, $ff, $ff, $ff    ; level 20 - The Final Barrier
+
+; ***************************************************************************************
+cheatCode
+    ; code: A <space> S,   E,   C,   R,   E,   T
+    ;
+    ; key codes as stored in memory address $ec (by the OS) when pressed, all with top bit set:
+    ;     $C1, $E2, $D1, $A2, $D2, $B3, $A2, $A3
+    ; stored here without top bit set:
+    !byte $41, $62, $51, $22, $52, $33, $22, $23
+cheatCodeEnd
+
+; ***************************************************************************************
+music
+    ;     B2, C#3, D3, E3, F#3, D3, F#3,    E#3, C#3, E#3,    E3, B#2, E3
+    !byte  0,   2,  3,  5,   7,  3,   7,7,    6,   2,   6,6,   5,   1,  5, 5
+    ;     B2, C#3, D3, E3, F#3, D3, F#3,     B3,  A3, F#3,    D3, F#3, A3
+    !byte  0,   2,  3,  5,   7,  3,   7,     12,  10,   7,     3,   7, 10, 10, 10, 10
+    ;     B2, C#3, D3, E3, F#3, D3, F#3,    E#3, C#3, E#3,    E3, B#2, E3
+    !byte  0,   2,  3,  5,   7,  3,   7,7,    6,   2,   6,6,   5,   1,  5, 5
+    ;     B2, C#3, D3, E3, F#3, D3, F#3,     B3, F#3,  D3,   F#3,  B3, B2
+    !byte  0,   2,  3,  5,   7,  3,   7,     12,   7,   3,     7,  12,  0, 0, 0, 0, $ff
+
+soundFrequenciesFirst
+    !byte $80 + 4           ; 0   1012  B2
+    !byte $80 + 12          ; 1    956  C3 (=B#2)
+    !byte $80 + 6           ; 2    902  C#3
+    !byte $80 + 3           ; 3    851  D3
+    !byte $80 + 4           ; 4    804  D#3
+    !byte $80 + 6           ; 5    758  E3
+    !byte $80 + 12          ; 6    716  F3 (=E#3)
+    !byte $80 + 4           ; 7    676  F#3
+    !byte $80 + 14          ; 8    638  G3
+    !byte $80 + 10          ; 9    602  G#3
+    !byte $80 + 8           ; 10   568  A3
+    !byte $80 + 8           ; 11   536  A#3
+    !byte $80 + 10          ; 12   506  B3
+
+soundFrequenciesSecond
+    !byte 63                ; 0   1012  B2
+    !byte 59                ; 1    956  C3 (=B#2)
+    !byte 56                ; 2    902  C#3
+    !byte 53                ; 3    851  D3
+    !byte 50                ; 4    804  D#3
+    !byte 47                ; 5    758  E3
+    !byte 44                ; 6    716  F3 (=E#3)
+    !byte 42                ; 7    676  F#3
+    !byte 39                ; 8    638  G3
+    !byte 37                ; 9    602  G#3
+    !byte 35                ; 10   568  A3
+    !byte 33                ; 11   536  A#3
+    !byte 31                ; 12   506  B3
+
+; ***************************************************************************************
+creditsMessage
+    !byte 31, 19, 2                 ; TAB(19,2)
+    !text "SOFTWARE PROJECTS"
+    !byte 31, 23, 4                 ; TAB(23,4)
+    !text "Presents"
+    !byte 31, 19, 15                ; TAB(19,15)
+    !text "ORIGINAL PROGRAM"
+    !byte 31, 19, 17                ; TAB(19,17)
+    !text "BY MATTHEW SMITH"
+    !byte 18, 0, 130                ; GCOL 0,130
+    !byte 24                        ; define graphics window
+    !word 19 * 32                   ; left
+    !word 19 * 32                   ; bottom
+    !word 36 * 32 + 12              ; right
+    !word (32-6)*32                 ; top
+    !byte 16                        ; clear graphics area
+    !byte 18, 0, 128                ; GCOL 0,128
+    !byte 26                        ; reset text window
+    !byte 17, 130                   ; COLOUR 130
+    !byte 31, 26, 9                 ; TAB(26,9)
+    !text "BY"
+    !byte 31, 21, 11                ; TAB(21,11)
+    !text "D.J.COATHUPE"
+    !byte 31, 19, 7                 ; TAB(19,7)
+creditsMessageEnd
+
+; ***************************************************************************************
+verticalGuardiansSpritesArray
+    ; vertical guardians for the later levels
+    ; Level     11,  12,  13,  14,  15,  16,  17,  18,  19,  20
+    !byte $ea, $03, $00, $04, $05, $06, $00, $07, $09, $08, $04
+
+; ***************************************************************************************
+    ; vertical movements at each stage of a jump
+jumpMovementArray
+    !byte $04, $04, $03, $03, $02, $02, $01, $00, $00, $00, $ff, $fe, $fe, $fd, $fd, $fc, $fc
+
+; ***************************************************************************************
+guardianColourTable
+    !byte $ff, $f0, $0f, $ff        ;
+
+guardianSetForEachLevel
+    ; level 1,   2,   3,   4,   5,   6,   7,  8,    9,  10,  11,  12,  13,  14,  15,  16,  17,  18,  19,  20
+    !byte $01, $02, $03, $04, $05, $06, $07, $08, $09, $0a, $0b, $08, $0c, $00, $0d, $0e, $0f, $09, $10, $01
+
+meteorPositions
+    !byte $64, $1b, $28, $a9, $16, $1d, $02, $58, $65, $57, $27, $d9, $aa, $1c, $15, $63
+
+    ; A Penrose triangle as encoded PLOT statements
+penroseTriangle
+    !byte $FE, 1                        ; GCOL 0,1
+    !byte $04, $12, $AC-6               ; MOVE
+    !byte $04, $12, $B8-6               ; MOVE
+    !byte $55, $78, $79-6               ; TRI
+    !byte $55, $6C, $8B-6               ; TRI
+    !byte $55, $78, $D3-6               ; TRI
+    !byte $55, $6C, $CD-6               ; TRI
+    !byte $FE, 2                        ; GCOL 0,2
+    !byte $04, $78, $79-6               ; MOVE
+    !byte $04, $83, $7F-6               ; MOVE
+    !byte $55, $78, $D3-6               ; TRI
+    !byte $55, $83, $E4-6               ; TRI
+    !byte $55, $37, $B3-6               ; TRI
+    !byte $55, $2D, $B8-6               ; TRI
+    !byte $FE, 3                        ; GCOL 0,3
+    !byte $04, $6C, $CC-6               ; MOVE
+    !byte $05, $6C, $98-6               ; DRAW
+    !byte $05, $2C, $B8-6               ; DRAW
+    !byte $05, $83, $E4-6               ; DRAW
+    !byte $05, $77, $EA-6               ; DRAW
+    !byte $05, $12, $B8-6               ; DRAW
+    !byte $05, $12, $AC-6               ; DRAW
+    !byte $05, $78, $79-6               ; DRAW
+    !byte $05, $83, $7F-6               ; DRAW
+    !byte $05, $83, $E4-6               ; DRAW
+    !byte $04, $78, $79-6               ; MOVE
+    !byte $05, $78, $D3-6               ; DRAW
+    !byte $05, $37, $B3-6               ; DRAW
+    !byte $04, $6C, $99-6               ; MOVE
+    !byte $05, $6C, $8B-6               ; DRAW
+    !byte $05, $12, $B8-6               ; DRAW
+    !byte $FF                           ; TERMINATOR
+
+
 
 !if (* > $3280 ) {
     !error "Code too big by ", * - $3280, " bytes"
 }
 free2 = $3280 - *
     * = $3280                       ; start of visible screen
-!pseudopc $6200 {
-
-; ***************************************************************************************
-gameOver
-    ; clear screen
-    lda #>screenStartAddress        ;
-    sta $71                         ;
-    lda #<screenStartAddress        ; ($70,$71) = $3280
-    sta $70                         ;
-
-    ldx #41                         ;
-    ldy #0                          ;
-    tya                             ;
-clearScreenLoop
-    sta ($70),y                     ;
-    iny                             ;
-    bne clearScreenLoop             ;
-
-    inc $71                         ;
-    dex                             ;
-    bne clearScreenLoop             ;
-
-    jsr drawRoomName                ;
-
-    ; copy 32 bytes (4 characters worth) into drawable region at softCharacterDefinitions
-    ldx #0                          ; loop counter
--
-    lda pedestalSprite,x            ;
-    sta softCharacterDefinitions,x  ;
-    inx                             ;
-    cpx #$40                        ;
-    bne -                           ;
-
-    ; draw pedestal
-    ldx #0                          ; loop counter
--
-    lda pedestalMessage,x           ;
-    jsr OSWRCH                      ;
-    inx                             ;
-    cpx #$0c                        ; loop 12 times
-    bne -                           ;
-
-    lda #<willyRight2               ; }
-    sta plotSourceSpriteAddressLow  ; }
-    lda #>willyRight2               ; } sprite address = $0580 (address of willy)
-    sta plotSourceSpriteAddressHigh ; }
-
-    ldx #78                         ;
-    ldy #104                        ;
-    lda #3                          ;
-    jsr plot                        ; plot willy (on the pedestal) (mode 3)
-
-    lda #8                          ;
-    sta footPositionY               ;
-footDescendingLoop
-    lda #<footSprite                ; }
-    sta plotSourceSpriteAddressLow  ; } set address to foot sprite
-    lda #>footSprite                ; }
-    sta plotSourceSpriteAddressHigh ; }
-    ldx #$4e                        ;
-    ldy footPositionY               ;
-    lda #3                          ;
-    jsr plot                        ; draw foot (mode 3)
-
-    ldx #$ff                        ;
-    ldy #$40                        ; loop counter
--
-    dex                             ;
-    bne -                           ; delay
-    lda footPositionY               ;
-    lsr                             ;
-    eor #$3f                        ;
-    sta channel2Frequency           ; increase pitch
-    dey                             ;
-    bne -                           ; if (not zero) then branch (loop back)
-
-    inc footPositionY               ;
-    inc footPositionY               ;
-    lda footPositionY               ;
-    cmp #106                        ;
-    bne footDescendingLoop          ;
-
-    lda #$9f                        ;
-    jsr soundDirect                 ; silence sound
-
-    lda #$10                        ; delay amount
-    jsr delayAndClearPedestalSprite ;
-    jmp showTitleScreen             ;
+!pseudopc $6480 {
 
 
-; ***************************************************************************************
-checkForCollisions
-    ; not needed!?
-    ;jsr getPlayerSourceSpriteAddress    ;
-    ;ldx newPlayerPixelX                 ;
-    ;ldy newPlayerPixelY                 ;
-    ;lda #1                              ;
-    ;jsr plot                            ; draw player (mode 1)
-    jsr checkForDeath                   ;
-    jsr checkForSwitchFlipped           ;
-    jsr collideWithVerticalGuardians    ;
-
-collideWithHorizontalGuardians
-    lda #3                              ;
-    sta collisionLimit1                 ;
-    lda #4                              ;
-    sta collisionLimit2                 ;
-    lda willyAnimationEOR               ;
-    cmp #3                              ;
-    bne willyPointingRight              ;
-
-    ; willy pointing left
-    lda #4                              ;
-    sta collisionLimit1                 ; set left/right limits for willy collision
-    lda #3                              ;
-    sta collisionLimit2                 ;
-
-willyPointingRight
-    lda playerPixelX                    ;
-    and #3                              ;
-    eor willyAnimationEOR               ;
-    cmp #3                              ;
-    bne checkCollision                  ;
-
-    lda willyAnimationEOR               ;
-    cmp #3                              ;
-    bne +                               ;
-    lda #5                              ;
-    sta collisionLimit1                 ;
-    jmp checkCollision                  ;
-
-+
-    lda #5                              ;
-    sta collisionLimit2                 ;
-
-    ; loop to check each guardian
-checkCollision
-    ldx #0                              ;
-checkCollisionLoop
-    lda guardianPositions,x             ;
-    cmp #$ff                            ;
-    beq return8                         ; if (out of guardians) then return
-    jsr checkCollisionForOneGuardian    ;
-    txa                                 ;
-    clc                                 ;
-    adc #4                              ;
-    tax                                 ;
-    jmp checkCollisionLoop              ;
-
-; ***************************************************************************************
-checkCollisionForOneGuardian
-    clc                                 ;
-    adc #19                             ;
-    sec                                 ;
-    sbc playerPixelX                    ; guardianX + 19 - playerX
-collisionLimit1 = * + 1
-    cmp #3                              ;
-    bcc possibleCollisionInX            ; if (guardianX + 19 - playerX < limit1) then branch
-    eor #$fe                            ; [attempt to negate value, not correct]
-collisionLimit2 = * + 1
-    cmp #3                              ;
-    bcc possibleCollisionInX            ; if (255 - guardianX - 19 + playerX < limit2) then branch
-return8
-    rts                                 ;
-
-possibleCollisionInX
-    inx                                 ;
-    lda guardianPositions,x             ; get guardian cell Y
-    sec                                 ;
-    sbc #1                              ;
-    asl                                 ;
-    asl                                 ;
-    asl                                 ;
-    cmp playerPixelY                    ;
-    bcc possibleCollisionInY            ; if ((guardianCellY - 1) * 8) < playerY then branch
-    dex                                 ;
-    rts                                 ;
-
-possibleCollisionInY
-    lda guardianPositions,x             ;
-    dex                                 ;
-    clc                                 ;
-    adc #3                              ;
-    asl                                 ;
-    asl                                 ;
-    asl                                 ;
-    sec                                 ;
-    sbc #1                              ;
-    cmp playerPixelY                    ; if (((guardian cell Y + 3) * 8) - 1) > playerY then branch (collision found)
-    bcs deathJumper3                    ;
-    rts                                 ;
-
-deathJumper3
-    jmp death                           ;
-
-; ***************************************************************************************
-collideWithVerticalGuardians
-    lda #0                              ;
-    sta collisionFudgeFactor            ;
-    lda playerPixelX                    ;
-    and #3                              ;
-    eor willyAnimationEOR               ;
-    cmp #0                              ;
-    beq +                               ;
-    lda #1                              ;
-    sta collisionFudgeFactor            ;
-+
-    lda currentLevel                    ;
-    cmp #5                              ;
-    bne notLevel5                       ;
-
-    ; level 5 - Eugene's Lair specific code
-    lda eugenePositionY                 ;
-    and #$7f                            ;
-    sec                                 ;
-    sbc #8                              ;
-    sta currentVerticalGuardians + 1    ; Y coordinate
-
-    lda #$ff                            ; } only one vertical guardian on level 5 - Eugene's Lair
-    sta verticalGuardian2               ; }
-
-    lda #$0f                            ; } column 15
-    sta currentVerticalGuardians        ; }
-
-notLevel5
-    lda currentLevel                    ;
-    cmp #8                              ;
-    beq kongSpecifics                   ;
-    cmp #12                             ;
-    beq kongSpecifics                   ;
-    jmp regularLevels                   ;
-
-    ; Kong levels specific code
-kongSpecifics
-    lda #$ff                            ;
-    sta currentVerticalGuardians        ;
-    lda $33c0                           ; screen byte where Kong lives
-    cmp #0                              ;
-    beq regularLevels                   ;
-    lda #$0f                            ; }
-    sta currentVerticalGuardians        ; } column 15
-
-    lda #$ff                            ; } only one vertical guardian on Kong levels
-    sta verticalGuardian2               ; }
-
-    lda #0                              ;
-    sta currentVerticalGuardians + 1    ; Y coordinate
-
-regularLevels
-    lda #$f1                            ;
-    sta largestYExtent                  ;
-    lda currentLevel                    ;
-    cmp #14                             ;
-    bne +                               ;
-
-    ; level 14 - Skylab Landing Bay specific code
-    lda #$f1                            ;
-    sta largestYExtent                  ;
-
-    ; check for collisions with all vertical guardians
-+
-    ldx #0                              ; loop counter
-verticalGuardianCollisionLoop
-    lda currentVerticalGuardians,x      ;
-    cmp #$ff                            ;
-    beq return9                         ; if (no vertical guardians) then branch (return)
-    jsr checkOneVerticalCollision       ;
-    txa                                 ;
-    clc                                 ;
-    adc #4                              ;
-    tax                                 ;
-    cpx #16                             ;
-    bcs return9                         ;
-    jmp verticalGuardianCollisionLoop   ;
-
-; ***************************************************************************************
-checkOneVerticalCollision
-    lda currentVerticalGuardians,x      ;
-    and #$3f                            ;
-    clc                                 ;
-    adc #5                              ;
-    asl                                 ;
-    asl                                 ;
-    sta tempScreenByte                  ;
-    lda playerPixelX                    ;
-    clc                                 ;
-    adc #4                              ;
-    sec                                 ;
-tempScreenByte = * + 1
-    sbc #$ff                            ; playerX + 4 - (guardianX + 5) * 4
-    cmp #0                              ;
-    beq checkVerticalCollision          ;
-    cmp #7                              ;
-    bcc checkVerticalCollision          ;
-    sec                                 ;
-    sbc collisionFudgeFactor            ; subtract 0 or 1
-    cmp #7                              ;
-    bcc checkVerticalCollision          ;
-    clc                                 ;
-    adc collisionFudgeFactor            ; subtract 0 or 1
-    cmp #$fd                            ;
-    bcs checkVerticalCollision          ;
-    clc                                 ;
-    adc collisionFudgeFactor            ; subtract 0 or 1
-    cmp #$fd                            ;
-    bcs checkVerticalCollision          ;
-return9
-    rts                                 ;
-
-; ***************************************************************************************
-checkVerticalCollision
-    lda currentVerticalGuardians + 1,x  ;
-    clc                                 ;
-    adc #8                              ;
-    sec                                 ;
-    sbc playerPixelY                    ;
-    cmp #19                             ;
-    bcc deathJumper4                    ; if ( guardianY + 8 - playerY < 19) then branch (die)
-largestYExtent = * + 1
-    cmp #$f0                            ; if (guardianY + 8 - playerY > largestYExtent) then branch (die)
-    bcs deathJumper4                    ;
-    rts                                 ;
-
-; ***************************************************************************************
-deathJumper4
-    jmp death                           ;
 
 ; ***************************************************************************************
 toggleEugeneColour
@@ -8877,40 +8825,340 @@ levelDefinitions
     ; terminator
     !byte $ff, $ff, $ff
 
-    ; A Penrose triangle as encoded PLOT statements
-penroseTriangle
-    !byte $FE, 1                        ; GCOL 0,1
-    !byte $04, $12, $AC-6               ; MOVE
-    !byte $04, $12, $B8-6               ; MOVE
-    !byte $55, $78, $79-6               ; TRI
-    !byte $55, $6C, $8B-6               ; TRI
-    !byte $55, $78, $D3-6               ; TRI
-    !byte $55, $6C, $CD-6               ; TRI
-    !byte $FE, 2                        ; GCOL 0,2
-    !byte $04, $78, $79-6               ; MOVE
-    !byte $04, $83, $7F-6               ; MOVE
-    !byte $55, $78, $D3-6               ; TRI
-    !byte $55, $83, $E4-6               ; TRI
-    !byte $55, $37, $B3-6               ; TRI
-    !byte $55, $2D, $B8-6               ; TRI
-    !byte $FE, 3                        ; GCOL 0,3
-    !byte $04, $6C, $CC-6               ; MOVE
-    !byte $05, $6C, $98-6               ; DRAW
-    !byte $05, $2C, $B8-6               ; DRAW
-    !byte $05, $83, $E4-6               ; DRAW
-    !byte $05, $77, $EA-6               ; DRAW
-    !byte $05, $12, $B8-6               ; DRAW
-    !byte $05, $12, $AC-6               ; DRAW
-    !byte $05, $78, $79-6               ; DRAW
-    !byte $05, $83, $7F-6               ; DRAW
-    !byte $05, $83, $E4-6               ; DRAW
-    !byte $04, $78, $79-6               ; MOVE
-    !byte $05, $78, $D3-6               ; DRAW
-    !byte $05, $37, $B3-6               ; DRAW
-    !byte $04, $6C, $99-6               ; MOVE
-    !byte $05, $6C, $8B-6               ; DRAW
-    !byte $05, $12, $B8-6               ; DRAW
-    !byte $FF                           ; TERMINATOR
+!if * > $6ba0 {
+    !error "space is wrong, ", *
+}
+free3 = $6ba0 - *
+    ; ***********************************************************************************
+* = $6ba0
+backgroundCache
+* = * + 16 * 6
+
+; ***************************************************************************************
+gameOver
+    ; clear screen
+    lda #>screenStartAddress        ;
+    sta $71                         ;
+    lda #<screenStartAddress        ; ($70,$71) = $3280
+    sta $70                         ;
+
+    ldx #41                         ;
+    ldy #0                          ;
+    tya                             ;
+clearScreenLoop
+    sta ($70),y                     ;
+    iny                             ;
+    bne clearScreenLoop             ;
+
+    inc $71                         ;
+    dex                             ;
+    bne clearScreenLoop             ;
+
+    jsr drawRoomName                ;
+
+    ; copy 32 bytes (4 characters worth) into drawable region at softCharacterDefinitions
+    ldx #0                          ; loop counter
+-
+    lda pedestalSprite,x            ;
+    sta softCharacterDefinitions,x  ;
+    inx                             ;
+    cpx #$40                        ;
+    bne -                           ;
+
+    ; draw pedestal
+    ldx #0                          ; loop counter
+-
+    lda pedestalMessage,x           ;
+    jsr OSWRCH                      ;
+    inx                             ;
+    cpx #$0c                        ; loop 12 times
+    bne -                           ;
+
+    lda #<willyRight2               ; }
+    sta plotSourceSpriteAddressLow  ; }
+    lda #>willyRight2               ; } sprite address = $0580 (address of willy)
+    sta plotSourceSpriteAddressHigh ; }
+
+    ldx #78                         ;
+    ldy #104                        ;
+    lda #3                          ;
+    jsr plot                        ; plot willy (on the pedestal) (mode 3)
+
+    lda #8                          ;
+    sta footPositionY               ;
+footDescendingLoop
+    lda #<footSprite                ; }
+    sta plotSourceSpriteAddressLow  ; } set address to foot sprite
+    lda #>footSprite                ; }
+    sta plotSourceSpriteAddressHigh ; }
+    ldx #$4e                        ;
+    ldy footPositionY               ;
+    lda #3                          ;
+    jsr plot                        ; draw foot (mode 3)
+
+    ldx #$ff                        ;
+    ldy #$40                        ; loop counter
+-
+    dex                             ;
+    bne -                           ; delay
+    lda footPositionY               ;
+    lsr                             ;
+    eor #$3f                        ;
+    sta channel2Frequency           ; increase pitch
+    dey                             ;
+    bne -                           ; if (not zero) then branch (loop back)
+
+    inc footPositionY               ;
+    inc footPositionY               ;
+    lda footPositionY               ;
+    cmp #106                        ;
+    bne footDescendingLoop          ;
+
+    lda #$9f                        ;
+    jsr soundDirect                 ; silence sound
+
+    lda #$10                        ; delay amount
+    jsr delayAndClearPedestalSprite ;
+    jmp showTitleScreen             ;
+
+
+; ***************************************************************************************
+checkForCollisions
+    ; not needed!?
+    ;jsr getPlayerSourceSpriteAddress    ;
+    ;ldx newPlayerPixelX                 ;
+    ;ldy newPlayerPixelY                 ;
+    ;lda #1                              ;
+    ;jsr plot                            ; draw player (mode 1)
+    jsr checkForDeath                   ;
+    jsr checkForSwitchFlipped           ;
+    jsr collideWithVerticalGuardians    ;
+
+collideWithHorizontalGuardians
+    lda #3                              ;
+    sta collisionLimit1                 ;
+    lda #4                              ;
+    sta collisionLimit2                 ;
+    lda willyAnimationEOR               ;
+    cmp #3                              ;
+    bne willyPointingRight              ;
+
+    ; willy pointing left
+    lda #4                              ;
+    sta collisionLimit1                 ; set left/right limits for willy collision
+    lda #3                              ;
+    sta collisionLimit2                 ;
+
+willyPointingRight
+    lda playerPixelX                    ;
+    and #3                              ;
+    eor willyAnimationEOR               ;
+    cmp #3                              ;
+    bne checkCollision                  ;
+
+    lda willyAnimationEOR               ;
+    cmp #3                              ;
+    bne +                               ;
+    lda #5                              ;
+    sta collisionLimit1                 ;
+    jmp checkCollision                  ;
+
++
+    lda #5                              ;
+    sta collisionLimit2                 ;
+
+    ; loop to check each guardian
+checkCollision
+    ldx #0                              ;
+checkCollisionLoop
+    lda guardianPositions,x             ;
+    cmp #$ff                            ;
+    beq return8                         ; if (out of guardians) then return
+    jsr checkCollisionForOneGuardian    ;
+    txa                                 ;
+    clc                                 ;
+    adc #4                              ;
+    tax                                 ;
+    jmp checkCollisionLoop              ;
+
+; ***************************************************************************************
+checkCollisionForOneGuardian
+    clc                                 ;
+    adc #19                             ;
+    sec                                 ;
+    sbc playerPixelX                    ; guardianX + 19 - playerX
+collisionLimit1 = * + 1
+    cmp #3                              ;
+    bcc possibleCollisionInX            ; if (guardianX + 19 - playerX < limit1) then branch
+    eor #$fe                            ; [attempt to negate value, not correct]
+collisionLimit2 = * + 1
+    cmp #3                              ;
+    bcc possibleCollisionInX            ; if (255 - guardianX - 19 + playerX < limit2) then branch
+return8
+    rts                                 ;
+
+possibleCollisionInX
+    inx                                 ;
+    lda guardianPositions,x             ; get guardian cell Y
+    sec                                 ;
+    sbc #1                              ;
+    asl                                 ;
+    asl                                 ;
+    asl                                 ;
+    cmp playerPixelY                    ;
+    bcc possibleCollisionInY            ; if ((guardianCellY - 1) * 8) < playerY then branch
+    dex                                 ;
+    rts                                 ;
+
+possibleCollisionInY
+    lda guardianPositions,x             ;
+    dex                                 ;
+    clc                                 ;
+    adc #3                              ;
+    asl                                 ;
+    asl                                 ;
+    asl                                 ;
+    sec                                 ;
+    sbc #1                              ;
+    cmp playerPixelY                    ; if (((guardian cell Y + 3) * 8) - 1) > playerY then branch (collision found)
+    bcs deathJumper3                    ;
+    rts                                 ;
+
+deathJumper3
+    jmp death                           ;
+
+; ***************************************************************************************
+collideWithVerticalGuardians
+    lda #0                              ;
+    sta collisionFudgeFactor            ;
+    lda playerPixelX                    ;
+    and #3                              ;
+    eor willyAnimationEOR               ;
+    cmp #0                              ;
+    beq +                               ;
+    lda #1                              ;
+    sta collisionFudgeFactor            ;
++
+    lda currentLevel                    ;
+    cmp #5                              ;
+    bne notLevel5                       ;
+
+    ; level 5 - Eugene's Lair specific code
+    lda eugenePositionY                 ;
+    and #$7f                            ;
+    sec                                 ;
+    sbc #8                              ;
+    sta currentVerticalGuardians + 1    ; Y coordinate
+
+    lda #$ff                            ; } only one vertical guardian on level 5 - Eugene's Lair
+    sta verticalGuardian2               ; }
+
+    lda #$0f                            ; } column 15
+    sta currentVerticalGuardians        ; }
+
+notLevel5
+    lda currentLevel                    ;
+    cmp #8                              ;
+    beq kongSpecifics                   ;
+    cmp #12                             ;
+    beq kongSpecifics                   ;
+    jmp regularLevels                   ;
+
+    ; Kong levels specific code
+kongSpecifics
+    lda #$ff                            ;
+    sta currentVerticalGuardians        ;
+    lda $33c0                           ; screen byte where Kong lives
+    cmp #0                              ;
+    beq regularLevels                   ;
+    lda #$0f                            ; }
+    sta currentVerticalGuardians        ; } column 15
+
+    lda #$ff                            ; } only one vertical guardian on Kong levels
+    sta verticalGuardian2               ; }
+
+    lda #0                              ;
+    sta currentVerticalGuardians + 1    ; Y coordinate
+
+regularLevels
+    lda #$f1                            ;
+    sta largestYExtent                  ;
+    lda currentLevel                    ;
+    cmp #14                             ;
+    bne +                               ;
+
+    ; level 14 - Skylab Landing Bay specific code
+    lda #$f1                            ;
+    sta largestYExtent                  ;
+
+    ; check for collisions with all vertical guardians
++
+    ldx #0                              ; loop counter
+verticalGuardianCollisionLoop
+    lda currentVerticalGuardians,x      ;
+    cmp #$ff                            ;
+    beq return9                         ; if (no vertical guardians) then branch (return)
+    jsr checkOneVerticalCollision       ;
+    txa                                 ;
+    clc                                 ;
+    adc #4                              ;
+    tax                                 ;
+    cpx #16                             ;
+    bcs return9                         ;
+    jmp verticalGuardianCollisionLoop   ;
+
+; ***************************************************************************************
+checkOneVerticalCollision
+    lda currentVerticalGuardians,x      ;
+    and #$3f                            ;
+    clc                                 ;
+    adc #5                              ;
+    asl                                 ;
+    asl                                 ;
+    sta tempScreenByte                  ;
+    lda playerPixelX                    ;
+    clc                                 ;
+    adc #4                              ;
+    sec                                 ;
+tempScreenByte = * + 1
+    sbc #$ff                            ; playerX + 4 - (guardianX + 5) * 4
+    cmp #0                              ;
+    beq checkVerticalCollision          ;
+    cmp #7                              ;
+    bcc checkVerticalCollision          ;
+    sec                                 ;
+    sbc collisionFudgeFactor            ; subtract 0 or 1
+    cmp #7                              ;
+    bcc checkVerticalCollision          ;
+    clc                                 ;
+    adc collisionFudgeFactor            ; subtract 0 or 1
+    cmp #$fd                            ;
+    bcs checkVerticalCollision          ;
+    clc                                 ;
+    adc collisionFudgeFactor            ; subtract 0 or 1
+    cmp #$fd                            ;
+    bcs checkVerticalCollision          ;
+return9
+    rts                                 ;
+
+; ***************************************************************************************
+checkVerticalCollision
+    lda currentVerticalGuardians + 1,x  ;
+    clc                                 ;
+    adc #8                              ;
+    sec                                 ;
+    sbc playerPixelY                    ;
+    cmp #19                             ;
+    bcc deathJumper4                    ; if ( guardianY + 8 - playerY < 19) then branch (die)
+largestYExtent = * + 1
+    cmp #$f0                            ; if (guardianY + 8 - playerY > largestYExtent) then branch (die)
+    bcs deathJumper4                    ;
+    rts                                 ;
+
+; ***************************************************************************************
+deathJumper4
+    jmp death                           ;
+
 
 
 ; ***************************************************************************************
@@ -9008,12 +9256,6 @@ toggleEnergyField
         !byte (.x * 16) + .y
         !byte .threadLength
     }
-beforeBackgroundCache
-free3 = $6ba0 - *
-    ; ***********************************************************************************
-* = $6ba0
-backgroundCache
-* = * + 16 * 6
 
     ; ***********************************************************************************
 levelSingleItemDefinitions
@@ -12911,170 +13153,6 @@ kongBeastSprite
     !byte %###...#.
     !byte %#.......
 
-energyFieldSprites
-    !byte %########
-    !byte %.##..##.
-    !byte %........
-    !byte %..#..#..
-    !byte %.#....#.
-    !byte %..#..#..
-    !byte %.#....#.
-    !byte %..#..#..
-    !byte %.#....#.
-    !byte %..#..#..
-    !byte %.#....#.
-    !byte %..#..#..
-    !byte %.#....#.
-    !byte %........
-    !byte %.##..##.
-    !byte %########
-
-    !byte %########
-    !byte %.##..##.
-    !byte %........
-    !byte %.#....#.
-    !byte %..#..#..
-    !byte %.#....#.
-    !byte %..#..#..
-    !byte %.#....#.
-    !byte %..#..#..
-    !byte %.#....#.
-    !byte %..#..#..
-    !byte %.#....#.
-    !byte %..#..#..
-    !byte %........
-    !byte %.##..##.
-    !byte %########
-
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-
-meteorAndTailSprites
-    !byte %........
-    !byte %........
-    !byte %..#...#.
-    !byte %#..#...#
-    !byte %.#..#.#.
-    !byte %#..#...#
-    !byte %.#..#.#.
-    !byte %...#..#.
-
-    !byte %........
-    !byte %..#.....
-    !byte %..#.#.#.
-    !byte %.#..#.#.
-    !byte %.#..#.#.
-    !byte %.#.#...#
-    !byte %..#...#.
-    !byte %...#.#..
-
-    !byte %.#..#...
-    !byte %...###..
-    !byte %..#.###.
-    !byte %.#####.#
-    !byte %.#.#.###
-    !byte %.#####.#
-    !byte %..##.##.
-    !byte %...###..
-
-    !byte %.#....#.
-    !byte %..####..
-    !byte %..##.##.
-    !byte %.#.#####
-    !byte %.#####.#
-    !byte %.##.####
-    !byte %..###.#.
-    !byte %...###..
-
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %..#...#.
-    !byte %#..#...#
-    !byte %.#..#.#.
-
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %.#......
-
-    !byte %#..#...#
-    !byte %.#..#.#.
-    !byte %...#..#.
-    !byte %.#..#...
-    !byte %...###..
-    !byte %..#.###.
-    !byte %.#####.#
-    !byte %.#.#.###
-
-    !byte %....#..#
-    !byte %..#.....
-    !byte %...#.#..
-    !byte %.#......
-    !byte %..#.#...
-    !byte %......#.
-    !byte %..#...#.
-    !byte %.#.###.#
-
-; ***************************************************************************************
-verticalGuardiansSpritesArray
-    ; vertical guardians for the later levels
-    ; Level     11,  12,  13,  14,  15,  16,  17,  18,  19,  20
-    !byte $ea, $03, $00, $04, $05, $06, $00, $07, $09, $08, $04
-
-; ***************************************************************************************
-    ; vertical movements at each stage of a jump
-jumpMovementArray
-    !byte $04, $04, $03, $03, $02, $02, $01, $00, $00, $00, $ff, $fe, $fe, $fd, $fd, $fc, $fc
-
-; ***************************************************************************************
-guardianColourTable
-    !byte $ff, $f0, $0f, $ff        ;
-
-guardianSetForEachLevel
-    ; level 1,   2,   3,   4,   5,   6,   7,  8,    9,  10,  11,  12,  13,  14,  15,  16,  17,  18,  19,  20
-    !byte $01, $02, $03, $04, $05, $06, $07, $08, $09, $0a, $0b, $08, $0c, $00, $0d, $0e, $0f, $09, $10, $01
-
-meteorPositions
-    !byte $64, $1b, $28, $a9, $16, $1d, $02, $58, $65, $57, $27, $d9, $aa, $1c, $15, $63
-
 
 ; ***************************************************************************************
     ; Three bytes per horizontal guardian, specifying initial position and direction:
@@ -13163,108 +13241,6 @@ exitMessage
     !byte $f1, $f2, $0a, $08, $08   ; $f1, $f2
     !byte $f3, $f4, $00             ; $f3, $f4
 
-; ***************************************************************************************
-;
-; Later levels (9 and 11 upwards) can have up to four vertical guardians
-;
-; Guardian position data is packed into two bytes:
-;
-; <x coordinate>    x position in cells, top bit specifies initial direction, (clear = up, set = down)
-; <y coordinates>   top nybble is the initial Y and also the second extent, bottom nybble is the first extent
-;
-; ***************************************************************************************
-verticalGuardians
-    !byte $00, $00, $00, $00, $00, $00, $00, $00    ; [UNUSED]
-    !byte $85, $0d, $cb, $0d, $94, $0d, $d9, $0d    ; level 9 - Wacky Amoebatrons
-    !byte $00, $00, $00, $00, $00, $00, $00, $00    ; [UNUSED]
-    !byte $83, $4d, $8c, $07, $95, $6d, $da, $0d    ; level 11 - Attack of the Mutant Telephones
-    !byte $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff    ; level 12 - Return of the Alien Kong Beast
-    !byte $85, $1d, $ff, $ff, $ff, $ff, $ff, $ff    ; level 13 - Ore Refinery
-    !byte $c1, $09, $8b, $04, $d5, $07, $ff, $ff    ; level 14 - Skylab Landing Bay
-    !byte $89, $4d, $8f, $5d, $d5, $4d, $ff, $ff    ; level 15 - The Bank
-    !byte $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff    ; level 16 - The Sixteenth Cavern
-    !byte $83, $8d, $4a, $c0, $13, $80, $db, $0c    ; level 17 - The Warehouse
-    !byte $c5, $1d, $8a, $1d, $d4, $1d, $99, $1d    ; level 18 - Amoebatrons' Revenge
-    !byte $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff    ; level 19 - The Meteor Storm
-    !byte $82, $06, $da, $4d, $ff, $ff, $ff, $ff    ; level 20 - The Final Barrier
-
-; ***************************************************************************************
-cheatCode
-    ; code: A <space> S,   E,   C,   R,   E,   T
-    ;
-    ; key codes as stored in memory address $ec (by the OS) when pressed, all with top bit set:
-    ;     $C1, $E2, $D1, $A2, $D2, $B3, $A2, $A3
-    ; stored here without top bit set:
-    !byte $41, $62, $51, $22, $52, $33, $22, $23
-cheatCodeEnd
-
-; ***************************************************************************************
-music
-    ;     B2, C#3, D3, E3, F#3, D3, F#3,    E#3, C#3, E#3,    E3, B#2, E3
-    !byte  0,   2,  3,  5,   7,  3,   7,7,    6,   2,   6,6,   5,   1,  5, 5
-    ;     B2, C#3, D3, E3, F#3, D3, F#3,     B3,  A3, F#3,    D3, F#3, A3
-    !byte  0,   2,  3,  5,   7,  3,   7,     12,  10,   7,     3,   7, 10, 10, 10, 10
-    ;     B2, C#3, D3, E3, F#3, D3, F#3,    E#3, C#3, E#3,    E3, B#2, E3
-    !byte  0,   2,  3,  5,   7,  3,   7,7,    6,   2,   6,6,   5,   1,  5, 5
-    ;     B2, C#3, D3, E3, F#3, D3, F#3,     B3, F#3,  D3,   F#3,  B3, B2
-    !byte  0,   2,  3,  5,   7,  3,   7,     12,   7,   3,     7,  12,  0, 0, 0, 0, $ff
-
-soundFrequenciesFirst
-    !byte $80 + 4           ; 0   1012  B2
-    !byte $80 + 12          ; 1    956  C3 (=B#2)
-    !byte $80 + 6           ; 2    902  C#3
-    !byte $80 + 3           ; 3    851  D3
-    !byte $80 + 4           ; 4    804  D#3
-    !byte $80 + 6           ; 5    758  E3
-    !byte $80 + 12          ; 6    716  F3 (=E#3)
-    !byte $80 + 4           ; 7    676  F#3
-    !byte $80 + 14          ; 8    638  G3
-    !byte $80 + 10          ; 9    602  G#3
-    !byte $80 + 8           ; 10   568  A3
-    !byte $80 + 8           ; 11   536  A#3
-    !byte $80 + 10          ; 12   506  B3
-
-soundFrequenciesSecond
-    !byte 63                ; 0   1012  B2
-    !byte 59                ; 1    956  C3 (=B#2)
-    !byte 56                ; 2    902  C#3
-    !byte 53                ; 3    851  D3
-    !byte 50                ; 4    804  D#3
-    !byte 47                ; 5    758  E3
-    !byte 44                ; 6    716  F3 (=E#3)
-    !byte 42                ; 7    676  F#3
-    !byte 39                ; 8    638  G3
-    !byte 37                ; 9    602  G#3
-    !byte 35                ; 10   568  A3
-    !byte 33                ; 11   536  A#3
-    !byte 31                ; 12   506  B3
-
-; ***************************************************************************************
-creditsMessage
-    !byte 31, 19, 2                 ; TAB(19,2)
-    !text "SOFTWARE PROJECTS"
-    !byte 31, 23, 4                 ; TAB(23,4)
-    !text "Presents"
-    !byte 31, 19, 15                ; TAB(19,15)
-    !text "ORIGINAL PROGRAM"
-    !byte 31, 19, 17                ; TAB(19,17)
-    !text "BY MATTHEW SMITH"
-    !byte 18, 0, 130                ; GCOL 0,130
-    !byte 24                        ; define graphics window
-    !word 19 * 32                   ; left
-    !word 19 * 32                   ; bottom
-    !word 36 * 32 + 12              ; right
-    !word (32-6)*32                 ; top
-    !byte 16                        ; clear graphics area
-    !byte 18, 0, 128                ; GCOL 0,128
-    !byte 26                        ; reset text window
-    !byte 17, 130                   ; COLOUR 130
-    !byte 31, 26, 9                 ; TAB(26,9)
-    !text "BY"
-    !byte 31, 21, 11                ; TAB(21,11)
-    !text "D.J.COATHUPE"
-    !byte 31, 19, 7                 ; TAB(19,7)
-creditsMessageEnd
 
 ; ***************************************************************************************
 plotMessageStart
@@ -13571,6 +13547,13 @@ verticalGuardian2
     !byte $ea, $ea, $ea, $ea        ; third  guardian
     !byte $ea, $ea, $ea, $ea        ; fourth guardian
 endOfEverything
+
+!if * > $8000 {
+    !error "space is wrong, ", *
 }
+
+}
+
+
 free4 = $8000 - endOfEverything
 allFree = free1 + free2 + free3 + free4

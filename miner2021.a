@@ -4,6 +4,23 @@
 ; constants
 charSPACE                       = $20       ;
 
+black                              = 0
+red                                = 1
+green                              = 2
+yellow                             = 3
+blue                               = 4
+magenta                            = 5
+cyan                               = 6
+white                              = 7
+flashingblackwhite                 = 8
+flashingredcyan                    = 9
+flashinggreenmagenta               = 10
+flashingyellowblue                 = 11
+flashingblueyellow                 = 12
+flashingmagentagreen               = 13
+flashingcyanred                    = 14
+flashingwhiteblack                 = 15
+
 ; OS memory locations
 vduTextColourByteOR             = $D2       ; } bytes to implement current foreground
 vduTextColourByteEOR            = $D3       ; } and background text colours
@@ -12,7 +29,6 @@ interruptAccumulator            = $FC       ; RESERVED for INTERRUPTS
 irqv1                           = $204      ;
 irqv2                           = $206      ;
 
-;vduBackgroundTextColour         = $0358     ; Current colour stored as the byte value to colour the whole byte the given colour
 softCharacterDefinitions        = $0c00     ;
 
 logicalScreenStart              = $3000     ;
@@ -43,6 +59,7 @@ OSWRCH                          = $ffee     ;
 OSWORD                          = $fff1     ;
 OSBYTE                          = $fff4     ;
 OSCLI                           = $fff7     ;
+
 
 ; ***************************************************************************************
 ; game specifics
@@ -157,7 +174,7 @@ musicCounter                    = $5f       ;
 channel2Frequency               = $60       ;
 previousNoteByte                = $61       ;
 rememberCharacterToDraw         = $62       ;
-
+byteToWrite                     = $63       ;
 
 levelDataOffset                 = $70       ;
 
@@ -879,13 +896,13 @@ allOtherSpikes
     !byte %....#...
 
     !byte %...#....
-    !byte %...#....
     !byte %##.#.##.
     !byte %..###...
     !byte %##.#.##.
     !byte %..###...
-    !byte %.#.#.#..
-    !byte %#..#..#.
+    !byte %.#...#..
+    !byte %##...##.
+    !byte %..#.#...
 
     !byte %.##...##
     !byte %...#.#..
@@ -2248,52 +2265,50 @@ checkForJump
 
 ; ***************************************************************************************
 cancelJump
-    lda #0                          ;
-    sta willyDeltaX                 ;
+    lda #0                                  ;
+    sta willyDeltaX                         ;
     sta playerYNegativeOffsetWithinCell     ;
-    sta willyFalling                ;
-    sta jumpDirection               ;
-    lda hasDrawnConveyors           ;
-    beq +                           ;
-    lda #0                          ;
-    sta hasDrawnConveyors           ;
-    rts                             ;
+    sta willyFalling                        ;
+    sta jumpDirection                       ;
+    lda hasDrawnConveyors                   ;
+    beq +                                   ;
+    rts                                     ;
 
 ; ***************************************************************************************
 +
 ;    jsr updateAirAndCheckExit       ;
-    jsr drawConveyor                ;
-    jmp updatePlayerWithAnimation   ;
+    jsr drawConveyor                    ;
+    jmp updatePlayerWithAnimation       ;
 
 ; ***************************************************************************************
 checkForWallOnJump
-    ldx newPlayerPixelX             ;
-    ldy newPlayerPixelY             ;
-    jsr setTextPosFromPixelPos      ;
-    dec cursorY                     ;
-    dec cursorY                     ;
-    dec cursorY                     ;
+    ldx newPlayerPixelX                 ;
+    ldy newPlayerPixelY                 ;
+    jsr setTextPosFromPixelPos          ;
+    dec cursorY                         ;
+    dec cursorY                         ;
+    dec cursorY                         ;
 
-    jsr readTwoCharactersFromScreen ; read the two characters immediately higher on screen than the player
-    lda screenCharacterA            ;
-    cmp #$8f                        ;
-    beq foundWallSoCancelJump       ; if (wall) then branch
-    lda screenCharacterB            ;
-    cmp #$8f                        ;
-    beq foundWallSoCancelJump       ; if (wall) then branch
+    jsr readTwoCharactersFromScreen     ; read the two characters immediately higher on screen than the player
+    lda screenCharacterA                ;
+    cmp #$8f                            ;
+    beq foundWallSoCancelJump           ; if (wall) then branch
+    lda screenCharacterB                ;
+    cmp #$8f                            ;
+    beq foundWallSoCancelJump           ; if (wall) then branch
 
     ; start jump
-    lda #1                          ;
-    sta isJumping                   ;
-    lda playerPixelY                ;
-    sta playerHeightOnTakeOff       ;
-    lda #0                          ;
-    sta jumpPhase                   ;
-    jmp handleJumping               ;
+    lda #1                              ;
+    sta isJumping                       ;
+    lda playerPixelY                    ;
+    sta playerHeightOnTakeOff           ;
+    lda #0                              ;
+    sta jumpPhase                       ;
+    jmp handleJumping                   ;
 
 ; ***************************************************************************************
 foundWallSoCancelJump
-    jmp cancelJump                  ;
+    jmp cancelJump                      ;
 
 ; ***************************************************************************************
 checkIfBlockedLeftOrRight
@@ -2367,17 +2382,17 @@ onCellFloor
 
 ; ***************************************************************************************
 updateNewPlayerY
-    lda playerPixelY                ;
-    cmp playerHeightOnTakeOff       ;
-    bne updateConveyorAndPlayer     ; if (player height not the same as when last on ground) then branch (move player)
+    lda playerPixelY                    ;
+    cmp playerHeightOnTakeOff           ;
+    bne updateConveyorAndPlayer         ; if (player height not the same as when last on ground) then branch (move player)
 
-    lda jumpPhase                   ;
-    cmp #0                          ;
-    bne updateConveyorAndPlayer     ; if (jumping) then branch (move player)
+    lda jumpPhase                       ;
+    cmp #0                              ;
+    bne updateConveyorAndPlayer         ; if (jumping) then branch (move player)
 
-    lda newPlayerPixelY             ;
-    sta playerPixelY                ;
-    rts                             ;
+    lda newPlayerPixelY                 ;
+    sta playerPixelY                    ;
+    rts                                 ;
 
 ; ***************************************************************************************
 getPlayerSourceSpriteAddress
@@ -2403,15 +2418,15 @@ getPlayerSourceSpriteAddress
 ;
 ; ***************************************************************************************
 getDangerArea
-    clc                                     ;
-    sbc #8                                  ;
-    ldx #255                                ;
+    clc                                 ;
+    sbc #8                              ;
+    ldx #255                            ;
 -
-    inx                                     ;
-    sec                                     ; division by repeated subtraction
-    sbc #24                                 ;
-    bcs -                                   ;
-    rts                                     ;
+    inx                                 ;
+    sec                                 ; division by repeated subtraction
+    sbc #24                             ;
+    bcs -                               ;
+    rts                                 ;
 
 ; ***************************************************************************************
 ;
@@ -2457,8 +2472,6 @@ updateConveyorAndPlayer
     ldy newPlayerPixelY                 ; }
     lda #1                              ; }
     jsr readOrWriteCachedBackground     ; } cache new background
-    lda #1                              ;
-    sta hasDrawnConveyors               ;
     ; fall through...
 
 ; ***************************************************************************************
@@ -4556,6 +4569,9 @@ resetLevel19Meteors
     sta energyFieldTimer            ;
     jmp resetVerticalSprites        ;
 
+; ***************************************************************************************
+titleScreenPalette
+    !byte blue, red, green, white
 
 ; ***************************************************************************************
 showTitleScreenMessageAndWaitForRETURN
@@ -4565,16 +4581,12 @@ showTitleScreenMessageAndWaitForRETURN
     ; set palette to regular numbers
     ldx #0                          ;
 -
-    txa                             ;
-    jsr setPalette                  ;
+    lda titleScreenPalette,x        ;
+    sta playAreaPalette,x           ;
+    sta footerPalette,x             ;
     inx                             ;
-    cpx #5                          ;
+    cpx #4                          ;
     bne -                           ;
-
-    ; set logical colour 3 to white
-    lda #7                          ;
-    ldx #3                          ;
-    jsr setPalette                  ;
 
     ; delay loop
     lda #$d0                        ;
@@ -4747,21 +4759,26 @@ return10
 
 ; ***************************************************************************************
 drawConveyor
-    lda currentLevel                ;
-    cmp #18                         ;
-    beq return10                    ;
+    lda hasDrawnConveyors               ;
+    bne return10                        ;
+    lda #1                              ;
+    sta hasDrawnConveyors               ;
 
-    inc conveyorSpriteOffset        ;
-    lda conveyorLength              ;
-    cmp #$ff                        ;
-    beq return10                    ;
+    lda currentLevel                    ;
+    cmp #18                             ;
+    beq return10                        ;
 
-    lda conveyorX                   ;
-    and #$80                        ;
-    beq +                           ;
-    lda #3                          ;
+    inc conveyorSpriteOffset            ;
+    lda conveyorLength                  ;
+    cmp #$ff                            ;
+    beq return10                        ;
+
+    lda conveyorX                       ;
+    and #$80                            ;
+    beq +                               ;
+    lda #3                              ;
 +
-    eor conveyorSpriteOffset        ;
+    eor conveyorSpriteOffset            ;
 
     and #3                              ;
     asl                                 ;
@@ -4770,7 +4787,7 @@ drawConveyor
     clc                                 ;
     adc #$58                            ;
     sta cellPlotSourceSpriteAddressLow  ;
-    lda #$0c                            ;
+    lda #$0c                            ; $0c58 + offset*8
     sta cellPlotSourceSpriteAddressHigh ;
 
     lda conveyorX                       ;
@@ -4894,12 +4911,7 @@ setVerticalDisplayedCharacters
 
 ; ***************************************************************************************
 clearScreen
-    lda #0                          ;
-    ldx #3                          ; loop counter
--
-    jsr setPalette                  ; set every colour black (A=0)
-    dex                             ;
-    bpl -                           ; if (not done four yet) then branch (loop back)
+    jsr setBlackPalette             ;
 
     ; clear memory from screenStartAddress to screenEndAddress
     lda #<screenStartAddress        ;
@@ -4924,7 +4936,7 @@ injectAddressHigh = * + 2
     dey                             ;
     bpl -                           ;
 
-    ldx #20                             ; set 20 character rows
+    ldx #20                             ; show 20 character rows
     jmp setVerticalDisplayedCharacters  ;
 
 ; ***************************************************************************************
@@ -5064,6 +5076,19 @@ readLevelDataByte
     rts                             ;
 
 ; ***************************************************************************************
+setBlackPalette
+    ; set palette to black
+    lda #0                          ;
+    ldx #0                          ;
+-
+    sta playAreaPalette, x          ;
+    sta footerPalette, x            ;
+    inx                             ;
+    cpx #4                          ;
+    bne -                           ;
+    rts                             ;
+
+; ***************************************************************************************
 foundLevelData
     inx                             ; }
     stx readLevelDataByte + 1       ; } store address of start of level data
@@ -5078,14 +5103,7 @@ foundLevelData
     jsr readLevelDataByte           ; read second byte of level data
     sta levelColours2               ; store it
 
-    ; set palette to black
-    lda #0                          ;
-    ldx #0                          ;
--
-    jsr setPalette                  ;
-    inx                             ;
-    cpx #4                          ;
-    bne -                           ;
+    jsr setBlackPalette             ;
 
     ; next read header information (4 bytes) into $83-$86
     ldx #2                          ;
@@ -5353,46 +5371,33 @@ drawExit
     ldx #7                          ;
     jsr readLevelDataByte           ;
     sta $70                         ;
+    sta exitPositionX               ;
     inx                             ; read level exit position (index 7 and 8 into level data)
     jsr readLevelDataByte           ;
     sta $71                         ;
+    sta exitPositionY               ;
 
-    lda #31                         ;
-    jsr OSWRCH                      ;
-    lda $70                         ; TAB(exitX,exitY - 2)
-    jsr OSWRCH                      ;
-    lda $71                         ;
-    sec                             ;
-    sbc #2                          ;
-    jsr OSWRCH                      ;
-
-    ; Draw: f1,f2
-    ;       f3,f4
-    ldx #0                          ;
--
-    lda exitMessage,x               ;
-    jsr OSWRCH                      ;
-    inx                             ;
-    cpx #8                          ;
-    bne -                           ;
-    rts                             ;
+    jmp flashExit                   ;
 
 setRoomColours
     lda #0                          ;
     jsr OSWRCH                      ;
     jsr drawInitialAirMeter         ;
 
-;    lda #2                          ; COLOUR 2
-;    jsr setTextColour               ;
-
     jsr updateAirAndCheckExit       ;
     jsr drawConveyor                ;
     jsr drawExit                    ;
 
-    ldx #0                          ;
     lda levelColours                ;
     and #$0f                        ;
-    jsr setPalette                  ; set palette from lower nybble
+    sta playAreaPalette             ; set palette from lower nybble
+    sta footerPalette               ;
+    lda #red
+    sta footerPalette + 1           ;
+    lda #green
+    sta footerPalette + 2           ;
+    lda #white
+    sta footerPalette + 3           ;
 
     lda levelColours                ;
     and #$f0                        ;
@@ -5400,16 +5405,14 @@ setRoomColours
     lsr                             ;
     lsr                             ;
     lsr                             ;
-    ldx #1                          ;
-    jsr setPalette                  ; set palette from upper nybble
+    sta playAreaPalette + 1         ; set palette from upper nybble
 
     lda levelColours2               ;
     and #$0f                        ;
-    ldx #2                          ;
-    jsr setPalette                  ; set palette from second colour byte (lower nybble)
-    ldx #3                          ;
+    sta playAreaPalette + 2         ; set palette from second colour byte (lower nybble)
     lda #3                          ;
-    jmp setPalette                  ; set palette(3) = 3
+    sta playAreaPalette + 3         ; set palette(3) = 3
+    rts                             ;
 
 ; ***************************************************************************************
 command255IncrementFeatureIndex
@@ -5678,12 +5681,58 @@ oldIrq1RoutineHigh = * + 2
     cmp #2                              ;
     beq updateSound                     ;
 
+    cmp #5                              ;
+    beq changePalette                   ;
+    cmp #6                              ;
+    beq restorePalette                  ;
+
     cmp #13                             ;
     bne handledInterrupt                ;
     inc clock                           ;
     lda #0                              ;
     sta rasterArea                      ;
     beq handledInterrupt                ; ALWAYS branch
+
+; ***************************************************************************************
+changePalette
+    LDX #footerPalette - startOfPalettes + 3    ; }
+    JSR definePaletteAX                         ; } Set palette for header
+    jmp handledInterrupt                        ;
+
+; ***************************************************************************************
+restorePalette
+    LDX #playAreaPalette - startOfPalettes + 3  ; } Set palette for play area
+    JSR definePaletteAX                         ; }
+    jmp handledInterrupt                        ;
+
+; ***************************************************************************************
+startOfPalettes
+playAreaPalette
+    !byte black, red, green, yellow
+footerPalette
+    !byte black, red, green, white
+
+paletteLookupTable
+    !byte $00, $20, $80, $A0
+
+; ***************************************************************************************
+definePaletteAX
+    ldy #3                                  ;
+-
+    lda startOfPalettes, X                  ;
+    eor #7                                  ;
+    ora paletteLookupTable,Y                ;
+    sta videoULAPaletteRegister             ; store actual colour in register
+    eor #$10                                ;
+    sta videoULAPaletteRegister             ; store actual colour in register
+    eor #$50                                ;
+    sta videoULAPaletteRegister             ; store actual colour in register
+    eor #$10                                ;
+    sta videoULAPaletteRegister             ; store actual colour in register
+    dex                                     ;
+    dey                                     ;
+    bpl -                                   ;
+    rts                                     ;
 
 ; ***************************************************************************************
 updateSound
@@ -5820,6 +5869,8 @@ attractLoop
     sta attractModeTimer            ;
 showALevelLoop
     jsr updateAirAndCheckExit       ;
+    lda #0                          ;
+    sta hasDrawnConveyors           ;
     jsr drawConveyor                ;
     jsr animateKeysUpdateHorizontalGuardiansAndLevel19EnergyFields   ;
     jsr updateVerticalGuardians     ;
@@ -6382,21 +6433,6 @@ drawRoomName
     sta readRoomNameCharacter + 2   ;
     lda #0                          ;
     sta roomNumberReached           ;
-    ldx #4                          ; TAB(4,17)
-    ldy #17                         ;
-    jsr setTextPos                  ;
-
-    ; print 32 spaces
-    lda #charSPACE                  ;
-    ldx #0                          ;
--
-    jsr OSWRCH                      ;
-    inx                             ;
-    cpx #$20                        ;
-    bne -                           ;
-
-    lda #3                          ; COLOUR 3
-    jsr setTextColour               ;
 
     ; scan for next control character
     ldx #0                          ; loop counter
@@ -6417,32 +6453,33 @@ foundControlCharacter
     cmp roomNumberReached           ; }
     bne -                           ; } if (room not reached) then branch back
 
-    ; tab to room title area
     stx tempX                       ;
-    ldx #4                          ; TAB (4, 17)
-    ldy #17                         ;
-    jsr setTextPos                  ;
-    lda #131                        ; COLOUR 131
-    jsr setTextColour               ;
-    lda #0                          ; COLOUR 0
-    jsr setTextColour               ;
-    ldx #31                         ;
-    lda #charSPACE                  ;
--
-    JSR OSWRCH                      ;
-    dex                             ;
-    bpl -                           ;
 
-    ; tab to correct position
+    ; calculate the correct position
+    lda #0
+    sta titleTextStartXHigh         ;
     ldx tempX                       ;
-    jsr readRoomNameCharacter       ; }
-    clc                             ; }
-    adc #4                          ; }
-    tax                             ; } TAB(31, 4+char, 17)
-    ldy #17                         ; }
-    jsr setTextPos                  ; }
+    jsr readRoomNameCharacter       ; get cell X to draw room title
+    clc                             ;
+    adc #4                          ;
+    ldx #4                          ;
+-
+    asl                             ; }
+    rol titleTextStartXHigh         ; } x32
+    dex                             ; }
+    bpl -                           ; }
+    sta titleTextStartXLow          ;
 
-    ; print room title
+    ; draw the background an move into position
+    ldx #0
+drawRoomTitleBackgroundLoop
+    lda roomTitleBackground, x      ;
+    jsr OSWRCH                      ;
+    inx                             ;
+    cpx #roomTitleBackgroundEnd - roomTitleBackground   ;
+    bne drawRoomTitleBackgroundLoop ;
+
+    ; print the room title
     ldx tempX                       ;
 -
     inx                             ;
@@ -6452,6 +6489,17 @@ foundControlCharacter
     jsr OSWRCH                      ;
     jmp -
 +
+
+    ; finish up (return to regular VDU 4 mode)
+    ldx #0                          ;
+-
+    lda vdu4CursorOff,x             ;
+    jsr OSWRCH                      ;
+    inx                             ;
+    cpx #vdu4CursorOffEnd - vdu4CursorOff
+    bne -
+
+    ; clear colours just in case?
     lda #128                        ; COLOUR 128
     jsr setTextColour               ;
     lda #3                          ; COLOUR 3
@@ -6515,7 +6563,7 @@ readOrWriteAddrHigh = readOrWriteByte + 2
 FramePeriod     = 312*62-2
 
 ; Calculate here the timer value to interrupt at the desired line
-TimerValue      = 71*62 + 25
+TimerValue      = 88*62 + 25
 
 ; This is the delay between interrupts (three character rows)
 ShortTimerValue = 24*62 + 46
@@ -6631,6 +6679,9 @@ startGame
     sta clock                               ;
 
 playCurrentLevel
+    lda #0                                  ;
+    sta hasDrawnConveyors                   ;
+
     lda tempScreenAddressLow                ; }
     sta plotScreenAddressLow                ; } restore screen plotting address
     lda tempScreenAddressHigh               ; }
@@ -6824,6 +6875,7 @@ storeLevelNumber
 .return1
     rts                                 ;
 
+; ***************************************************************************************
 initializeLevelSprites
     ldx #0                          ;
 -
@@ -6846,11 +6898,6 @@ initializeLevelSprites
     sta $0cd7                       ;
     sta $0cbf                       ;
     sta $0cef                       ;
-
-    lda $70                         ; }
-    sta exitPositionX               ; }
-    lda $71                         ; } set exit position
-    sta exitPositionY               ; }
 
     lda #$4c                        ; }
     sta doWeMoveEugene              ; } store opcode for 'JMP abs'
@@ -7069,6 +7116,10 @@ reachedExit
     jsr pauseMusic                  ;
     lda #0                          ;
     sta keyCounter                  ;
+
+    lda playAreaPalette + 1         ;
+    sta playAreaPalette + 2         ;
+    sta playAreaPalette + 3         ;
 drainAirRemaining
     lda airRemaining                ;
     lsr                             ;
@@ -7137,7 +7188,7 @@ updateAir
     beq loseAir                     ;
     rts                             ;
 
-airStartAddress = $5d82
+airStartAddress = $5d86
 
 ; ***************************************************************************************
 loseAir
@@ -7166,19 +7217,39 @@ loseAir
 
     lda airRemaining                    ;
     cmp #48                             ;
-    bcc red                             ;
+    bcc redAir                          ;
     lda byteMaskGreen, x                ;
     jmp writeAir                        ;
-red
+redAir
     lda byteMaskRed, x                  ;
 
+    ; write the first two pixel rows
 writeAir
+    sta byteToWrite                     ;
+    ldy #0                              ;
+    sta (airScreenAddressLow),y         ;
+    iny                                 ;
+    sta (airScreenAddressLow),y         ;
+
+    ; move to next character row
+    lda airScreenAddressLow             ;
+    clc                                 ;
+    adc #$80 - 6                        ;
+    sta airScreenAddressLow             ;
+    lda airScreenAddressHigh            ;
+    adc #2                              ;
+    sta airScreenAddressHigh            ;
+
+    lda byteToWrite                     ;
+
+    ; write last three pixel rows
     ldy #0                              ;
 -
     sta (airScreenAddressLow),y         ;
     iny                                 ;
-    cpy #4                              ;
+    cpy #3                              ;
     bne -                               ;
+
 return14
     rts                                 ;
 
@@ -7869,6 +7940,84 @@ penroseTriangle
     !byte $05, $6C, $8B-6               ; DRAW
     !byte $05, $12, $B8-6               ; DRAW
     !byte $FF                           ; TERMINATOR
+
+yOffsetToTitle = 11 * 4
+
+roomTitleBackground
+    ; draw yellow bar (colour 3)
+    !byte 18, 0, 3                          ; GCOL 0, 3
+    !byte 25, 4                             ;
+    !word 32*4, 400 + yOffsetToTitle        ; MOVE bottom left
+    !byte 25, 4                             ;
+    !word 1279-4*32, 400 + yOffsetToTitle   ; MOVE bottom right
+    !byte 25, $55                           ;
+    !word 32*4, 432 + yOffsetToTitle        ; TRI top left
+    !byte 25, $55                           ;
+    !word 1279-4*32, 432 + yOffsetToTitle   ; TRI top right
+    !byte 25, 4                             ;
+titleTextStartXLow = *
+titleTextStartXHigh = * + 1
+    !word 0                                 ; X coordinate for title text
+    !word 428 + yOffsetToTitle              ; Y coordinate for title text
+    !byte 18, 0, 0                          ; GCOL 0, 0
+    !byte 5                                 ; VDU 5
+roomTitleBackgroundEnd
+
+airOffsetY = -4
+; ***************************************************************************************
+airMessage
+;    !byte $11, 3                    ; COLOUR 2
+;    !byte $1f, 4, 18                ; TAB(4,18)
+;    !byte $11, 129                  ; COLOUR 129
+;    !text "AIR"                     ;
+;    !text "       "                 ;
+;    !byte $11, 130                  ; COLOUR 130
+;    !text "                      "  ;
+;    !byte $11, 128                  ; COLOUR 128
+
+    ; draw red bar (colour 1)
+    !byte 18, 0, 1                  ; GCOL 0,1
+    !byte 25, 4                     ;
+    !word 32*4, 400 + airOffsetY    ; MOVE bottom left
+    !byte 25, 4                     ;
+    !word 32*14, 400 + airOffsetY   ; MOVE bottom right
+    !byte 25, $55                   ;
+    !word 32*4, 432 + airOffsetY    ; TRI top left
+    !byte 25, $55                   ;
+    !word 32*14, 432 + airOffsetY   ; TRI top right
+
+    ; draw green bar (colour 2)
+    !byte 18, 0, 2                      ; GCOL 0,2
+    !byte 25, 4                         ;
+    !word 32*14, 400 + airOffsetY       ; MOVE bottom left
+    !byte 25, 4                         ;
+    !word 1279-4*32, 400 + airOffsetY   ; MOVE bottom right
+    !byte 25, $55                       ;
+    !word 32*14, 432 + airOffsetY       ; TRI top left
+    !byte 25, $55                       ;
+    !word 1279-4*32, 432 + airOffsetY   ; TRI top right
+
+    !byte 18, 0, 3                  ; GCOL 0,3
+
+    ; draw white bar itself
+    !byte 25, 4                                 ;
+    !word           256,  436-12 + airOffsetY   ; MOVE
+    !byte 25, 5                                 ;
+    !word           1144, 436-12 + airOffsetY   ; MOVE
+    !byte 25, $55                               ;
+    !word           256, 420-12 + airOffsetY    ; DRAW
+    !byte 25, $55                               ;
+    !word           1144, 420-12 + airOffsetY   ; DRAW
+
+    !byte 5                                     ; VDU 5
+    !byte 25, 4                                 ;
+    !word 32*4 + 4, 404 + 24 + airOffsetY       ;
+    !text "AIR"                                 ;
+vdu4CursorOff
+    !byte 4                         ; VDU 4
+    !byte 23, 1, 0, 0,0,0,0,0,0,0,0 ; cursor off
+vdu4CursorOffEnd
+airMessageEnd
 
 
 
@@ -13237,12 +13386,6 @@ levelTitles
     !byte $0d                               ; terminator
 
 ; ***************************************************************************************
-exitMessage
-    !byte $f1, $f2, $0a, $08, $08   ; $f1, $f2
-    !byte $f3, $f4, $00             ; $f3, $f4
-
-
-; ***************************************************************************************
 plotMessageStart
     !byte 25                        ; VDU 25
 plotType
@@ -13276,26 +13419,6 @@ crtcSetup
     !byte 23, 1,  0,   0, $ff       ; VDU 23,0,1, 0,0;0;0;0;   horizontal displayed = 0
     !byte 23, 0, 13, $50, $ff       ; set display address (low)
 crtcSetupEnd
-
-; ***************************************************************************************
-airMessage
-    !byte $11, 3                    ; COLOUR 2
-    !byte $1f, 4, 18                ; TAB(4,18)
-    !byte $11, 129                  ; COLOUR 129
-    !text "AIR"                     ;
-    !text "       "                 ;
-    !byte $11, 130                  ; COLOUR 130
-    !text "                      "  ;
-    !byte $11, 128                  ; COLOUR 128
-    !byte 25, 4                     ;
-    !word           256,  436       ; MOVE
-    !byte 25, 5                     ;
-    !word           1144, 436       ; MOVE
-    !byte 25, $55                   ;
-    !word           256, 424        ; DRAW
-    !byte 25, $55                   ;
-    !word           1144, 424       ; DRAW
-airMessageEnd
 
 ; ***************************************************************************************
 pedestalMessage
@@ -13404,8 +13527,6 @@ debugChangePalette
     eor #$10                                ;
     sta videoULAPaletteRegister             ; store actual colour in register
     rts
-paletteLookupTable
-    !byte $00, $20, $80, $A0
 
 energyFieldString
     !byte $1f, 15, 5                    ; TAB(15, 5)

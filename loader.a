@@ -67,11 +67,11 @@ tempAddrHigh    = $77
 
 copyDownBlock
     !word $1900                             ; from
-    !word $0500                             ; to
-    !word $2D80                             ; length
+    !word $0400                             ; to
+    !word $2E80                             ; length
 
 copyUpBlock
-    !word $1900+$3280-$0500                 ; from
+    !word $1900+$3280-$0400                 ; from
     !word $6480                             ; to
     !word $2000                             ; length
 

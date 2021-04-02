@@ -2,34 +2,42 @@
 ;
 
 ; constants
-charSPACE                       = $20       ;
+charSPACE                           = $20       ;
 
-black                              = 0
-red                                = 1
-green                              = 2
-yellow                             = 3
-blue                               = 4
-magenta                            = 5
-cyan                               = 6
-white                              = 7
-flashingblackwhite                 = 8
-flashingredcyan                    = 9
-flashinggreenmagenta               = 10
-flashingyellowblue                 = 11
-flashingblueyellow                 = 12
-flashingmagentagreen               = 13
-flashingcyanred                    = 14
-flashingwhiteblack                 = 15
+black                               = 0
+red                                 = 1
+green                               = 2
+yellow                              = 3
+blue                                = 4
+magenta                             = 5
+cyan                                = 6
+white                               = 7
+flashingblackwhite                  = 8
+flashingredcyan                     = 9
+flashinggreenmagenta                = 10
+flashingyellowblue                  = 11
+flashingblueyellow                  = 12
+flashingmagentagreen                = 13
+flashingcyanred                     = 14
+flashingwhiteblack                  = 15
+
+keyCodeDELETE = $a6
+keyCodeESCAPE = $8f
+keyCodeS      = $ae
+keyCodeQ      = $ef
+keyCodeCOPY   = $96
+keyCodeSHIFT  = $ff
+
 
 ; OS memory locations
-vduTextColourByteOR             = $D2       ; } bytes to implement current foreground
-vduTextColourByteEOR            = $D3       ; } and background text colours
-vduWriteCursorScreenAddressLow  = $D8       ; address of the top of the cell
-interruptAccumulator            = $FC       ; RESERVED for INTERRUPTS
-irqv1                           = $204      ;
-irqv2                           = $206      ;
+vduTextColourByteOR                 = $D2       ; } bytes to implement current foreground
+vduTextColourByteEOR                = $D3       ; } and background text colours
+vduWriteCursorScreenAddressLow      = $D8       ; address of the top of the cell
+interruptAccumulator                = $FC       ; RESERVED for INTERRUPTS
+irqv1                               = $204      ;
+irqv2                               = $206      ;
 
-logicalScreenStart              = $3000     ;
+logicalScreenStart                  = $3000     ;
 
 videoULAPaletteRegister             = $fe21     ; Video ULA palette register
 
@@ -63,10 +71,6 @@ OSCLI                           = $fff7     ;
 ; game specifics
 
 ; zero page memory locations
-meteorTailAnimationOffset       = $3f       ;
-energyFieldSpriteOffset         = $3f       ;
-collisionFudgeFactor            = $5a       ;
-
 altScreenAddressLow             = $00       ;
 altScreenAddressHigh            = $01       ;
 cachedCellX                     = $02       ;
@@ -174,6 +178,22 @@ previousNoteByte                = $61       ;
 rememberCharacterToDraw         = $62       ;
 byteToWrite                     = $63       ;
 
+meteorTailAnimationOffset       = $64       ;
+energyFieldSpriteOffset         = $64       ;
+collisionFudgeFactor            = $65       ;
+
+footPositionY                   = $66       ;
+cheatModeEnabled                = $67       ;
+levelNumberCounter              = $68       ;
+tempCounter                     = $68       ;
+zeroBasedLevel                  = $69       ;
+roomNumberReached               = $6a       ;
+keyPositionCounter              = $6b       ;
+currentKeyIndex                 = $6c       ;
+keyColourCounter                = $6d       ;
+attractModeTimer                = $6e       ;
+cheatCodeCounter                = $6f       ;
+
 levelDataOffset                 = $70       ;
 
 plotMode                        = $70       ;
@@ -187,6 +207,16 @@ plotSourceSpriteAddressLow      = $77       ;
 plotSourceSpriteAddressHigh     = $78       ;
 
 levelFeatureIndex               = $79       ;
+
+; ***************************************************************************************
+; level decode
+singleItemSprite                = $7a       ;
+decodeLevelByte                 = $7b       ;
+singleItemX                     = $7c       ;
+singleItemY                     = $7d       ;
+singleItemOffsetX               = $7e       ;
+singleItemType                  = $7f       ;
+
 currentLevel                    = $80       ;
 levelColours                    = $81       ;
 levelColours2                   = $82       ;
@@ -200,7 +230,33 @@ zpGuardianPositionY             = $8b       ;
 zpGuardianLimit1                = $8c       ;
 zpGuardianLimit2                = $8d       ;
 zpGuardianAnimIndex             = $8e       ;
+singleItemSpriteOffset          = $8f       ;
+musicEnabled                    = $90       ;
+energyFieldTimer                = $91       ;
 
+; ***************************************************************************************
+kongYCoordinate                 = $92       ;
+kongBeastSwitchTriggered        = $93       ;
+kongAnimationCounter            = $94       ;
+
+; ***************************************************************************************
+eugenePositionY                 = $95       ; top bit indicates current direction
+copyEugeneSourceByte            = $96       ;
+copyEugeneTempByte              = $97       ; } shared
+copyWhichSprite                 = $97       ; }
+
+conveyorDirection               = $98       ;
+textCursorX                     = $99       ;
+textCursorY                     = $9a       ;
+
+; ***************************************************************************************
+meteorLandingY                  = $9b       ;
+meteorXCoordinate               = $9c       ;
+meteorYCoordinate               = $9d       ;
+meteorAnimationState            = $9e       ;
+meteorIndex                     = $9f       ;
+
+; ***************************************************************************************
 verticalGuardianMODE1Address    = $0400     ;
 verticalGuardianMODE1Address1   = $0440     ;
 verticalGuardianMODE1Address2   = $0480     ;
@@ -210,6 +266,114 @@ screenStartAddress              = $3280     ; start of visible screen
 blankAreaOfScreen               = $34d0     ; empty screen area to the right of the play area
 screenEndAddress                = $6480     ; end of visible screen
 backgroundCache                 = $6ba0     ; six character cells copied from the screen before the player is drawn
+
+; ***************************************************************************************
+; This is the number of timer ticks per frame (num PAL scanlines * 62us/line)
+; This timing is only true of non-interlaced modes.
+; We have to subtract 2 because the latch reload costs 2us.
+; This is not documented anywhere!
+FramePeriod     = 312*62-2
+
+; Calculate here the timer value to interrupt at the desired line
+TimerValue      = 88*62 + 25
+
+; This is the delay between interrupts (three character rows)
+ShortTimerValue = 24*62 + 46
+
+* = $0400
+; ***************************************************************************************
+initialize
+    lda #$ff                                ;
+    sta musicCounter                        ;
+    sta vsyncCounter                        ;
+    sta rasterArea                          ;
+    sta channel2Frequency                   ;
+    sta previousNoteByte                    ;
+    sta musicEnabled                        ;
+    jsr pauseMusic                          ;
+
+    ; install irq code
+    sei
+    lda #$7F                                ; }
+    sta userVIAInterruptEnableRegister      ; } Disable all interrupts
+
+    lda irqv1                               ;
+    sta oldIrq1RoutineLow                   ;
+    lda irqv1 + 1                           ;
+    sta oldIrq1RoutineHigh                  ;
+
+    lda #<mainInterruptRoutine              ;
+    sta irqv1                               ;
+    lda #>mainInterruptRoutine              ;
+    sta irqv1 + 1                           ;
+
+    lda #$c0                                ; }
+    sta userVIAInterruptEnableRegister      ; } Enable User VIA timer 1
+
+    ; set User VIA T1 in free run mode (i.e. repeating)
+    lda #$c0                                ; }
+    sta userVIAAuxiliaryControlRegister     ; } Start User VIA T1 in free run mode
+
+
+    ; write User VIA T1 low now (the timer will not be written until you write the high byte)
+    lda #<TimerValue                        ;
+    sta userVIATimer1CounterLow             ;
+    ; get high byte ready so we can write it as quickly as possible at the right moment
+    ldx #>TimerValue                        ;
+
+    ; wait for VSync without having to catch it from its IRQ
+    lda #2                                  ;
+    sta systemVIAInterruptFlagRegister      ; clear VSync flag
+-
+    bit systemVIAInterruptFlagRegister      ;
+    beq -                                   ; poll VSync flag
+
+    stx userVIATimer1CounterHigh            ; start User VIA Timer 1 counting
+    sta userVIAInterruptFlagRegister        ; clear VSync flag
+
+    ; set timer to fire every frame (set latch)
+    lda #<ShortTimerValue                   ;
+    sta userVIATimer1LatchLow               ;
+    lda #>ShortTimerValue                   ;
+    sta userVIATimer1LatchHigh              ;
+    lda #0                                  ;
+    sta rasterArea                          ;
+    cli                                     ;
+
+    ; print VDU stream
+    ldx #0                          ;
+-
+    lda crtcSetup,x                 ;
+    cmp #$ff                        ;
+    beq output8Zeros                ;
+    jsr OSWRCH                      ;
+backFrom8Zeros
+    inx                             ;
+    cpx #crtcSetupEnd - crtcSetup   ;
+    bne -                           ;
+
+    ; *FX 229,1 - ESCAPE generates ASCII code
+    lda #229                        ;
+    ldx #1                          ;
+    ldy #0                          ;
+    jsr OSBYTE                      ;
+
+    ; VDU 26 - reset text and graphics windows
+    lda #26                         ;
+    jsr OSWRCH                      ;
+
+    jmp showTitleScreen             ;
+
+; ***************************************************************************************
+output8Zeros
+    ldy #8                          ;
+    lda #0                          ;
+zerosLoop
+    jsr OSWRCH                      ;
+    dey                             ;
+    bne zerosLoop                   ;
+    jmp backFrom8Zeros              ;
+
 
 * = $0500
 
@@ -434,7 +598,7 @@ manicMinerGraphic
 guardianPositions
     !byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
 guardianPositionsCopy
-    !byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+    !byte $00, $00, $00, $00, $00
 
 !if * > $0800 {
     !error "space is wrong, ", *
@@ -470,6 +634,7 @@ footSprite
     !byte $01, $02, $00, $00, $64, $00, $00, $7e, $00, $00, $fe, $7e, $7e, $00, $00, $00
 
 exitSprites2x2
+    ; exit 0
     ; skull and crossbones
     !byte %.....###            ;     ######
     !byte %....####            ;    ########
@@ -506,6 +671,7 @@ exitSprites2x2
     !byte %...#####
     !byte %.....##.
 
+    ; exit 1
     ; star box
     !byte %########            ;################
     !byte %#.......            ;#              #
@@ -541,6 +707,7 @@ exitSprites2x2
     !byte %.......#
     !byte %########
 
+    ; exit 2
     !byte %########            ;################
     !byte %.#...#..            ; #   #   #   #
     !byte %#..##..#            ;#  ##  ##  ##  #
@@ -575,6 +742,7 @@ exitSprites2x2
     !byte %#..##..#
     !byte %########
 
+    ; exit 3
     !byte %########            ;################
     !byte %#####...            ;#####   #   ####
     !byte %#...#...            ;#   #   #  #   #
@@ -609,7 +777,43 @@ exitSprites2x2
     !byte %#...#..#
     !byte %########
 
+    ; exit 4
+    !byte %########            ;################
+    !byte %##.##.#.            ;## ## # # # # ##
+    !byte %###.#.#.            ;### # #  ## # ##
+    !byte %########            ;################
+    !byte %#..#....            ;#  #        #  #
+    !byte %#..#....            ;#  #        #  #
+    !byte %########            ;################
+    !byte %#..#....            ;#  #        #  #
+    !byte %########            ;#  #        #  #
+    !byte %#.#.#.##            ;################
+    !byte %.##.#.##            ;#  #        #  #
+    !byte %########            ;#  #        #  #
+    !byte %....#..#            ;################
+    !byte %....#..#            ;#  #        #  #
+    !byte %########            ;#  #        #  #
+    !byte %....#..#            ;################
+
+    !byte %#..#....
+    !byte %########
+    !byte %#..#....
+    !byte %#..#....
+    !byte %########
+    !byte %#..#....
+    !byte %#..#....
+    !byte %########
+    !byte %....#..#
+    !byte %########
+    !byte %....#..#
+    !byte %....#..#
+    !byte %########
+    !byte %....#..#
+    !byte %....#..#
+    !byte %########
+
 exitSprites1x1
+    ; exit 0
     !byte %########
     !byte %#..##..#
     !byte %#.###.##
@@ -619,6 +823,7 @@ exitSprites1x1
     !byte %#.###.##
     !byte %########
 
+    ; exit 1
     !byte %#...#...
     !byte %.#...#..
     !byte %..#...#.
@@ -628,6 +833,7 @@ exitSprites1x1
     !byte %..#...#.
     !byte %...#...#
 
+    ; exit 2
     !byte %########
     !byte %#......#
     !byte %#......#
@@ -636,44 +842,100 @@ exitSprites1x1
     !byte %#......#
     !byte %#......#
     !byte %########
+
+exitSprites1x1Reflected
+    ; exit 0
+    !byte %########
+    !byte %#..#..#.
+    !byte %#..#..#.
+    !byte %#..#..#.
+    !byte %#..#..#.
+    !byte %#..#..#.
+    !byte %#..#..#.
+    !byte %#..#..#.
+
+    ; exit 1
+    !byte %########
+    !byte %#......#
+    !byte %#.######
+    !byte %#.######
+    !byte %#.##....
+    !byte %#.##....
+    !byte %#.##....
+    !byte %####....
+
+    ; exit 2
+    !byte %########
+    !byte %#.......
+    !byte %#......#
+    !byte %#.....#.
+    !byte %#....#..
+    !byte %#...#...
+    !byte %#..#....
+    !byte %#.#....#
+
+    ; exit 3
+    !byte %########
+    !byte %#.......
+    !byte %#...####
+    !byte %#...####
+    !byte %#...####
+    !byte %#...####
+    !byte %#...####
+    !byte %#...##..
+
+    ; exit 4
+    !byte %########
+    !byte %########
+    !byte %######..
+    !byte %#####...
+    !byte %####....
+    !byte %###.....
+    !byte %##.....#
+    !byte %##....#.
+
+    ; exit 5
+    !byte %########
+    !byte %#.......
+    !byte %#.......
+    !byte %########
+    !byte %########
+    !byte %#.......
+    !byte %#.......
+    !byte %########
+
+    ; exit 6
+    !byte %########
+    !byte %#.......
+    !byte %#.##....
+    !byte %#.#.....
+    !byte %#.#.#.#.
+    !byte %#.#.#.#.
+    !byte %#.#.#.#.
+    !byte %#.#.#.#.
+
+    ; exit 7
+    !byte %########
+    !byte %#.......
+    !byte %#.######
+    !byte %#.#.....
+    !byte %#.#.####
+    !byte %#.#.#...
+    !byte %#.#.#.##
+    !byte %#.#.#.#.
+
+    ; exit 8
+    !byte %########
+    !byte %#......#
+    !byte %#......#
+    !byte %########
+    !byte %#......#
+    !byte %#......#
+    !byte %########
+    !byte %#......#
 
 exitSprites1x2
-    !byte %########
-    !byte %#..#..#.
-    !byte %#..#..#.
-    !byte %#..#..#.
-    !byte %#..#..#.
-    !byte %#..#..#.
-    !byte %#..#..#.
-    !byte %#..#..#.
-
-    !byte %#..#..#.
-    !byte %#..#..#.
-    !byte %#..#..#.
-    !byte %#..#..#.
-    !byte %#..#..#.
-    !byte %#..#..#.
-    !byte %#..#..#.
-    !byte %########
-
-    !byte %########
-    !byte %#......#
-    !byte %#.######
-    !byte %#.######
-    !byte %#.##....
-    !byte %#.##....
-    !byte %#.##....
-    !byte %####....
-
-    !byte %####....
-    !byte %#.##....
-    !byte %#.##....
-    !byte %#.##....
-    !byte %#.######
-    !byte %#.######
-    !byte %#......#
-    !byte %########
-
+    ; exit 0
     !byte %########
     !byte %#.......
     !byte %##......
@@ -692,79 +954,7 @@ exitSprites1x2
     !byte %#..#..#.
     !byte %########
 
-    !byte %########
-    !byte %#.......
-    !byte %#......#
-    !byte %#.....#.
-    !byte %#....#..
-    !byte %#...#...
-    !byte %#..#....
-    !byte %#.#....#
-
-    !byte %#.#....#
-    !byte %#..#....
-    !byte %#...#...
-    !byte %#....#..
-    !byte %#.....#.
-    !byte %#......#
-    !byte %#.......
-    !byte %########
-
-    !byte %########
-    !byte %#.......
-    !byte %#...####
-    !byte %#...####
-    !byte %#...####
-    !byte %#...####
-    !byte %#...####
-    !byte %#...##..
-
-    !byte %#...##..
-    !byte %#...####
-    !byte %#...####
-    !byte %#...####
-    !byte %#...####
-    !byte %#...####
-    !byte %#.......
-    !byte %########
-
-    !byte %########
-    !byte %########
-    !byte %######..
-    !byte %#####...
-    !byte %####....
-    !byte %###.....
-    !byte %##.....#
-    !byte %##....#.
-
-    !byte %##....#.
-    !byte %##.....#
-    !byte %###.....
-    !byte %####....
-    !byte %#####...
-    !byte %######..
-    !byte %########
-    !byte %########
-
-    !byte %########
-    !byte %#.......
-    !byte %#.......
-    !byte %########
-    !byte %########
-    !byte %#.......
-    !byte %#.......
-    !byte %########
-
-    ; $0a00
-    !byte %########
-    !byte %#.......
-    !byte %#.......
-    !byte %########
-    !byte %########
-    !byte %#.......
-    !byte %#.......
-    !byte %########
-
+    ; exit 1
     !byte %########
     !byte %#.......
     !byte %#.######
@@ -783,42 +973,7 @@ exitSprites1x2
     !byte %#.#.#.#.
     !byte %########
 
-    !byte %########
-    !byte %#.......
-    !byte %#.##....
-    !byte %#.#.....
-    !byte %#.#.#.#.
-    !byte %#.#.#.#.
-    !byte %#.#.#.#.
-    !byte %#.#.#.#.
-
-    !byte %#.#.#.#.
-    !byte %#.#.#.#.
-    !byte %#.#.#.#.
-    !byte %#.#.#.#.
-    !byte %#.#.....
-    !byte %#.##....
-    !byte %#.......
-    !byte %########
-
-    !byte %########
-    !byte %#.......
-    !byte %#.######
-    !byte %#.#.....
-    !byte %#.#.####
-    !byte %#.#.#...
-    !byte %#.#.#.##
-    !byte %#.#.#.#.
-
-    !byte %#.#.#.#.
-    !byte %#.#.#.##
-    !byte %#.#.#...
-    !byte %#.#.####
-    !byte %#.#.....
-    !byte %#.######
-    !byte %#.......
-    !byte %########
-
+    ; exit 2
     !byte %........
     !byte %.....###
     !byte %...##...
@@ -837,26 +992,11 @@ exitSprites1x2
     !byte %.######.
     !byte %........
 
-    !byte %..###...
-    !byte %...###..
-    !byte %....###.
-    !byte %....###.
-    !byte %##..###.
-    !byte %#######.
-    !byte %######..
-    !byte %........
-
-    !byte %...###..
-    !byte %..###...
-    !byte %.###....
-    !byte %.###....
-    !byte %.###..##
-    !byte %.#######
-    !byte %..######
-    !byte %........
+; single items (spikes, thread, keys)
+startOfSingleItemPage = * - 11 * 8
 
 spikePlant
-    !byte %.#...#..
+    !byte %.#...#..    ; single item character $eb
     !byte %..#.#...
     !byte %#..#.#..
     !byte %.#.#...#
@@ -866,7 +1006,7 @@ spikePlant
     !byte %...#....
 
 allOtherSpikes
-    !byte %.######.
+    !byte %.######.    ; single item character $ec
     !byte %..####..
     !byte %...###..
     !byte %...##...
@@ -875,7 +1015,7 @@ allOtherSpikes
     !byte %....#...
     !byte %....#...
 
-    !byte %########
+    !byte %########    ; single item character $ed
     !byte %#######.
     !byte %.######.
     !byte %.#..##..
@@ -884,7 +1024,7 @@ allOtherSpikes
     !byte %....#...
     !byte %....#...
 
-    !byte %...#....
+    !byte %...#....    ; single item character $ee
     !byte %##.#.##.
     !byte %..###...
     !byte %##.#.##.
@@ -893,7 +1033,7 @@ allOtherSpikes
     !byte %##...##.
     !byte %..#.#...
 
-    !byte %.##...##
+    !byte %.##...##    ; single item character $ef
     !byte %...#.#..
     !byte %...###..
     !byte %.##.#.##
@@ -902,7 +1042,7 @@ allOtherSpikes
     !byte %.##...##
     !byte %...#.#..
 
-    !byte %..####..
+    !byte %..####..    ; single item character $f0
     !byte %...##...
     !byte %#.####.#
     !byte %###..###
@@ -911,7 +1051,7 @@ allOtherSpikes
     !byte %...##...
     !byte %..####..
 
-    !byte %#.#..#.#
+    !byte %#.#..#.#    ; single item character $f1
     !byte %.#....#.
     !byte %..####..
     !byte %##.##.##
@@ -920,7 +1060,7 @@ allOtherSpikes
     !byte %#.#..#.#
     !byte %..#..#..
 
-    !byte %.#..#...
+    !byte %.#..#...    ; single item character $f2
     !byte %#.##..#.
     !byte %.#.###.#
     !byte %...#..#.
@@ -929,7 +1069,7 @@ allOtherSpikes
     !byte %#.#.#..#
     !byte %.#...###
 
-    !byte %.#...#..
+    !byte %.#...#..    ; single item character $f3
     !byte %.#...#..
     !byte %.#...#..
     !byte %.#...#..
@@ -938,7 +1078,7 @@ allOtherSpikes
     !byte %###.###.
     !byte %########
 
-    !byte %#.####.#
+    !byte %#.####.#    ; single item character $f4
     !byte %..#.#...
     !byte %.......#
     !byte %#..##.#.
@@ -948,7 +1088,7 @@ allOtherSpikes
     !byte %..#.#...
 
     ; thread
-    !byte %...#....
+    !byte %...#....    ; single item character $f5
     !byte %...#....
     !byte %...#....
     !byte %...#....
@@ -959,7 +1099,7 @@ allOtherSpikes
 
 keySprites
     ; key 0
-    !byte %..##....
+    !byte %..##....    ; single item character $f6
     !byte %.#..#...
     !byte %#...#...
     !byte %#..#....
@@ -970,7 +1110,7 @@ keySprites
 
     ; key 1
     ; ice lolly
-    !byte %.#.#....
+    !byte %.#.#....    ; single item character $f7
     !byte %#.#.#...
     !byte %.#.#.#..
     !byte %#.#.#...
@@ -981,7 +1121,7 @@ keySprites
 
     ; key 2
     ; cube
-    !byte %...#####
+    !byte %...#####    ; single item character $f8
     !byte %..#...##
     !byte %.#...###
     !byte %########
@@ -992,7 +1132,7 @@ keySprites
 
     ; key 3
     ; banana
-    !byte %#.......
+    !byte %#.......    ; single item character $f9
     !byte %##......
     !byte %###.##..
     !byte %.###..#.
@@ -1003,7 +1143,7 @@ keySprites
 
     ; key 4
     ; apple
-    !byte %....#...
+    !byte %....#...    ; single item character $fa
     !byte %....#...
     !byte %..#####.
     !byte %.#.#####
@@ -1013,7 +1153,7 @@ keySprites
     !byte %..#####.
 
     ; key 5
-    !byte %...##...
+    !byte %...##...    ; single item character $fb
     !byte %.##..##.
     !byte %.#....#.
     !byte %##.##..#
@@ -1023,7 +1163,7 @@ keySprites
     !byte %...##...
 
     ; key 6
-    !byte %..####..
+    !byte %..####..    ; single item character $fc
     !byte %.#.##.#.
     !byte %#..#.#.#
     !byte %##.#.#.#
@@ -1033,7 +1173,7 @@ keySprites
     !byte %..####..
 
     ; key 7
-    !byte %#.#.#.#.
+    !byte %#.#.#.#.    ; single item character $fd
     !byte %#.#.#.#.
     !byte %#######.
     !byte %#######.
@@ -1043,7 +1183,7 @@ keySprites
     !byte %#.#.#.#.
 
     ; key 8
-    !byte %.#####..
+    !byte %.#####..    ; single item character $fe
     !byte %..###...
     !byte %.##..#..
     !byte %##.####.
@@ -1053,7 +1193,7 @@ keySprites
     !byte %.#####..
 
     ; key 9
-    !byte %....####
+    !byte %....####    ; single item character $ff
     !byte %....#..#
     !byte %..######
     !byte %..#..#..
@@ -1063,6 +1203,7 @@ keySprites
     !byte %........
 
 floorSprites
+    ; floor 0
     !byte %########
     !byte %########
     !byte %##.##.##
@@ -1072,6 +1213,7 @@ floorSprites
     !byte %........
     !byte %........
 
+    ; floor 1
     !byte %########
     !byte %########
     !byte %.##..##.
@@ -1081,6 +1223,7 @@ floorSprites
     !byte %########
     !byte %........
 
+    ; floor 2
     !byte %########
     !byte %########
     !byte %#..##..#
@@ -1090,6 +1233,7 @@ floorSprites
     !byte %.##..##.
     !byte %........
 
+    ; floor 3
     !byte %.#####..
     !byte %########
     !byte %###.####
@@ -1099,6 +1243,7 @@ floorSprites
     !byte %....#...
     !byte %....#...
 
+    ; floor 4
     !byte %########
     !byte %########
     !byte %##..#.#.
@@ -1108,6 +1253,7 @@ floorSprites
     !byte %#.....#.
     !byte %........
 
+    ; floor 5
     !byte %########
     !byte %########
     !byte %...#...#
@@ -1117,6 +1263,7 @@ floorSprites
     !byte %########
     !byte %########
 
+    ; floor 6
     !byte %########
     !byte %########
     !byte %.##...#.
@@ -1126,6 +1273,7 @@ floorSprites
     !byte %.##.....
     !byte %.##.....
 
+    ; floor 7
     !byte %########
     !byte %########
     !byte %.#...##.
@@ -1215,6 +1363,27 @@ wallSprites
     !byte %.#.#.#.#
     !byte %#.#.#.#.
     !byte %.#.#.#.#
+
+    ; wall 8
+    !byte %.#.##.#.
+    !byte %.#.##.#.
+    !byte %.#.##.#.
+    !byte %.#.##.#.
+    !byte %.#.##.#.
+    !byte %.#.##.#.
+    !byte %.#.##.#.
+    !byte %.#.##.#.
+
+    ; wall 9 [unused]
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+
 
 crumbleSprites
     ; crumble 0
@@ -1366,12 +1535,42 @@ conveyorSprites
     !byte %........
     !byte %........
 
+    ; [unused]
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+    !byte %........
+
+
 softCharacterDefinitions
 
 !if softCharacterDefinitions != $0c00 {
     !error "sprites are misaligned", *
 }
-
+currentFloorSprites
+    ; $0c00
     !byte %########                 ; char 128 ($80, $A0, $C0, $E0)
     !byte %########
     !byte %##.##.##
@@ -1381,6 +1580,7 @@ softCharacterDefinitions
     !byte %........
     !byte %........
 
+    ; $0c08
     !byte %########                 ; char 129 ($81, $A1, $C1, $E1)
     !byte %########
     !byte %.##..##.
@@ -1390,6 +1590,8 @@ softCharacterDefinitions
     !byte %########
     !byte %........
 
+currentCrumbleSprites
+    ; $0c10
     !byte %########                 ; char 130 ($82, $A2, $C2, $E2)
     !byte %#...#...
     !byte %..#...#.
@@ -1399,6 +1601,7 @@ softCharacterDefinitions
     !byte %..#...#.
     !byte %#...#...
 
+    ; $0c18
     !byte %........                 ; char 131 ($83, $A3, $C3, $E3)
     !byte %########
     !byte %#...#...
@@ -1408,6 +1611,7 @@ softCharacterDefinitions
     !byte %#...#...
     !byte %..#...#.
 
+    ; $0c20
     !byte %........                 ; char 132 ($84, $A4, $C4, $E4)
     !byte %........
     !byte %########
@@ -1417,6 +1621,7 @@ softCharacterDefinitions
     !byte %..#...#.
     !byte %#...#...
 
+    ; $0c28
     !byte %........                 ; char 133 ($85, $A5, $C5, $E5)
     !byte %........
     !byte %........
@@ -1426,6 +1631,7 @@ softCharacterDefinitions
     !byte %#...#...
     !byte %..#...#.
 
+    ; $0c30
     !byte %........                 ; char 134 ($86, $A6, $C6, $E6)
     !byte %........
     !byte %........
@@ -1435,6 +1641,7 @@ softCharacterDefinitions
     !byte %..#...#.
     !byte %#...#...
 
+    ; $0c38
     !byte %........                 ; char 135 ($87, $A7, $C7, $E7)
     !byte %........
     !byte %........
@@ -1444,6 +1651,7 @@ softCharacterDefinitions
     !byte %#...#...
     !byte %..#...#.
 
+    ; $0c40
     !byte %........                 ; char 136 ($88, $A8, $C8, $E8)
     !byte %........
     !byte %........
@@ -1453,6 +1661,7 @@ softCharacterDefinitions
     !byte %########
     !byte %#...#...
 
+    ; $0c48
     !byte %........                 ; char 137 ($89, $A9, $C9, $E9)
     !byte %........
     !byte %........
@@ -1462,6 +1671,7 @@ softCharacterDefinitions
     !byte %........
     !byte %########
 
+    ; $0c50
     !byte %........                 ; char 138 ($8A, $AA, $CA, $EA)
     !byte %........
     !byte %........
@@ -1471,6 +1681,8 @@ softCharacterDefinitions
     !byte %........
     !byte %........
 
+currentConveyorSprites
+    ; $0c58
     !byte %##....##                 ; char 139 ($8B, $AB, $CB, $EB)
     !byte %.##..##.
     !byte %...##...
@@ -1480,6 +1692,7 @@ softCharacterDefinitions
     !byte %........
     !byte %........
 
+    ; $0c60
     !byte %....####                 ; char 140 ($8C, $AC, $CC, $EC)
     !byte %.##..##.
     !byte %....####
@@ -1489,6 +1702,7 @@ softCharacterDefinitions
     !byte %........
     !byte %........
 
+    ; $0c68
     !byte %..####..                 ; char 141 ($8D, $AD, $CD, $ED)
     !byte %.##..##.
     !byte %#......#
@@ -1498,6 +1712,7 @@ softCharacterDefinitions
     !byte %........
     !byte %........
 
+    ; $0c70
     !byte %####....                 ; char 142 ($8E, $AE, $CE, $EE)
     !byte %.##..##.
     !byte %####....
@@ -1507,6 +1722,8 @@ softCharacterDefinitions
     !byte %........
     !byte %........
 
+    ; $0c78
+currentWallSprite
     !byte %..#...#.                 ; char 143 ($8F, $AF, $CF, $EF)
     !byte %########
     !byte %#...#...
@@ -1515,7 +1732,9 @@ softCharacterDefinitions
     !byte %########
     !byte %#...#...
     !byte %########
-keySprite
+
+currentKeySprite
+    ; $0c80
     !byte %..##....                 ; char 144 ($90, $B0, $D0, $F0)
     !byte %.#..#...
     !byte %#...#...
@@ -1525,7 +1744,8 @@ keySprite
     !byte %....#.#.
     !byte %.....#..
 
-exitSprite
+currentExitSprite
+    ; $0c88
     ; exit0
     !byte %########                 ; char 145 ($91, $B1, $D1, $F1)
     !byte %#......#
@@ -1536,6 +1756,7 @@ exitSprite
     !byte %#......#
     !byte %########
 
+    ; $0c90
     ; exit1
     !byte %########                 ; char 146 ($92, $B2, $D2, $F2)
     !byte %#......#
@@ -1546,6 +1767,7 @@ exitSprite
     !byte %#......#
     !byte %########
 
+    ; $0c98
     ; exit2
     !byte %########                 ; char 147 ($93, $B3, $D3, $F3)
     !byte %#......#
@@ -1556,6 +1778,7 @@ exitSprite
     !byte %#......#
     !byte %########
 
+    ; $0ca0
     ; exit3
     !byte %########                 ; char 148 ($94, $B4, $D4, $F4)
     !byte %#......#
@@ -1566,6 +1789,7 @@ exitSprite
     !byte %#......#
     !byte %########
 
+    ; $0ca8
     !byte %########                 ; char 149 ($95, $B5, $D5, $F5)
     !byte %#......#
     !byte %#......#
@@ -1575,6 +1799,7 @@ exitSprite
     !byte %#......#
     !byte %#......#
 
+    ; $0cb0
     !byte %########                 ; char 150 ($96, $B6, $D6, $F6)
     !byte %########
     !byte %...##...
@@ -1584,6 +1809,8 @@ exitSprite
     !byte %...##...
     !byte %...##...
 
+currentWallSpriteCopy
+    ; $0cb8
     !byte %........                 ; char 151 ($97, $B7, $D7, $F7)
     !byte %........
     !byte %........
@@ -1593,6 +1820,7 @@ exitSprite
     !byte %........
     !byte %........
 
+    ; $0cc0
     !byte %########                 ; char 152 ($98, $B8, $D8, $F8)
     !byte %#......#
     !byte %#......#
@@ -1602,6 +1830,7 @@ exitSprite
     !byte %.##.....
     !byte %.##.....
 
+    ; $0cc8
     !byte %########                 ; char 153 ($99, $B9, $D9, $F9)
     !byte %#......#
     !byte %#......#
@@ -1611,6 +1840,8 @@ exitSprite
     !byte %.....##.
     !byte %.....##.
 
+currentFloorSpriteCopy
+    ; $0cd0
     !byte %........                 ; char 154 ($9A, $BA, $DA, $FA)
     !byte %........
     !byte %........
@@ -1620,6 +1851,8 @@ exitSprite
     !byte %........
     !byte %........
 
+    ; $0cd8
+currentSpikeSprite
     !byte %........                 ; char 155 ($9B, $BB, $DB, $FB)
     !byte %........
     !byte %........
@@ -1629,6 +1862,8 @@ exitSprite
     !byte %........
     !byte %........
 
+currentSpikeSprite2
+    ; $0ce0
     !byte %........                 ; char 156 ($9C, $BC, $DC, $FC)
     !byte %........
     !byte %........
@@ -1638,6 +1873,8 @@ exitSprite
     !byte %........
     !byte %........
 
+currentSecondFloorSpriteCopy
+    ; $0ce8
     !byte %........                 ; char 157 ($9D, $BD, $DD, $FD)
     !byte %........
     !byte %........
@@ -1647,6 +1884,7 @@ exitSprite
     !byte %........
     !byte %........
 
+    ; $0cf0
     !byte %....#...                 ; char 158 ($9E, $BE, $DE, $FE)
     !byte %....#...
     !byte %....#...
@@ -1656,6 +1894,7 @@ exitSprite
     !byte %....#...
     !byte %....#...
 
+    ; $0cf8
     !byte %........                 ; char 159 ($9F, $BF, $DF, $FF)
     !byte %........
     !byte %........
@@ -2116,16 +2355,25 @@ checkIfSupported
     sta willyFalling                    ;
     jmp updatePlayerFalling             ;
 
+keyCodeRETURN   = $b6
+keyCodeZ        = $9e
+keyCodeX        = $bd
+
+; ***************************************************************************************
+isKeyPressed
+    ldy #$ff                                ;
+    lda #$81                                ;
+    jsr OSBYTE                              ; check for key X pressed
+    cpy #$ff                                ;
+    rts                                     ;
+
 ; ***************************************************************************************
 onGround
     lda #0                                  ;
     sta willyChangedDirection               ;
 
-    ldy #$ff                                ;
-    ldx #$9e                                ;
-    lda #$81                                ; check for Z key
-    jsr OSBYTE                              ;
-    cpy #$ff                                ;
+    ldx #keyCodeZ                           ;
+    jsr isKeyPressed                        ; is Z pressed
     bne checkForXKey                        ;
 
     ; handle Z pressed
@@ -2153,11 +2401,8 @@ switchToLookingLeft
 
 ; ***************************************************************************************
 checkForXKey
-    ldy #$ff                                ; }
-    ldx #$bd                                ; }
-    lda #$81                                ; } check for X key
-    jsr OSBYTE                              ; }
-    cpy #$ff                                ; }
+    ldx #keyCodeX                           ; }
+    jsr isKeyPressed                        ; } is X pressed
     bne checkForUpdatePlayerOnConveyor      ; }
 
     ; handle X pressed
@@ -2268,11 +2513,8 @@ movingWithConveyor
     beq checkForJump                        ;
     jsr checkIfBlockedLeftOrRight           ;
 checkForJump
-    ldy #$ff                                ;
-    ldx #$b6                                ;
-    lda #$81                                ;
-    jsr OSBYTE                              ; check for RETURN key pressed
-    cpy #$ff                                ;
+    ldx #keyCodeRETURN                      ; }
+    jsr isKeyPressed                        ; } is RETURN pressed
     bne cancelJump                          ; if (return not pressed) then branch (no jump)
 
     ; handle jump
@@ -4591,10 +4833,6 @@ resetLevel19Meteors
     jmp resetVerticalSprites        ;
 
 ; ***************************************************************************************
-titleScreenPalette
-    !byte blue, red, green, white
-
-; ***************************************************************************************
 showTitleScreenMessageAndWaitForRETURN
     lda #2                          ;
     sta lives                       ;
@@ -4623,11 +4861,8 @@ showTitleScreenMessageAndWaitForRETURN
     stx $71                         ; reset to zero
     sty $72                         ;
 
-    ldy #$ff                        ;
-    ldx #$b6                        ;
-    lda #$81                        ; wait for RETURN key
-    jsr OSBYTE                      ;
-    cpy #$ff                        ;
+    ldx #keyCodeRETURN              ; }
+    jsr isKeyPressed                ; } is RETURN pressed
     beq startGameJumper             ; if (RETURN pressed) then branch
 
     ldy $72                         ;
@@ -4806,9 +5041,9 @@ drawConveyor
     asl                                 ;
     asl                                 ;
     clc                                 ;
-    adc #$58                            ;
+    adc #<currentConveyorSprites        ;
     sta cellPlotSourceSpriteAddressLow  ;
-    lda #$0c                            ; $0c58 + offset*8
+    lda #>currentConveyorSprites        ; currentConveyorSprites + offset*8
     sta cellPlotSourceSpriteAddressHigh ;
 
     lda conveyorX                       ;
@@ -5150,11 +5385,11 @@ foundLevelData
     lsr                             ;
     tax                             ;
 
-    ; copy floor sprite from floorSprites+X to $0c00 for 16 bytes
+    ; copy floor sprite from floorSprites+X to currentFloorSprites for 16 bytes
     ldy #0                          ;
 -
     lda floorSprites,x              ;
-    sta softCharacterDefinitions,y  ;
+    sta currentFloorSprites,y       ;
     inx                             ;
     iny                             ;
     cpy #16                         ;
@@ -5171,11 +5406,11 @@ foundLevelData
     rol                             ;
     tax                             ;
 
-    ; copy crumble bar sprite from crumbleSprites+X to $0c10 for 8 bytes
+    ; copy crumble bar sprite from crumbleSprites+X to currentCrumbleSprites for 8 bytes
     ldy #0                          ;
 -
     lda crumbleSprites,x            ;
-    sta $0c10,y                     ;
+    sta currentCrumbleSprites,y     ;
     iny                             ;
     inx                             ;
     cpy #8                          ;
@@ -5202,9 +5437,9 @@ tempLoop
     ldy tempCounter                 ; loop counter
 
 -
-    lda $0c10,x                     ;
+    lda currentCrumbleSprites,x     ;
 storeAddressLow = * + 1
-    sta $0c18,y                     ;
+    sta currentCrumbleSprites+8,y   ;
     inx                             ;
     iny                             ;
     cpy #8                          ;
@@ -5231,11 +5466,11 @@ storeAddressLow = * + 1
     asl                             ;
     tax                             ;
 
-    ; copy conveyor sprite from conveyorSprites+X to $0c58 for 32 bytes
+    ; copy conveyor sprite from conveyorSprites+X to currentConveyorSprites for 32 bytes
     ldy #0                          ;
 -
     lda conveyorSprites,x           ;
-    sta $0c58,y                     ;
+    sta currentConveyorSprites,y    ;
     inx                             ;
     iny                             ;
     cpy #$20                        ;
@@ -5249,11 +5484,11 @@ storeAddressLow = * + 1
     lsr                             ; divide by 2
     tax                             ;
 
-    ; copy side wall sprite from wallSprites+X to $0c78 for 8 bytes
+    ; copy side wall sprite from wallSprites+X to currentWallSprite for 8 bytes
     ldy #0                          ;
 -
     lda wallSprites,x               ;
-    sta $0c78,y                     ;
+    sta currentWallSprite,y         ;
     iny                             ;
     inx                             ;
     cpy #8                          ;
@@ -5269,11 +5504,11 @@ storeAddressLow = * + 1
     asl                             ; multiply by eight
     tax                             ;
 
-    ; copy key sprite from keySprites+X to $0c80 for 8 bytes
+    ; copy key sprite from keySprites+X to currentKeySprite for 8 bytes
     ldy #0                          ;
 -
     lda keySprites,x                ;
-    sta $0c80,y                     ;
+    sta currentKeySprite,y          ;
     iny                             ;
     inx                             ;
     cpy #8                          ;
@@ -5284,58 +5519,89 @@ storeAddressLow = * + 1
 
 ; ***************************************************************************************
 getExitSprite
-    ; $86 bottom 3 bits holds the exit sprite
+    ; $86 bottom 6 bits holds the exit sprite
     ;     top two bits are the type:
     ;
     ;   00 = 8x8 exit sprite repeated four times (lower 3 bits are sprite number)
-    ;   10 = 8x16 exit sprite mirrored about the Y axis (lower 3 bits are sprite number)
-    ;   01 = }
-    ;   11 = } 16x16 exit sprite (lower 6 bits are the sprite number)
+    ;   01 = 16x16 exit sprite (lower 3 bits are the sprite number)
+    ;   10 = 8x16 exit sprite reflected in the Y axis (lower bits are the sprite number)
+    ;   11 = 8x8 exit sprite reflected four times (lower 5 bits are sprite number)
     ;
     lda $86                         ;
     and #$c0                        ; get top two bits
     beq getExit8x8                  ; if (neither bit set) then branch
     cmp #$80                        ;
-    beq getExit8x16                 ; if (only top bit set) then branch
+    beq getExit8x16                 ;
+    cmp #$c0                        ;
+    beq getExit8x8Reflected         ;
 
 getExit16x16
     lda $86                         ;
-    and #$3f                        ; get lower 6 bits
-    clc                             ;
-    rol                             ;
-    rol                             ;
-    rol                             ;
-    rol                             ;
-    rol                             ; multiply by 32
+    asl                             ;
+    asl                             ;
+    asl                             ;
+    asl                             ;
+    asl                             ; multiply by 32
     tax                             ;
-    ; copy from exitSprites2x2+X to $0c88 for 32 bytes
+    ; copy 32 bytes of exit sprite to currentExitSprite
     ldy #0                          ;
 -
     lda exitSprites2x2,x            ;
-    sta $0c88,y                     ;
+    sta currentExitSprite,y         ;
     inx                             ;
     iny                             ;
     cpy #32                         ;
+    bcc -                           ;
+    rts                             ;
+
+getExit8x8Reflected
+    lda $86                         ;
+    asl                             ;
+    asl                             ;
+    asl                             ; multiply by eight
+    tax                             ;
+
+    ; copy eight bytes of exit sprite, store in top left quadrant, then reverse the bits
+    ; and store in the top right.
+    ldy #0                          ;
+-
+    lda exitSprites1x1Reflected,x   ;
+    sta currentExitSprite,y         ;
+    jsr reverseBits                 ;
+    sta currentExitSprite + 8,y     ;
+    inx                             ;
+    iny                             ;
+    cpy #8                          ;
     bne -                           ;
+
+    ; copy the bytes from the top half of the exit to the bottom half, reflecting
+    ldy #0                          ;
+    ldx #7                          ;
+-
+    lda currentExitSprite,y         ;
+    sta currentExitSprite + 16,x    ;
+    lda currentExitSprite + 8,y     ;
+    sta currentExitSprite + 24,x    ;
+    iny                             ;
+    dex                             ;
+    bpl -                           ;
     rts                             ;
 
 getExit8x8
     lda $86                         ;
-    and #7                          ; get bottom three bits
-    clc                             ;
-    rol                             ;
-    rol                             ;
-    rol                             ; multiply by eight
+    asl                             ;
+    asl                             ;
+    asl                             ; multiply by eight
     tax                             ;
 
-    ; copy from $0980+X to $0c88 and $0c90 and $0c98 and $0ca0 for eight bytes
+    ; copy eight bytes of the exit
     ldy #0                          ;
 -
     lda exitSprites1x1,x            ;
-    sta $0c88,y                     ;
-    sta $0c90,y                     ;
-    sta $0c98,y                     ;
-    sta $0ca0,y                     ;
+    sta currentExitSprite,y         ;
+    sta currentExitSprite + 8,y     ;
+    sta currentExitSprite + 16,y    ;
+    sta currentExitSprite + 24,y    ;
     inx                             ;
     iny                             ;
     cpy #8                          ;
@@ -5346,12 +5612,10 @@ getExit8x16
     lda #>exitSprites1x2            ;
     sta getExitSourceByte + 2       ;
     lda $86                         ;
-    and #$3f                        ; get lower 6 bits
-    clc                             ;
-    rol                             ;
-    rol                             ;
-    rol                             ;
-    rol                             ;
+    asl                             ;
+    asl                             ;
+    asl                             ;
+    asl                             ;
     clc                             ;
     adc #<exitSprites1x2            ;
     sta getExitSourceByte + 1       ;
@@ -5363,21 +5627,21 @@ getExit8x16
     ldy #15                          ; loop counter
 getExitSourceByte
     lda exitSprites1x2,y            ;
-    sta $0c88,y                     ;
+    sta currentExitSprite,y         ;
     dey                             ;
     bpl getExitSourceByte           ;
 
     ; reverse the left hand side of the exit to get the right hand side
     ldx #7                          ;
 -
-    lda $0c90,x                     ;
-    sta $0c98,x                     ;
+    lda currentExitSprite + 8,x     ;
+    sta currentExitSprite + 16,x    ;
     jsr reverseBits                 ;
-    sta $0ca0,x                     ;
+    sta currentExitSprite + 24,x    ;
 
-    lda $0c88,x                     ;
+    lda currentExitSprite,x         ;
     jsr reverseBits                 ;
-    sta $0c90,x                     ;
+    sta currentExitSprite + 8,x     ;
 
     dex                             ;
     bpl -                           ;
@@ -5689,31 +5953,6 @@ oldIrq1RoutineHigh = * + 2
     jmp $ffff                           ;
 
 +
-    ; handle system VIA Timer 1
-;    ldy rasterArea                               ;
-;    CPY #12                                     ;
-;    BNE +                                       ;
-;    LDX #.headerPalette - .startOfPalettes + 3  ; }
-;    JSR .definePaletteAX                        ; } Set palette for header
-
-;+
-;    CPY #0                                      ;
-;    BNE +                                       ;
-;    LDX #.playAreaPalette - .startOfPalettes + 3; } Set palette for play area
-;    JSR .definePaletteAX                        ; }
-
-;+
-;    CPY #6                                      ;
-;    BNE +                                       ;
-
-;    LDX #8                                      ; loop counter for delay
-;-
-;    DEX                                         ; delay so we set the palette at the right time
-;    BNE -                                       ;
-;    LDX #.footerPalette  - .startOfPalettes + 3 ; } Set palette for footer
-;    JSR .definePaletteAX                        ; }
-;+
-
     lda #$40                            ; clear User VIA timer 1 interrupt
     sta userVIAInterruptFlagRegister    ;
 
@@ -5751,6 +5990,9 @@ restorePalette
     jmp handledInterrupt                        ;
 
 ; ***************************************************************************************
+titleScreenPalette
+    !byte blue, red, green, white
+
 startOfPalettes
 playAreaPalette
     !byte black, red, green, yellow
@@ -5933,11 +6175,8 @@ showALevelLoop
     cmp #$40                        ;
     beq showNextLevel               ;
 
-    ldy #$ff                        ;
-    ldx #$b6                        ;
-    lda #$81                        ; check for RETURN
-    jsr OSBYTE                      ;
-    cpy #$ff                        ;
+    ldx #keyCodeRETURN              ; }
+    jsr isKeyPressed                ; } is RETURN pressed
     beq +                           ;
 
     jmp showALevelLoop              ;
@@ -6136,7 +6375,7 @@ swapLogoWithC00
     tay                             ;
     lda softCharacterDefinitions,x  ;
     sta manicMinerGraphic,x         ;
-    tya                             ; swap $700->$7ff with $0c00->$0cff
+    tya                             ; swap logo with current character defintions
     sta softCharacterDefinitions,x  ;
     inx                             ;
     bne -                           ;
@@ -6218,7 +6457,7 @@ drawExtraSpikes
     cmp #12                             ; } the ceiling of levels 8 and 12
     beq drawSpecialSpikes               ; }
     ldx #0                              ; swap characters back
-    jmp swapPagesC00andA00              ;
+    jmp swapPagesC00andSingleItemPage   ;
 
 ; ***************************************************************************************
 drawSpecialSpikes
@@ -6247,7 +6486,7 @@ drawSpecialSpikes
     jsr OSWRCH                          ; } VDU &EC (second spike)
 
     ldx #0                              ; swap characters back
-    jmp swapPagesC00andA00              ;
+    jmp swapPagesC00andSingleItemPage   ;
 
 ; ***************************************************************************************
 setSingleItemOffset15Command
@@ -6267,7 +6506,7 @@ setSingleItemNextTypeCommand
 toggleAlternativeSingleItemSprite
     jsr setSingleOffsetX5               ; X offset 5, type++
     ldx #0                              ;
-    jsr swapPagesC00andA00              ; swap pages
+    jsr swapPagesC00andSingleItemPage   ; swap pages
     lda #$eb                            ; regular single item character code
     sta singleItemSprite                ;
     jmp decodeNextSingleItem            ;
@@ -6356,17 +6595,17 @@ setSingleOffsetX5
     rts                             ;
 
 ; ***************************************************************************************
-swapPagesC00andA00
-    lda softCharacterDefinitions,x  ;
-    tay                             ;
-    lda $0a00,x                     ;
-    sta softCharacterDefinitions,x  ;
-    tya                             ;
-    sta $0a00,x                     ;
-    inx                             ;
-    cpx #$ff                        ;
-    bne swapPagesC00andA00          ;
-    rts                             ;
+swapPagesC00andSingleItemPage
+    lda softCharacterDefinitions,x      ;
+    tay                                 ;
+    lda startOfSingleItemPage,x         ;
+    sta softCharacterDefinitions,x      ;
+    tya                                 ;
+    sta startOfSingleItemPage,x         ;
+    inx                                 ;
+    cpx #$ff                            ;
+    bne swapPagesC00andSingleItemPage   ;
+    rts                                 ;
 
 ; ***************************************************************************************
 incrementLevelDataPointer
@@ -6459,9 +6698,9 @@ colourCycleKeys
 
     jsr setCursorScreenAddress          ;
 
-    lda #<keySprite                     ;
+    lda #<currentKeySprite              ;
     sta cellPlotSourceSpriteAddressLow  ;
-    lda #>keySprite                     ;
+    lda #>currentKeySprite              ;
     sta cellPlotSourceSpriteAddressHigh ;
     jmp cellPlot                        ;
 
@@ -6554,7 +6793,7 @@ copySpikeSprites
     ldx #0                          ; loop counter
 -
     lda spikePlant,x                ;
-    sta $0cd8,x                     ; copy spike plant sprite to $0cd8
+    sta currentSpikeSprite,x        ; copy spike plant sprite to current spike sprite
     inx                             ;
     cpx #8                          ;
     bne -                           ;
@@ -6568,7 +6807,7 @@ copySpikeSprites
     ldy #0                          ; loop counter
 -
     lda allOtherSpikes,x            ;
-    sta $0ce0,y                     ; copy spike from allOtherSpikes+(8*singleItemSpriteOffset) to $0ce0
+    sta currentSpikeSprite2,y       ; copy spike from allOtherSpikes+(8*singleItemSpriteOffset) to currentSpikeSprite2
     inx                             ;
     iny                             ;
     cpy #8                          ;
@@ -6599,120 +6838,6 @@ readOrWriteAddrLow = readOrWriteByte + 1
 readOrWriteAddrHigh = readOrWriteByte + 2
     lda $ffff,x                     ;
     rts                             ;
-
-; ***************************************************************************************
-; This is the number of timer ticks per frame (num PAL scanlines * 62us/line)
-; This timing is only true of non-interlaced modes.
-; We have to subtract 2 because the latch reload costs 2us.
-; This is not documented anywhere!
-FramePeriod     = 312*62-2
-
-; Calculate here the timer value to interrupt at the desired line
-TimerValue      = 88*62 + 25
-
-; This is the delay between interrupts (three character rows)
-ShortTimerValue = 24*62 + 46
-
-; ***************************************************************************************
-initialize
-    lda #$ff                                ;
-    sta musicCounter                        ;
-    sta vsyncCounter                        ;
-    sta rasterArea                          ;
-    sta channel2Frequency                   ;
-    sta previousNoteByte                    ;
-    jsr pauseMusic                          ;
-
-    ; install irq code
-    sei
-    lda #$7F                                ; }
-    sta userVIAInterruptEnableRegister      ; } Disable all interrupts
-
-    lda irqv1                               ;
-    sta oldIrq1RoutineLow                   ;
-    lda irqv1 + 1                           ;
-    sta oldIrq1RoutineHigh                  ;
-
-    lda #<mainInterruptRoutine              ;
-    sta irqv1                               ;
-    lda #>mainInterruptRoutine              ;
-    sta irqv1 + 1                           ;
-
-    lda #$c0                                ; }
-    sta userVIAInterruptEnableRegister      ; } Enable User VIA timer 1
-
-    ; set User VIA T1 in free run mode (i.e. repeating)
-    lda #$c0                                ; }
-    sta userVIAAuxiliaryControlRegister     ; } Start User VIA T1 in free run mode
-
-
-    ; write User VIA T1 low now (the timer will not be written until you write the high byte)
-    lda #<TimerValue                        ;
-    sta userVIATimer1CounterLow             ;
-    ; get high byte ready so we can write it as quickly as possible at the right moment
-    ldx #>TimerValue                        ;
-
-    ; wait for VSync without having to catch it from its IRQ
-    lda #2                                  ;
-    sta systemVIAInterruptFlagRegister      ; clear VSync flag
--
-    bit systemVIAInterruptFlagRegister      ;
-    beq -                                   ; poll VSync flag
-
-    stx userVIATimer1CounterHigh            ; start User VIA Timer 1 counting
-    sta userVIAInterruptFlagRegister        ; clear VSync flag
-
-    ; set timer to fire every frame (set latch)
-    lda #<ShortTimerValue                   ;
-    sta userVIATimer1LatchLow               ;
-    lda #>ShortTimerValue                   ;
-    sta userVIATimer1LatchHigh              ;
-    lda #0                                  ;
-    sta rasterArea                          ;
-    cli                                     ;
-
-    ; print VDU stream
-    ldx #0                          ;
--
-    lda crtcSetup,x                 ;
-    cmp #$ff                        ;
-    beq output8Zeros                ;
-    jsr OSWRCH                      ;
-backFrom8Zeros
-    inx                             ;
-    cpx #crtcSetupEnd - crtcSetup   ;
-    bne -                           ;
-
-    ; *FX 229,1 - ESCAPE generates ASCII code
-    lda #229                        ;
-    ldx #1                          ;
-    ldy #0                          ;
-    jsr OSBYTE                      ;
-
-    ; VDU 26 - reset text and graphics windows
-    lda #26                         ;
-    jsr OSWRCH                      ;
-
-    jmp showTitleScreen             ;
-
-; ***************************************************************************************
-output8Zeros
-    ldy #8                          ;
-    lda #0                          ;
-zerosLoop
-    jsr OSWRCH                      ;
-    dey                             ;
-    bne zerosLoop                   ;
-    jmp backFrom8Zeros              ;
-
-waitForRETURN
-    ldy #$ff                    ;
-    ldx #$b6                    ; -74 = RETURN
-    lda #129                    ;
-    jsr OSBYTE                  ;
-    cpy #$ff                    ;
-    beq waitForRETURN           ;
-    rts                         ;
 
 ; ***************************************************************************************
 
@@ -6752,32 +6877,20 @@ playCurrentLevel
     sta clock                               ;
 
     ; read special keys (for sound on/off, pause, quit)
-    ldy #$ff                                ;
-    ldx #$a6                                ; DELETE
-    lda #$81                                ;
-    jsr OSBYTE                              ;
-    cpy #$ff                                ;
+    ldx #keyCodeDELETE                      ;
+    jsr isKeyPressed                        ; is DELETE pressed
     beq freezeGame                          ;
 
-    ldy #$ff                                ;
-    ldx #$8f                                ; ESCAPE
-    lda #$81                                ;
-    jsr OSBYTE                              ;
-    cpy #$ff                                ;
+    ldx #keyCodeESCAPE                      ;
+    jsr isKeyPressed                        ; is ESCAPE pressed
     beq endGame                             ;
 
-    ldy #$ff                                ;
-    ldx #$ae                                ; S
-    lda #$81                                ;
-    jsr OSBYTE                              ;
-    cpy #$ff                                ;
+    ldx #keyCodeS                           ;
+    jsr isKeyPressed                        ; is S pressed
     beq musicOn                             ;
 
-    ldy #$ff                                ;
-    ldx #$ef                                ; Q
-    lda #$81                                ;
-    jsr OSBYTE                              ;
-    cpy #$ff                                ;
+    ldx #keyCodeQ                           ;
+    jsr isKeyPressed                        ; is Q pressed
     beq musicOff                            ;
 
     ; check for cheat mode enabled
@@ -6790,13 +6903,10 @@ checkForFunctionKeys
     lda #0                                  ;
     sta keyCounter                          ; zero loop counter
 readKeysLoop
-    ldy #$ff                                ;
     ldx keyCounter                          ;
     lda keysToRead,x                        ; get key to read
     tax                                     ;
-    lda #$81                                ;
-    jsr OSBYTE                              ;
-    cpy #$ff                                ;
+    jsr isKeyPressed                        ;
     beq functionKeyPressed                  ; if (function key pressed) then branch
 
     inc keyCounter                          ; increment counter
@@ -6811,11 +6921,8 @@ freezeGame
 waitForCOPYKey
     jsr checkCheatCode                      ;
 
-    ldy #$ff                                ;
-    ldx #$96                                ; COPY
-    lda #$81                                ;
-    jsr OSBYTE                              ;
-    cpy #$ff                                ;
+    ldx #keyCodeCOPY                        ;
+    jsr isKeyPressed                        ; is COPY pressed
     bne waitForCOPYKey                      ;
 
     jsr updateMusicState                    ;
@@ -6831,7 +6938,7 @@ musicOff
     jmp checkForFunctionKeys                ;
 
 musicOn
-    lda #1                                  ;
+    lda #255                                ;
     sta musicEnabled                        ;
     jsr resumeMusic                         ;
     jmp checkForFunctionKeys                ;
@@ -6871,11 +6978,8 @@ updateMusicState
     jmp resumeMusic                         ;
 
 functionKeyPressed
-    ldy #$ff                                ;
-    ldx #$ff                                ;
-    lda #$81                                ; check for SHIFT key press
-    jsr OSBYTE                              ;
-    cpy #$ff                                ;
+    ldx #keyCodeSHIFT                       ;
+    jsr isKeyPressed                        ; is SHIFT pressed
     beq shiftPressed                        ;
 
 afterShiftHandled
@@ -6922,27 +7026,32 @@ storeLevelNumber
 
 ; ***************************************************************************************
 initializeLevelSprites
-    ldx #0                          ;
+    ldx #0                              ;
 -
-    lda softCharacterDefinitions,x  ;
-    sta $0cd0,x                     ;       copy eight bytes from $0c00 to $0cd0
-    lda $0c78,x                     ;
-    sta $0cb8,x                     ;       copy eight bytes from $0c78 to $0cb8
-    lda $0c08,x                     ;
-    sta $0ce8,x                     ;       copy eight bytes from $0c09 to $0ce8
-    inx                             ;
-    cpx #8                          ;
-    bne -                           ;
+    lda currentFloorSprites,x           ;
+    sta currentFloorSpriteCopy,x        ;       copy eight bytes of floor
 
-    lda #0                          ;
-    sta $0cd6                       ;
-    sta $0cbe                       ;
-    sta $0cee                       ;
+    lda currentWallSprite,x             ;
+    sta currentWallSpriteCopy,x         ;       copy eight bytes of wall
 
-    lda #$ff                        ;
-    sta $0cd7                       ;
-    sta $0cbf                       ;
-    sta $0cef                       ;
+    lda currentFloorSprites + 8,x       ;
+    sta currentSecondFloorSpriteCopy,x  ;       copy eight bytes of second floor
+
+    inx                                 ;
+    cpx #8                              ;
+    bne -                               ;
+
+    ; punch out one line
+    lda #0                                  ;
+    sta currentFloorSpriteCopy + 6          ;
+    sta currentWallSpriteCopy + 6           ;
+    sta currentSecondFloorSpriteCopy + 6    ;
+
+    ; fill in another line
+    lda #$ff                                ;
+    sta currentFloorSpriteCopy + 7          ;
+    sta currentWallSpriteCopy + 7           ;
+    sta currentSecondFloorSpriteCopy + 7    ;
 
     lda #$4c                        ; }
     sta doWeMoveEugene              ; } store opcode for 'JMP abs'
@@ -7123,9 +7232,9 @@ setColourAndShowExit
     sbc #2                          ;
     sta cursorY                     ;
 
-    lda #<exitSprite                    ;
+    lda #<currentExitSprite             ;
     sta cellPlotSourceSpriteAddressLow  ;
-    lda #>exitSprite                    ; use exit sprite
+    lda #>currentExitSprite             ; use exit sprite
     sta cellPlotSourceSpriteAddressHigh ;
 
     jsr drawExitCell                ; top left
@@ -7595,9 +7704,9 @@ checkFullCharacter
     rts                                                 ;
 
 checkUserDefinedCharacters
-    ldy #0                                              ; loop counter
+    ldy #<softCharacterDefinitions                      ; loop counter
     sty characterAddrLow                                ;
-    lda #$0c                                            ;
+    lda #>softCharacterDefinitions                      ;
     sta characterAddrHigh                               ;
 readCharLoop
     ldx #7                                              ; x=7
@@ -7929,14 +8038,14 @@ creditsMessage
 
     !byte 17, 2                     ; COLOUR 1
     !byte 31, 1, 18                 ; TAB(19,17)
-    !text "2021 Edition"
-    !byte 31, 1, 19
-    !text "by TobyLobster"
-    !byte 17, 3
+    !text "2021 Edition"            ;
+    !byte 31, 1, 19                 ;
+    !text "by TobyLobster"          ;
+    !byte 17, 3                     ;
     !byte 31, 20, 3                 ; TAB(19,2)
-    !text "SOFTWARE PROJECTS"
-;    !byte 31, 24, 5                 ; TAB(23,4)
-    !byte 5
+    !text "SOFTWARE PROJECTS"       ;
+;    !byte 31, 24, 5                ; TAB(23,4)
+    !byte 5                         ;
     !byte 18, 0, 3                  ; GCOL 0,3
     !byte 25, 4                     ;
     !word 780, 864                  ;
@@ -7979,24 +8088,24 @@ penOffsetX = 4
 penOffsetY = -10
     ; A Penrose triangle as encoded PLOT statements
 penroseTriangle
-    !byte $FE, 1                                    ; GCOL 0,1
+    !byte $fe, 1                                    ; GCOL 0,1
     !byte $04, $12 + penOffsetX, $AC+penOffsetY     ; MOVE
     !byte $04, $12 + penOffsetX, $B8+penOffsetY     ; MOVE
     !byte $55, $78 + penOffsetX, $79+penOffsetY     ; TRI
-    !byte $55, $6C + penOffsetX, $8B+penOffsetY     ; TRI
+    !byte $55, $6c + penOffsetX, $8B+penOffsetY     ; TRI
     !byte $55, $78 + penOffsetX, $D3+penOffsetY     ; TRI
-    !byte $55, $6C + penOffsetX, $CD+penOffsetY     ; TRI
-    !byte $FE, 2                                    ; GCOL 0,2
+    !byte $55, $6c + penOffsetX, $CD+penOffsetY     ; TRI
+    !byte $fe, 2                                    ; GCOL 0,2
     !byte $04, $78 + penOffsetX, $79+penOffsetY     ; MOVE
     !byte $04, $83 + penOffsetX, $7F+penOffsetY     ; MOVE
     !byte $55, $78 + penOffsetX, $D3+penOffsetY     ; TRI
     !byte $55, $83 + penOffsetX, $E4+penOffsetY     ; TRI
     !byte $55, $37 + penOffsetX, $B3+penOffsetY     ; TRI
-    !byte $55, $2D + penOffsetX, $B8+penOffsetY     ; TRI
-    !byte $FE, 3                                    ; GCOL 0,3
-    !byte $04, $6C + penOffsetX, $CC+penOffsetY     ; MOVE
-    !byte $05, $6C + penOffsetX, $98+penOffsetY     ; DRAW
-    !byte $05, $2C + penOffsetX, $B8+penOffsetY     ; DRAW
+    !byte $55, $2d + penOffsetX, $B8+penOffsetY     ; TRI
+    !byte $fe, 3                                    ; GCOL 0,3
+    !byte $04, $6c + penOffsetX, $CC+penOffsetY     ; MOVE
+    !byte $05, $6c + penOffsetX, $98+penOffsetY     ; DRAW
+    !byte $05, $2c + penOffsetX, $B8+penOffsetY     ; DRAW
     !byte $05, $83 + penOffsetX, $E4+penOffsetY     ; DRAW
     !byte $05, $77 + penOffsetX, $EA+penOffsetY     ; DRAW
     !byte $05, $12 + penOffsetX, $B8+penOffsetY     ; DRAW
@@ -8007,32 +8116,13 @@ penroseTriangle
     !byte $04, $78 + penOffsetX, $79+penOffsetY     ; MOVE
     !byte $05, $78 + penOffsetX, $D3+penOffsetY     ; DRAW
     !byte $05, $37 + penOffsetX, $B3+penOffsetY     ; DRAW
-    !byte $04, $6C + penOffsetX, $99+penOffsetY     ; MOVE
-    !byte $05, $6C + penOffsetX, $8B+penOffsetY     ; DRAW
+    !byte $04, $6c + penOffsetX, $99+penOffsetY     ; MOVE
+    !byte $05, $6c + penOffsetX, $8B+penOffsetY     ; DRAW
     !byte $05, $12 + penOffsetX, $B8+penOffsetY     ; DRAW
-    !byte $FF                                       ; TERMINATOR
+    !byte $ff                                       ; TERMINATOR
 
 yOffsetToTitle = 11 * 4
 
-roomTitleBackground
-    ; draw yellow bar (colour 3)
-    !byte 18, 0, 3                          ; GCOL 0, 3
-    !byte 25, 4                             ;
-    !word 32*4, 400 + yOffsetToTitle        ; MOVE bottom left
-    !byte 25, 4                             ;
-    !word 1279-4*32, 400 + yOffsetToTitle   ; MOVE bottom right
-    !byte 25, $55                           ;
-    !word 32*4, 432 + yOffsetToTitle        ; TRI top left
-    !byte 25, $55                           ;
-    !word 1279-4*32, 432 + yOffsetToTitle   ; TRI top right
-    !byte 25, 4                             ;
-titleTextStartXLow = *
-titleTextStartXHigh = * + 1
-    !word 0                                 ; X coordinate for title text
-    !word 428 + yOffsetToTitle              ; Y coordinate for title text
-    !byte 18, 0, 0                          ; GCOL 0, 0
-    !byte 5                                 ; VDU 5
-roomTitleBackgroundEnd
 
 airOffsetY = -4
 ; ***************************************************************************************
@@ -8336,9 +8426,14 @@ playerStartPositions
     !byte .exitY
 }
 
-exitType1x1 = 0
-exitType2x2 = 64
-exitType1x2 = 128
+;   00 = 8x8 exit sprite repeated four times (lower 3 bits are sprite number)
+;   01 = 16x16 exit sprite (lower 3 bits are the sprite number)
+;   10 = 8x16 exit sprite reflected in the Y axis (lower bits are the sprite number)
+;   11 = 8x8 exit sprite reflected four times (lower 5 bits are sprite number)
+exitType1x1Rep  = 0
+exitType2x2     = $40
+exitType1x2     = $80
+exitType1x1Ref  = $c0
 
 levelDefinitions
     ; ***********************************************************************************
@@ -8347,7 +8442,7 @@ levelDefinitions
     +levelColours black, red, green
     ;          floor, crumble, conveyor, side, key
     +levelSprites  0,       0,        1,    0,   0
-    +levelExit exitType1x1, 0, 33, 16
+    +levelExit exitType1x1Rep, 0, 33, 16
 
     ; floors
     +levelStrip 4, 13, 15
@@ -8383,7 +8478,7 @@ levelDefinitions
     +levelColours blue, magenta, white
     ;          floor, crumble, conveyor, side, key
     +levelSprites  0,       0,        1,    0,   1
-    +levelExit exitType1x2, 0, 33, 16
+    +levelExit exitType1x1Ref, 0, 33, 16
 
     ; floors
     +levelStrip 13, 12, 4
@@ -8454,7 +8549,7 @@ levelDefinitions
     ;          floor, crumble, conveyor, side, key
     +levelSprites  0,       0,        1,    0,   0
 
-    +levelExit exitType1x1, 1, 33,  4
+    +levelExit exitType1x1Rep, 1, 33,  4
 
     ; floors
     +levelStrip  5, 12,  2
@@ -8495,7 +8590,7 @@ levelDefinitions
     +levelColours blue, green, white
     ;          floor, crumble, conveyor, side, key
     +levelSprites  0,       0,        1,    0,   2
-    +levelExit exitType1x2, 0, 19, 16
+    +levelExit exitType1x1Ref, 0, 19, 16
 
     ; floors
     +levelStrip 0, 13, 2
@@ -8532,7 +8627,7 @@ levelDefinitions
     +levelColours black, green, cyan
     ;          floor, crumble, conveyor, side, key
     +levelSprites  2,       0,        1,    0,   0
-    +levelExit exitType1x2, 1, 33, 3
+    +levelExit exitType1x1Ref, 3, 33, 3
 
     ; floors
     +levelStrip 0, 9, 2
@@ -8568,7 +8663,7 @@ levelDefinitions
     +levelColours black, red, green
     ;          floor, crumble, conveyor, side, key
     +levelSprites  0,       3,        2,    0,   0
-    +levelExit exitType1x1, 2, 19, 16
+    +levelExit exitType1x1Rep, 2, 19, 16
 
     ; floors
     +levelStrip 8, 13, 3
@@ -8604,11 +8699,11 @@ levelDefinitions
     +levelColours black, red, green
     ;          floor, crumble, conveyor, side, key
     +levelSprites  0,       0,        2,    0,   3
-    +levelExit exitType1x2, 2, 19, 16
+    +levelExit exitType1x2, 0, 19, 16
 
     ; floors
     +levelStrip 3, 12, 2
-    +levelStrip 3, 12, 2                             ; [redundant]
+    +levelStrip 3, 12, 2            ; required - to not screw up the next level?
     +levelStrip 0, 10, 1
     +levelStrip 1, 7, 3
     +levelStrip 0, 5, 3
@@ -8649,8 +8744,8 @@ levelDefinitions
     !byte $ff, $ff
     +levelColours black, red, green
     ;          floor, crumble, conveyor, side, key
-    +levelSprites  0,       0,        2,    0,   0
-    +levelExit exitType1x2, 3, 5, 3
+    +levelSprites  0,       0,        2,    8,   0
+    +levelExit exitType1x1Ref, 2, 5, 3
 
     ; floors
     +levelStrip 2, 12, 26
@@ -8737,7 +8832,7 @@ levelDefinitions
     +levelColours blue, cyan, white
     ;          floor, crumble, conveyor, side, key
     +levelSprites  0,       0,        0,    7,   6
-    +levelExit exitType1x2, 0, 5, 4
+    +levelExit exitType2x2, 4, 5, 4
 
     ; floors
     +levelStrip 0, 3, 4
@@ -8774,7 +8869,7 @@ levelDefinitions
     +levelColours black, magenta, cyan
     ;          floor, crumble, conveyor, side, key
     +levelSprites  0,       0,        2,    0,   3
-    +levelExit exitType1x2, 4, 19, 16
+    +levelExit exitType1x1Ref, 3, 19, 16
 
     ; floors
     +levelStrip 10, 13, 3
@@ -8817,7 +8912,7 @@ levelDefinitions
     !byte $ff, $ff
     +levelColours black, green, white
     ;          floor, crumble, conveyor, side, key
-    +levelSprites  5,       0,        2,    0,   5
+    +levelSprites  5,       0,        2,    8,   5
     +levelExit exitType2x2, 0, 5, 16
 
     ; floors
@@ -8865,7 +8960,7 @@ levelDefinitions
     +levelColours blue, green, magenta
     ;          floor, crumble, conveyor, side, key
     +levelSprites  6,       0,        2,    2,   7
-    +levelExit exitType1x2, 5, 19, 3
+    +levelExit exitType1x1Ref, 4, 19, 3
 
     ; floors
     +levelStrip 0, 11, 0
@@ -8941,7 +9036,7 @@ levelDefinitions
     +levelColours black, red, cyan
     ;          floor, crumble, conveyor, side, key
     +levelSprites  0,       0,        2,    0,   9
-    +levelExit exitType1x2, 6, 16, 8
+    +levelExit exitType1x1Ref, 8, 16, 8
 
     ; floors
     +levelStrip  0, 12, 9
@@ -8981,7 +9076,7 @@ levelDefinitions
     +levelColours black, green, cyan
     ;          floor, crumble, conveyor, side, key
     +levelSprites  0,       3,        1,    5,   0
-    +levelExit exitType1x2, 7, 33, 4
+    +levelExit exitType1x2, 1, 33, 4
 
     ; floors
     +levelStrip 26, 14, 4
@@ -9021,7 +9116,7 @@ levelDefinitions
     +levelColours black, red, cyan
     ;          floor, crumble, conveyor, side, key
     +levelSprites  0,       0,        0,    4,   0
-    +levelExit exitType1x2, 8, 33, 3
+    +levelExit exitType1x1Ref, 6, 33, 3
 
     ;  floors
     +levelStrip 0, 15, 30
@@ -9054,7 +9149,7 @@ levelDefinitions
     +levelColours blue, green, white
     ;          floor, crumble, conveyor, side, key
     +levelSprites  0,       0,        1,    0,   0
-    +levelExit exitType1x2, 9, 19, 7
+    +levelExit exitType1x1Ref, 7, 19, 7
 
     ; floors
     +levelStrip 0, 5, 2
@@ -9093,7 +9188,7 @@ levelDefinitions
     +levelColours black, green, cyan
     ;          floor, crumble, conveyor, side, key
     +levelSprites  0,       0,        1,    0,   0
-    +levelExit exitType1x2, 10, 33, 4
+    +levelExit exitType1x2, 2, 33, 4
 
     ; floors
     +levelStrip 7, 5, 7
@@ -9149,6 +9244,26 @@ meteorPositions
 jumpMovementArray
     !byte $04, $04, $03, $03, $02, $02, $01, $00, $00, $00, $ff, $fe, $fe, $fd, $fd, $fc, $fc
 
+roomTitleBackground
+    ; draw yellow bar (colour 3)
+    !byte 18, 0, 3                          ; GCOL 0, 3
+    !byte 25, 4                             ;
+    !word 32*4, 400 + yOffsetToTitle        ; MOVE bottom left
+    !byte 25, 4                             ;
+    !word 1279-4*32, 400 + yOffsetToTitle   ; MOVE bottom right
+    !byte 25, $55                           ;
+    !word 32*4, 432 + yOffsetToTitle        ; TRI top left
+    !byte 25, $55                           ;
+    !word 1279-4*32, 432 + yOffsetToTitle   ; TRI top right
+    !byte 25, 4                             ;
+titleTextStartXLow = *
+titleTextStartXHigh = * + 1
+    !word 0                                 ; X coordinate for title text
+    !word 428 + yOffsetToTitle              ; Y coordinate for title text
+    !byte 18, 0, 0                          ; GCOL 0, 0
+    !byte 5                                 ; VDU 5
+roomTitleBackgroundEnd
+
 !if * > $6ba0 {
     !error "space is wrong, ", *
 }
@@ -9195,7 +9310,7 @@ clearScreenLoop
     lda pedestalMessage,x           ;
     jsr OSWRCH                      ;
     inx                             ;
-    cpx #$0c                        ; loop 12 times
+    cpx #pedestalMessageEnd - pedestalMessage ; loop 12 times
     bne -                           ;
 
     lda #<willyRight2               ; }
@@ -13602,6 +13717,7 @@ pedestalMessage
     !byte $80, $81                  ; draw leg
     !byte $0a, $08, $08             ; down and back
     !byte $82, $83                  ; draw foot
+pedestalMessageEnd
 
 ; ***************************************************************************************
 level20EnergyFieldsString
@@ -13623,20 +13739,6 @@ oswordSoundBlock
 ; uninitialized variables
 ; ***************************************************************************************
 
-footPositionY
-    !byte $ea                                       ;
-
-cheatModeEnabled
-    !byte $00                                       ;
-
-; ***************************************************************************************
-levelNumberCounter
-tempCounter
-    !byte $ea                       ;
-
-zeroBasedLevel
-    !byte $ea                       ;
-
 ; ***************************************************************************************
 ; sprite numbers to draw (level specific)
 levelFeatureArray
@@ -13649,18 +13751,14 @@ levelFeature2
 levelFeature3
     !byte $8b                           ; conveyor
 levelFeature4
-    !byte $8a                           ; unused?
+    !byte $8a                           ; ?
 levelFeature5
-    !byte $00                           ; unused?
+    !byte $00                           ; ?
 
 ; ***************************************************************************************
 levelColourArray
     !byte $01, $01, $03, $02, $03       ;
     !byte $00, $00, $00                 ; [unused?]
-
-; ***************************************************************************************
-roomNumberReached
-    !byte $00                           ;
 
 ; ***************************************************************************************
 screenAreaMinY
@@ -13726,41 +13824,6 @@ keyYPositions
 keyGot
     !byte $00, $00, $00, $00, $00   ;
 
-keyPositionCounter
-    !byte $0f                       ;
-currentKeyIndex
-    !byte $00                       ;
-keyColourCounter
-    !byte $00                       ;
-
-; ***************************************************************************************
-attractModeTimer
-    !byte $ea                       ;
-
-cheatCodeCounter
-    !byte $00                       ;
-
-; ***************************************************************************************
-; level decode
-singleItemSprite
-    !byte $ea                       ;
-decodeLevelByte
-    !byte $ea                       ;
-singleItemX
-    !byte $ea                       ;
-singleItemY
-    !byte $ea                       ;
-singleItemOffsetX
-    !byte $ea                       ;
-singleItemType
-    !byte $ea                       ;
-singleItemSpriteOffset
-    !byte $ea                       ;
-
-musicEnabled
-    !byte $ea                       ;
-
-
 ; ***************************************************************************************
 ; ***************************************************************************************
 ; ***************************************************************************************
@@ -13783,28 +13846,6 @@ musicEnabled
 ; ***************************************************************************************
 ; ***************************************************************************************
 
-energyFieldTimer
-    !byte $ea                                       ;
-
-; ***************************************************************************************
-kongYCoordinate
-    !byte $ea                                       ;
-kongBeastSwitchTriggered
-    !byte $00                       ;
-kongAnimationCounter
-    !byte $ea
-
-; ***************************************************************************************
-eugenePositionY
-    !byte $ea                       ; top bit indicates current direction
-
-copyEugeneSourceByte
-    !byte $ea                       ;
-copyEugeneTempByte
-copyWhichSprite
-    !byte $ea                       ;
-
-
 willySpriteAddressLow
     !byte $00
 willySpriteAddressHigh
@@ -13813,27 +13854,6 @@ willySpriteAddressHigh
     !byte $00                       ; [UNUSED, but copied in and out of cache]
     !byte $00                       ; [UNUSED, but copied in and out of cache]
     !byte $00                       ; [UNUSED, but copied in and out of cache]
-
-conveyorDirection
-    !byte $ff                       ;
-
-; ***************************************************************************************
-textCursorX
-    !byte $00
-textCursorY
-    !byte $ea
-
-; ***************************************************************************************
-meteorLandingY
-    !byte $06                       ;
-meteorXCoordinate
-    !byte $08                       ;
-meteorYCoordinate
-    !byte $ff                       ;
-meteorAnimationState
-    !byte $00                       ;
-meteorIndex
-    !byte $00                       ;
 
 ; ***************************************************************************************
     ; Each vertical guardian has four bytes in this table

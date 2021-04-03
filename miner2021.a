@@ -1427,7 +1427,7 @@ crumbleSprites
     !byte %#.#.#.#.
 
 conveyorSprites
-    !byte %#######.                 ; conveyor 1
+    !byte %#######.                 ; conveyor 0
     !byte %.##..##.
     !byte %#######.
     !byte %........
@@ -1463,7 +1463,7 @@ conveyorSprites
     !byte %........
     !byte %........
 
-    !byte %##....##                 ; conveyor 2
+    !byte %##....##                 ; conveyor 1
     !byte %.##..##.
     !byte %...##...
     !byte %.##..##.
@@ -1499,7 +1499,7 @@ conveyorSprites
     !byte %########
     !byte %........
 
-    !byte %##....##                 ; conveyor 3
+    !byte %##....##                 ; conveyor 2
     !byte %.##..##.
     !byte %...##...
     !byte %.##..##.
@@ -7413,11 +7413,11 @@ updateKongFalling
     cmp #112                        ;
     bcs resetKongTriggered          ; if (kongY >= 112) then branch (reset trigger)
     cmp #16                         ;
-    beq lowerKong                   ; if (kongY == 16) then branch
+    beq startLoweringKong           ; if (kongY == 16) then branch
     and #4                          ;
     cmp #4                          ;
     beq YIsAMultipleOfFour          ;
-    jsr isKongLow                   ;
+    jsr isKongStillFalling          ;
     jsr checkKongHeight2            ;
 
     lda kongYCoordinate             ;
@@ -7430,7 +7430,7 @@ updateKongFalling
     jmp setColour2AndShowExit       ;
 
 YIsAMultipleOfFour
-    jsr isKongLow                   ;
+    jsr isKongStillFalling          ;
     jsr checkKongHeight             ;
 
     lda kongYCoordinate             ;
@@ -7447,7 +7447,7 @@ resetKongTriggered
     sta kongBeastSwitchTriggered    ;
     jmp setColour2AndShowExit       ;
 
-lowerKong
+startLoweringKong
     lda kongYCoordinate             ;
     clc                             ;
     adc #4                          ;
@@ -7478,8 +7478,8 @@ kongIsNotLow
     jsr addToScore                  ; add 40 to score
     ldx #78                         ;
     ldy kongYCoordinate             ;
-    lda #1                          ;
-    jmp plot                        ; draw Kong falling (mode 10)
+    lda #6                          ;
+    jmp plot                        ; draw Kong falling (mode 6)
 
 kongIsLow
     lda #$69                        ;
@@ -7493,7 +7493,7 @@ setColour2AndShowExit
     lda #2                          ; COLOUR 2
     jmp setTextColour               ;
 
-isKongLow
+isKongStillFalling
     lda kongYCoordinate             ;
     cmp #96                         ;
     bcs +                           ; if (kong low enough) then return 1
@@ -8513,7 +8513,7 @@ levelDefinitions
     ; ***********************************************************************************
     ; level 3 - The Menagerie
     !byte $ff, $ff
-    +levelColours blue, cyan, white
+    +levelColours black, cyan, magenta
     ;          floor, crumble, conveyor, side, key
     +levelSprites  1,       1,        2,    1,   0
     +levelExit exitType2x2, 2, 33, 14
@@ -8587,9 +8587,9 @@ levelDefinitions
     ; ***********************************************************************************
     ; level 5 - Eugene's Lair
     !byte $ff, $ff
-    +levelColours blue, green, white
+    +levelColours red, cyan, white
     ;          floor, crumble, conveyor, side, key
-    +levelSprites  0,       0,        1,    0,   2
+    +levelSprites  0,       0,        2,    0,   2
     +levelExit exitType1x1Ref, 0, 19, 16
 
     ; floors
@@ -8627,7 +8627,7 @@ levelDefinitions
     +levelColours black, green, cyan
     ;          floor, crumble, conveyor, side, key
     +levelSprites  2,       0,        1,    0,   0
-    +levelExit exitType1x1Ref, 3, 33, 3
+    +levelExit exitType1x1Ref, 1, 33, 3
 
     ; floors
     +levelStrip 0, 9, 2
@@ -8660,9 +8660,9 @@ levelDefinitions
     ; ***********************************************************************************
     ; level 7 - The Vat
     !byte $ff, $ff
-    +levelColours black, red, green
+    +levelColours black, green, red
     ;          floor, crumble, conveyor, side, key
-    +levelSprites  0,       3,        2,    0,   0
+    +levelSprites  0,       3,        0,    0,   0
     +levelExit exitType1x1Rep, 2, 19, 16
 
     ; floors
@@ -13594,9 +13594,9 @@ kongBeastSprite
 
 
 ; ***************************************************************************************
-    ; Three bytes per horizontal guardian, specifying initial position and direction:
-    ;   X1, Y + top bit, X2
-    ;   top bit indicates initial direction (set = left), initial bounce at X2
+; Three bytes per horizontal guardian, specifying initial position and direction:
+;   X1, Y + top bit, X2
+;   top bit indicates initial direction (set = left), initial bounce at X2
 guardianLevelData
     ; level 1 - Central Cavern
     !byte $ff, $1a, $87, $3a

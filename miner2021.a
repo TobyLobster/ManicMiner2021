@@ -171,7 +171,7 @@ tempX                           = $5a       ;
 tempY                           = $5b       ;
 byteToReverse                   = $5c       ;
 keysLeft                        = $5d       ;
-vsyncCounter                    = $5e       ;
+currentNoteTimePlayed           = $5e       ;
 musicCounter                    = $5f       ;
 channel2Frequency               = $60       ;
 previousNoteByte                = $61       ;
@@ -285,7 +285,7 @@ ShortTimerValue = 24*62 + 46
 initialize
     lda #$ff                                ;
     sta musicCounter                        ;
-    sta vsyncCounter                        ;
+    sta currentNoteTimePlayed               ;
     sta rasterArea                          ;
     sta channel2Frequency                   ;
     sta previousNoteByte                    ;
@@ -4873,7 +4873,7 @@ showTitleScreenMessageAndWaitForRETURN
     lda #$ff                        ;
     sta previousNoteByte            ;
     sta musicCounter                ; }
-    sta vsyncCounter                ; }
+    sta currentNoteTimePlayed       ; }
     jsr resumeMusic                 ; } demo mode
     jmp playAttractLoop             ; }
 
@@ -6030,7 +6030,7 @@ updateSound
     lda channel2Frequency               ;
     cmp #$ff                            ;
     beq silenceChannel2                 ;
-    lda vsyncCounter                    ;
+    lda currentNoteTimePlayed           ;
     cmp #$ff                            ;
     beq silenceChannel2                 ;
     lda #$b0                            ;
@@ -6058,13 +6058,13 @@ silenceChannel2
 ; ***************************************************************************************
 updateMusic
 updateMusicOpcode = *
-    inc vsyncCounter                ; This first instruction MUST be an INC (this byte is modified elsewhere)
-    lda vsyncCounter                ;
+    inc currentNoteTimePlayed       ; This first instruction MUST be an INC (this byte is modified elsewhere)
+    lda currentNoteTimePlayed       ;
     and #7                          ;
     beq updateChannel3              ; update channel 3
 updateMusicVolume
-    lda vsyncCounter                ;
-    lsr
+    lda currentNoteTimePlayed       ;
+    lsr                             ;
     clc                             ;
     adc #$93                        ;
     cmp #$9f                        ;
@@ -6085,7 +6085,7 @@ updateChannel3
     sta previousNoteByte            ;
     tax                             ;
     lda #0                          ;
-    sta vsyncCounter                ;
+    sta currentNoteTimePlayed       ;
     lda soundFrequenciesFirst,x     ;
     jsr soundDirect                 ; Channel 3 frequency
     lda soundFrequenciesSecond,x    ;
@@ -6095,7 +6095,7 @@ updateChannel3
 finishChannel3Notes
     lda #$ff                        ;
     sta musicCounter                ; end channel 3 notes
-    sta vsyncCounter                ;
+    sta currentNoteTimePlayed       ;
     sta previousNoteByte            ;
 +
     rts                             ;
@@ -6971,7 +6971,7 @@ pauseMusic
 updateMusicState
     lda #$ff                                ;
     sta musicCounter                        ;
-    sta vsyncCounter                        ;
+    sta currentNoteTimePlayed               ;
     sta previousNoteByte                    ;
     lda musicEnabled                        ;
     beq pauseMusic                          ;
@@ -9363,12 +9363,11 @@ footDescendingLoop
 
 ; ***************************************************************************************
 checkForCollisions
-    ; not needed!?
-    ;jsr getPlayerSourceSpriteAddress    ;
-    ;ldx newPlayerPixelX                 ;
-    ;ldy newPlayerPixelY                 ;
-    ;lda #1                              ;
-    ;jsr plot                            ; draw player (mode 1)
+    jsr getPlayerSourceSpriteAddress    ; This redraws the player after the guardians
+    ldx newPlayerPixelX                 ; have been drawn (which could erase part of the player)
+    ldy newPlayerPixelY                 ;
+    lda #1                              ;
+    jsr plot                            ; draw player (mode 1)
     jsr checkForDeath                   ;
     jsr checkForSwitchFlipped           ;
     jsr collideWithVerticalGuardians    ;
@@ -9380,7 +9379,7 @@ collideWithHorizontalGuardians
     sta collisionLimit2                 ;
     lda willyAnimationEOR               ;
     cmp #3                              ;
-    bne willyPointingRight              ;
+    bne continueCollision               ; if (willy pointing right) then branch
 
     ; willy pointing left
     lda #4                              ;
@@ -9388,7 +9387,7 @@ collideWithHorizontalGuardians
     lda #3                              ;
     sta collisionLimit2                 ;
 
-willyPointingRight
+continueCollision
     lda playerPixelX                    ;
     and #3                              ;
     eor willyAnimationEOR               ;
@@ -13320,22 +13319,22 @@ kongBeastSprite
     !byte %###.....
     !byte %##......
 
-    !byte %....#.#.             ; ....#.#...#.....
-    !byte %...#.##.             ; ...#.##..##.#...
-    !byte %.......#             ; .......#.#.#....
-    !byte %..###..#             ; ..###..#.##...#.
-    !byte %.##..#.#             ; .##..#.###..###.
-    !byte %......##             ; ......####.#....
-    !byte %########             ; ###########.###.
-    !byte %#....###             ; #....#######...#
-    !byte %..#.....             ; .###.#######.#..
-    !byte %.##.#...             ; ##...###########
-    !byte %.#.#....             ; #...#.######...#
-    !byte %.##...#.             ; ..##..#.#.#.##..
-    !byte %##..###.             ; .##..#..#.#..##.
-    !byte %##.#....             ; .#..#..##.#...#.
-    !byte %###.###.             ; ...#..#.#..#....
-    !byte %####...#             ; ..##.##.#..##...
+    !byte %....#.#.             ;    # #   #
+    !byte %...#.##.             ;   # ##  ## #
+    !byte %.......#             ;       # # #
+    !byte %..###..#             ;  ###  # ##   #
+    !byte %.##..#.#             ; ##  # ###  ###
+    !byte %......##             ;      #### #
+    !byte %########             ;########### ###
+    !byte %#....###             ;#    #######   #
+    !byte %..#.....             ; ### ####### #
+    !byte %.##.#...             ;##   ###########
+    !byte %.#.#....             ;#   # ######   #
+    !byte %.##...#.             ;  ##  # # # ##
+    !byte %##..###.             ; ##  #  # #  ##
+    !byte %##.#....             ; #  #  ## #   #
+    !byte %###.###.             ;   #  # #  #
+    !byte %####...#             ;  ## ## #  ##
 
     !byte %.###.###
     !byte %##...###

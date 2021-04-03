@@ -2663,9 +2663,10 @@ getPlayerSourceSpriteAddress
     sta plotSourceSpriteAddressLow      ; }
     lda newPlayerPixelX                 ; }
     and #3                              ; }
-    eor willyAnimationEOR               ; }
+    eor willyAnimationEOR               ; } index
+
     lsr                                 ; }
-    ror plotSourceSpriteAddressLow      ; } sprite address = willy looking right or left
+    ror plotSourceSpriteAddressLow      ; } sprite address = (willySpritePage * 256) + 64 * index
     lsr                                 ; }
     ror plotSourceSpriteAddressLow      ; }
     clc                                 ; }
@@ -9360,49 +9361,39 @@ footDescendingLoop
     jsr delayAndClearPedestalSprite ;
     jmp showTitleScreen             ;
 
+playerLeftmostPixelOffset
+    !byte 0, 1, 0, -1
+playerRightmostPixelOffset
+    !byte 7, 6, 7, 8
 
 ; ***************************************************************************************
 checkForCollisions
     jsr getPlayerSourceSpriteAddress    ; This redraws the player after the guardians
-    ldx newPlayerPixelX                 ; have been drawn (which could erase part of the player)
+    ldx newPlayerPixelX                 ; have been drawn (which could have erased part of a nearby player)
     ldy newPlayerPixelY                 ;
     lda #1                              ;
     jsr plot                            ; draw player (mode 1)
+
     jsr checkForDeath                   ;
     jsr checkForSwitchFlipped           ;
     jsr collideWithVerticalGuardians    ;
 
 collideWithHorizontalGuardians
-    lda #3                              ;
-    sta collisionLimit1                 ;
-    lda #4                              ;
-    sta collisionLimit2                 ;
-    lda willyAnimationEOR               ;
-    cmp #3                              ;
-    bne continueCollision               ; if (willy pointing right) then branch
-
-    ; willy pointing left
-    lda #4                              ;
-    sta collisionLimit1                 ; set left/right limits for willy collision
-    lda #3                              ;
-    sta collisionLimit2                 ;
-
-continueCollision
     lda playerPixelX                    ;
     and #3                              ;
     eor willyAnimationEOR               ;
-    cmp #3                              ;
-    bne checkCollision                  ;
-
-    lda willyAnimationEOR               ;
-    cmp #3                              ;
-    bne +                               ;
-    lda #5                              ;
+    tax                                 ;
+    lda playerPixelX                    ;
+    sec                                 ;
+    sbc #20                             ;
+    asl                                 ; get true pixel X
+    pha                                 ;
+    clc                                 ;
+    adc playerLeftmostPixelOffset, x    ;
     sta collisionLimit1                 ;
-    jmp checkCollision                  ;
-
-+
-    lda #5                              ;
+    pla
+    clc                                 ;
+    adc playerRightmostPixelOffset, x   ;
     sta collisionLimit2                 ;
 
     ; loop to check each guardian
@@ -9412,6 +9403,7 @@ checkCollisionLoop
     lda guardianPositions,x             ;
     cmp #$ff                            ;
     beq return8                         ; if (out of guardians) then return
+    asl                                 ; get pixel X
     jsr checkCollisionForOneGuardian    ;
     txa                                 ;
     clc                                 ;
@@ -9421,23 +9413,17 @@ checkCollisionLoop
 
 ; ***************************************************************************************
 checkCollisionForOneGuardian
-    clc                                 ;
-    adc #19                             ;
-    sec                                 ;
-    sbc playerPixelX                    ; guardianX + 19 - playerX
-collisionLimit1 = * + 1
-    cmp #3                              ;
-    bcc possibleCollisionInX            ; if (guardianX + 19 - playerX < limit1) then branch
-    eor #$fe                            ; [attempt to negate value, not correct]
 collisionLimit2 = * + 1
-    cmp #3                              ;
-    bcc possibleCollisionInX            ; if (255 - guardianX - 19 + playerX < limit2) then branch
-return8
-    rts                                 ;
+    cmp #$ff                            ;
+    bcs return8                         ;
+    clc                                 ;
+    adc #7                              ;
+collisionLimit1 = * + 1
+    cmp #$ff                            ;
+    bcc return8                         ;
 
 possibleCollisionInX
-    inx                                 ;
-    lda guardianPositions,x             ; get guardian cell Y
+    lda guardianPositions + 1,x         ; get guardian cell Y
     sec                                 ;
     sbc #1                              ;
     asl                                 ;
@@ -9445,12 +9431,10 @@ possibleCollisionInX
     asl                                 ;
     cmp playerPixelY                    ;
     bcc possibleCollisionInY            ; if ((guardianCellY - 1) * 8) < playerY then branch
-    dex                                 ;
     rts                                 ;
 
 possibleCollisionInY
-    lda guardianPositions,x             ;
-    dex                                 ;
+    lda guardianPositions + 1,x         ;
     clc                                 ;
     adc #3                              ;
     asl                                 ;
@@ -9459,10 +9443,12 @@ possibleCollisionInY
     sec                                 ;
     sbc #1                              ;
     cmp playerPixelY                    ; if (((guardian cell Y + 3) * 8) - 1) > playerY then branch (collision found)
-    bcs deathJumper3                    ;
+    bcs checkPixelCollision             ;
+return8
     rts                                 ;
 
-deathJumper3
+checkPixelCollision
+; TODO
     jmp death                           ;
 
 ; ***************************************************************************************

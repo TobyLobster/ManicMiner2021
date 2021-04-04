@@ -5,7 +5,7 @@ OSWRCH                          = $ffee     ;
 OSBYTE                          = $fff4     ;
 OSCLI                           = $fff7     ;
 
-main = $0d00
+initialize = $0400
 
 * = $0100
 
@@ -53,7 +53,7 @@ outputMessageLoop
     jsr copyUp                              ;
 
     ; run game
-    jmp main                                ;
+    jmp initialize                          ;
 
 ; ***************************************************************************************
 fromLow         = $70

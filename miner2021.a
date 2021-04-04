@@ -265,7 +265,7 @@ verticalGuardianMODE1Address3   = $04c0     ;
 screenStartAddress              = $3280     ; start of visible screen
 blankAreaOfScreen               = $34d0     ; empty screen area to the right of the play area
 screenEndAddress                = $6480     ; end of visible screen
-backgroundCache                 = $6ba0     ; six character cells copied from the screen before the player is drawn
+backgroundCache                 = $7fa0     ; six character cells copied from the screen before the player is drawn
 
 ; ***************************************************************************************
 ; This is the number of timer ticks per frame (num PAL scanlines * 62us/line)
@@ -597,8 +597,55 @@ manicMinerGraphic
 ; ***************************************************************************************
 guardianPositions
     !byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-guardianPositionsCopy
-    !byte $00, $00, $00, $00, $00
+    !byte $ff   ; terminator
+
+airOffsetY = -4
+; ***************************************************************************************
+airMessage
+
+    ; draw red bar (colour 1)
+    !byte 18, 0, 1                  ; GCOL 0,1
+    !byte 25, 4                     ;
+    !word 32*4, 400 + airOffsetY    ; MOVE bottom left
+    !byte 25, 4                     ;
+    !word 32*14, 400 + airOffsetY   ; MOVE bottom right
+    !byte 25, $55                   ;
+    !word 32*4, 432 + airOffsetY    ; TRI top left
+    !byte 25, $55                   ;
+    !word 32*14, 432 + airOffsetY   ; TRI top right
+
+    ; draw green bar (colour 2)
+    !byte 18, 0, 2                      ; GCOL 0,2
+    !byte 25, 4                         ;
+    !word 32*14, 400 + airOffsetY       ; MOVE bottom left
+    !byte 25, 4                         ;
+    !word 1279-4*32, 400 + airOffsetY   ; MOVE bottom right
+    !byte 25, $55                       ;
+    !word 32*14, 432 + airOffsetY       ; TRI top left
+    !byte 25, $55                       ;
+    !word 1279-4*32, 432 + airOffsetY   ; TRI top right
+
+    !byte 18, 0, 3                  ; GCOL 0,3
+
+    ; draw white bar itself
+    !byte 25, 4                                 ;
+    !word           256,  436-12 + airOffsetY   ; MOVE
+    !byte 25, 5                                 ;
+    !word           1144, 436-12 + airOffsetY   ; MOVE
+    !byte 25, $55                               ;
+    !word           256, 420-12 + airOffsetY    ; DRAW
+    !byte 25, $55                               ;
+    !word           1144, 420-12 + airOffsetY   ; DRAW
+
+    !byte 5                                     ; VDU 5
+    !byte 25, 4                                 ;
+    !word 32*4 + 4, 404 + 24 + airOffsetY       ;
+    !text "AIR"                                 ;
+vdu4CursorOff
+    !byte 4                         ; VDU 4
+    !byte 23, 1, 0, 0,0,0,0,0,0,0,0 ; cursor off
+vdu4CursorOffEnd
+airMessageEnd
 
 !if * > $0800 {
     !error "space is wrong, ", *
@@ -1906,11 +1953,6 @@ currentSecondFloorSpriteCopy
 spriteEnd
 
 ; ***************************************************************************************
-main
-    jmp initialize                  ;
-
-
-; ***************************************************************************************
 getLowByteAddress
     !byte <getSpriteMode1Byte, <getSpriteMode2Byte, <getSpriteMode3Byte, <getSpriteMode4Byte, <getSpriteMode5Byte, <getSpriteMode6Byte
 getHighByteAddress
@@ -1948,6 +1990,7 @@ screenRowAddressLow
     !byte <(logicalScreenStart + 28 * $280)
     !byte <(logicalScreenStart + 29 * $280)
     !byte <(logicalScreenStart + 30 * $280)
+    !byte <(logicalScreenStart + 31 * $280)
 screenRowAddressHigh
     !byte >(logicalScreenStart + 0 * $280)
     !byte >(logicalScreenStart + 1 * $280)
@@ -1980,6 +2023,7 @@ screenRowAddressHigh
     !byte >(logicalScreenStart + 28 * $280)
     !byte >(logicalScreenStart + 29 * $280)
     !byte >(logicalScreenStart + 30 * $280)
+    !byte >(logicalScreenStart + 31 * $280)
 
 ; ***************************************************************************************
 ;
@@ -2746,7 +2790,7 @@ updatePlayerWithAnimation
     ldy newPlayerPixelY                 ;
     lda #1                              ;
 opcodeForJsrPlot
-    jsr plot                            ; draw player (mode 1)
+    jsr plot                            ; draw player (plot mode 1)
 
 ;    lda #7
 ;    jsr debugChangePalette
@@ -2754,11 +2798,7 @@ opcodeForJsrPlot
     jsr updateAirAndCheckExit           ;
     jsr checkForLandingOnSpike          ;
 
-    lda #34                             ;
-    sta cursorX                         ;
-    lda #23                             ;
-    sta cursorY                         ;
-
+    jsr moveCursorToBackgroundCache     ;
     jsr checkSpikeKeySwitch             ;
     inc cursorX                         ;
     jsr checkSpikeKeySwitch             ;
@@ -2835,10 +2875,7 @@ checkForSpikeKeySwitchCollisions
 ;
 ; ***************************************************************************************
 checkForLandingOnSpike
-    lda #34                             ;
-    sta cursorX                         ;
-    lda #23                             ;
-    sta cursorY                         ; TAB(34,23)
+    jsr moveCursorToBackgroundCache ;
 
 -
     jsr readCharacter           ;
@@ -4457,11 +4494,13 @@ checkLevelNumber
     ldy #0                              ;
     ldx #1                              ;
 copyGuardianPositionDataLoop
-    jsr readGuardianByte                ;
-    sta guardianPositions,y             ; Y coordinate
+    jsr readGuardianByte                ; Read X1 Coordinate
+    cmp #$ff                            ;
+    beq finishedReadingGuardians        ;
+    sta guardianPositions,y             ; Store X1 coordinate
     iny                                 ;
     iny                                 ;
-    sta guardianPositions,y             ; X1 coordinate
+    sta guardianPositions,y             ; Store X1 Coordinate
     inx                                 ;
     dey                                 ;
     jsr readGuardianByte                ; Y coordinate
@@ -4472,10 +4511,9 @@ copyGuardianPositionDataLoop
     jsr readGuardianByte                ; X2 coordinate
     sta guardianPositions,y             ;
     inx                                 ;
-    jsr readGuardianByte                ;
     iny                                 ;
-    cmp #$ff                            ;
-    bne copyGuardianPositionDataLoop    ;
+    jmp copyGuardianPositionDataLoop    ;
+finishedReadingGuardians
     sta guardianPositions,y             ;
     rts                                 ;
 
@@ -5233,7 +5271,7 @@ drawSwitches
     jmp nonLevel10Init              ;
 
 level13Init
-    lda #$f5                        ;
+    lda #$f5                        ; thread?
     sta levelFeature1               ;
     lda #3                          ;
     sta levelColourArray + 1        ;
@@ -7153,11 +7191,17 @@ updateAirAndCheckExit
     beq checkExit                   ;
     rts                             ;
 
-checkExit
+; ***************************************************************************************
+moveCursorToBackgroundCache
     lda #34                         ;
     sta cursorX                     ;
-    lda #23                         ; TAB(34, 23)
+    lda #31                         ; TAB(34, 31)
     sta cursorY                     ;
+    rts                             ;
+
+; ***************************************************************************************
+checkExit
+    jsr moveCursorToBackgroundCache ;
 
     jsr readTwoCharactersFromScreen ;
     lda currentLevel                ;
@@ -8025,59 +8069,6 @@ soundFrequenciesSecond
     !byte 31                ; 12   506  B3
 
 ; ***************************************************************************************
-creditsMessage
-    !byte 18, 0, 129                ; GCOL 0,129
-    !byte 24                        ; define graphics window
-    !word 20 * 32 - 8               ; left
-    !word 18 * 32                   ; bottom
-    !word 37 * 32 + 8               ; right
-    !word (32-7)*32                 ; top
-    !byte 16                        ; clear graphics area
-
-    !byte 18, 0, 128                ; GCOL 0,128
-    !byte 26                        ; reset text window
-
-    !byte 17, 2                     ; COLOUR 1
-    !byte 31, 1, 18                 ; TAB(19,17)
-    !text "2021 Edition"            ;
-    !byte 31, 1, 19                 ;
-    !text "by TobyLobster"          ;
-    !byte 17, 3                     ;
-    !byte 31, 20, 3                 ; TAB(19,2)
-    !text "SOFTWARE PROJECTS"       ;
-;    !byte 31, 24, 5                ; TAB(23,4)
-    !byte 5                         ;
-    !byte 18, 0, 3                  ; GCOL 0,3
-    !byte 25, 4                     ;
-    !word 780, 864                  ;
-    !text "Presents"                ;
-    !byte 25, 4                     ;
-    !word 656, 512                  ;
-    !text "Original program"        ;
-    !byte 25, 4                     ;
-    !word 656, 460                  ;
-    !text "by Matthew Smith"        ;
-    !byte 25, 4                     ;
-    !word 876, 700                  ;
-    !text "by"                      ;
-    !byte 25, 4                     ;
-    !word 720, 700-32*2             ;
-    !text "D.J.COATHUPE"            ;
-
-    !byte 4                         ; VDU 4
-    !byte 23, 1, 0, 0,0,0,0,0,0,0,0 ; cursor off
-    !byte 17, 129                   ; COLOUR 129
-    !byte 31, 22, 12                ; TAB(21,11)
-    !byte 31, 20, 8                 ; TAB(19,7)
-creditsMessageEnd
-
-; ***************************************************************************************
-verticalGuardiansSpritesArray
-    ; vertical guardians for the later levels
-    ; Level     11,  12,  13,  14,  15,  16,  17,  18,  19,  20
-    !byte $ea, $03, $00, $04, $05, $06, $00, $07, $09, $08, $04
-
-; ***************************************************************************************
 guardianColourTable
     !byte $ff, $f0, $0f, $ff        ;
 
@@ -8122,57 +8113,15 @@ penroseTriangle
     !byte $05, $12 + penOffsetX, $B8+penOffsetY     ; DRAW
     !byte $ff                                       ; TERMINATOR
 
-yOffsetToTitle = 11 * 4
-
-
-airOffsetY = -4
 ; ***************************************************************************************
-airMessage
-
-    ; draw red bar (colour 1)
-    !byte 18, 0, 1                  ; GCOL 0,1
-    !byte 25, 4                     ;
-    !word 32*4, 400 + airOffsetY    ; MOVE bottom left
-    !byte 25, 4                     ;
-    !word 32*14, 400 + airOffsetY   ; MOVE bottom right
-    !byte 25, $55                   ;
-    !word 32*4, 432 + airOffsetY    ; TRI top left
-    !byte 25, $55                   ;
-    !word 32*14, 432 + airOffsetY   ; TRI top right
-
-    ; draw green bar (colour 2)
-    !byte 18, 0, 2                      ; GCOL 0,2
-    !byte 25, 4                         ;
-    !word 32*14, 400 + airOffsetY       ; MOVE bottom left
-    !byte 25, 4                         ;
-    !word 1279-4*32, 400 + airOffsetY   ; MOVE bottom right
-    !byte 25, $55                       ;
-    !word 32*14, 432 + airOffsetY       ; TRI top left
-    !byte 25, $55                       ;
-    !word 1279-4*32, 432 + airOffsetY   ; TRI top right
-
-    !byte 18, 0, 3                  ; GCOL 0,3
-
-    ; draw white bar itself
-    !byte 25, 4                                 ;
-    !word           256,  436-12 + airOffsetY   ; MOVE
-    !byte 25, 5                                 ;
-    !word           1144, 436-12 + airOffsetY   ; MOVE
-    !byte 25, $55                               ;
-    !word           256, 420-12 + airOffsetY    ; DRAW
-    !byte 25, $55                               ;
-    !word           1144, 420-12 + airOffsetY   ; DRAW
-
-    !byte 5                                     ; VDU 5
-    !byte 25, 4                                 ;
-    !word 32*4 + 4, 404 + 24 + airOffsetY       ;
-    !text "AIR"                                 ;
-vdu4CursorOff
-    !byte 4                         ; VDU 4
-    !byte 23, 1, 0, 0,0,0,0,0,0,0,0 ; cursor off
-vdu4CursorOffEnd
-airMessageEnd
-
+    ; Each vertical guardian has four bytes in this table
+    ; <x coord + top bit for direction + bit 6 for speed>, <y coord>, <Y extent 1>, <Y extent 2>
+currentVerticalGuardians
+    !byte $ea, $ea, $ea, $ea        ; first  guardian
+verticalGuardian2
+    !byte $ea, $ea, $ea, $ea        ; second guardian
+    !byte $ea, $ea, $ea, $ea        ; third  guardian
+    !byte $ea, $ea, $ea, $ea        ; fourth guardian
 
 
 !if (* > $3280 ) {
@@ -8181,211 +8130,6 @@ airMessageEnd
 free2 = $3280 - *
     * = $3280                       ; start of visible screen
 !pseudopc $6480 {
-
-
-
-; ***************************************************************************************
-toggleEugeneColour
-    lda eugeneColourMask                ;
-    eor #$0f                            ;
-    sta eugeneColourMask                ;
-
-    jsr updateVerticalGuardians         ;
-
-    lda #$ff                            ;
-    sta spriteColourMask                ;
-    rts                                 ;
-
-showScoreAndResetVerticalGuardians
-    jsr showScoreLivesAndLevel          ;
-    lda #$ff                            ;
-    sta currentVerticalGuardians        ;
-    rts                                 ;
-
-checkForSwitchFlipped
-    lda $332e                           ; screen address that becomes non-zero when the switch is flipped
-    cmp #0                              ;
-    bne switchFlipped                   ;
-    rts                                 ;
-
-switchFlipped
-    lda currentLevel                    ;
-    cmp #8                              ;
-    beq level8SwitchFlipped             ;
-    cmp #12                             ;
-    bne +                               ;
-
-    ; level 12 switch flipped - Return of the Alien Kong Beast
-    lda #$47                            ;
-    sta guardianPositions + 3           ;
-+
-    rts                                 ;
-
-level8SwitchFlipped
-    lda #$47                            ;
-    sta guardianPositions + 7           ;
-return6
-    rts                                 ;
-
-; ***************************************************************************************
-updateAirEtc
-    lda airRemaining                    ;
-    cmp #0                              ;
-    beq deathJumper5                    ; if (out of air) then branch (die)
-
-    lda playerPixelY                    ;
-    cmp willyHighestPointReachedOnCurrentJump ;
-    bcs +                               ;
-    sta willyHighestPointReachedOnCurrentJump ;
-+
-    lda playerPixelY                    ;
-    and #7                              ;
-    cmp #0                              ;
-    beq +                               ;
-    lda #0                              ;
-    sta willyIsOnGround                 ;
-+
-    lda playerPixelY                    ;
-    and #7                              ;
-    cmp willyOffsetWithinCellY          ;
-    bne setOffsetYWithinCell            ;
-    cmp #0                              ;
-    bne setOffsetYWithinCell            ;
-
-    lda willyIsOnGround                 ;
-    cmp #0                              ;
-    bne setOffsetYWithinCell            ;
-
-    ; land (or die if fallen too far)
-    lda #$ff                            ;
-    sta willyIsOnGround                 ;
-    jsr updateAirAndCheckExit           ;
-    jsr drawConveyor                    ;
-    lda playerPixelY                    ;
-    sec                                 ;
-    sbc willyHighestPointReachedOnCurrentJump   ;
-    cmp #$28                            ;
-    bcc +                               ; if (fall is less than 40 pixels) then branch
-    jmp death                           ;
-
-+
-    lda playerPixelY                            ;
-    sta willyHighestPointReachedOnCurrentJump   ;
-
-setOffsetYWithinCell
-    lda playerPixelY                    ;
-    and #7                              ;
-    sta willyOffsetWithinCellY          ;
-    rts                                 ;
-
-; ***************************************************************************************
-hitLevel20EnergyField
-    jsr swapEnergyFieldSpritesWith0C00  ;
-deathJumper5
-    jmp death                           ;
-
-; ***************************************************************************************
-checkForDeath
-    jsr updateAirEtc                    ;
-    lda currentLevel                    ;
-    cmp #20                             ;
-    bne return6                         ;
-    inc level20EnergyFieldsTimer        ;
-    jsr swapEnergyFieldSpritesWith0C00  ;
-    lda level20EnergyFieldsTimer        ;
-    and #$10                            ;
-    cmp #0                              ;
-    beq toggleLevel20EnergyFields       ;
-
-    ; check for collision
-    lda $4f42                           ; read screen byte directly
-    and #$80                            ;
-    cmp #0                              ; top bit set indicates a collision
-    bne hitLevel20EnergyField           ;
-
-    lda $3942                           ; read screen byte directly
-    and #$80                            ;
-    cmp #0                              ; top bit set indicates a collision
-    bne hitLevel20EnergyField           ;
-
-    lda $394a                           ; read screen byte directly
-    and #1                              ;
-    cmp #0                              ; bottom bit set indicates a collision
-    bne hitLevel20EnergyField           ;
-
-    lda $4f4a                           ; read screen byte directly
-    and #1                              ;
-    cmp #0                              ; bottom bit set indicates a collision
-    bne hitLevel20EnergyField           ;
-
-    lda level20EnergyFieldsTimer        ;
-    and #1                              ;
-    cmp #0                              ;
-    beq level20SwitchEnergyFieldSprite  ;
-    lda #0                              ;
-    sta energyFieldSpriteOffset         ;
-drawLevel20EnergyFieldString
-    ldx #0                              ;
--
-    lda level20EnergyFieldsString,x     ;
-    jsr OSWRCH                          ;
-    inx                                 ;
-    cpx #5                              ;
-    beq +                               ;
-backToLevel20EnergyFieldString
-    cpx #8                              ;
-    bne -                               ;
-    jsr drawLevel20EnergyField          ;
-    jmp swapEnergyFieldSpritesWith0C00  ;
-
-+
-    jsr drawLevel20EnergyField          ;
-    jmp backToLevel20EnergyFieldString  ;
-
-; ***************************************************************************************
-drawLevel20EnergyField
-    lda #$e0                            ;
-    clc                                 ;
-    adc energyFieldSpriteOffset         ;
-    jsr OSWRCH                          ; draw first character of energy field
-    tay                                 ;
-    iny                                 ;
-    lda #$0a                            ; move down
-    jsr OSWRCH                          ;
-    lda #8                              ; move left
-    jsr OSWRCH                          ;
-    tya                                 ;
-    jmp OSWRCH                          ; draw second character of energy field
-
-; ***************************************************************************************
-level20SwitchEnergyFieldSprite
-    lda #2                              ;
-    sta energyFieldSpriteOffset         ;
-    jmp drawLevel20EnergyFieldString    ;
-
-; ***************************************************************************************
-toggleLevel20EnergyFields
-    lda #4                              ;
-    sta energyFieldSpriteOffset         ;
-    lda level20EnergyFieldsTimer        ;
-    and #$0f                            ;
-    cmp #0                              ;
-    bne swapEnergyFieldSpritesWith0C00  ;
-    jmp drawLevel20EnergyFieldString    ;
-
-; ***************************************************************************************
-swapEnergyFieldSpritesWith0C00
-    ldx #$40                            ;
--
-    lda softCharacterDefinitions,x      ;
-    tay                                 ;
-    lda energyFieldSprites,x            ;
-    sta softCharacterDefinitions,x      ;
-    tya                                 ;
-    sta energyFieldSprites,x            ;
-    dex                                 ;
-    bne -                               ;
-    rts                                 ;
 
 ; ***************************************************************************************
 playerStartPositions
@@ -9245,6 +8989,9 @@ meteorPositions
 jumpMovementArray
     !byte $04, $04, $03, $03, $02, $02, $01, $00, $00, $00, $ff, $fe, $fe, $fd, $fd, $fc, $fc
 
+; ***************************************************************************************
+yOffsetToTitle = 11 * 4
+
 roomTitleBackground
     ; draw yellow bar (colour 3)
     !byte 18, 0, 3                          ; GCOL 0, 3
@@ -9264,15 +9011,6 @@ titleTextStartXHigh = * + 1
     !byte 18, 0, 0                          ; GCOL 0, 0
     !byte 5                                 ; VDU 5
 roomTitleBackgroundEnd
-
-!if * > $6ba0 {
-    !error "space is wrong, ", *
-}
-free3 = $6ba0 - *
-    ; ***********************************************************************************
-* = $6ba0
-backgroundCache
-* = * + 16 * 6
 
 ; ***************************************************************************************
 gameOver
@@ -9372,7 +9110,7 @@ checkForCollisions
     ldx newPlayerPixelX                 ; have been drawn (which could have erased part of a nearby player)
     ldy newPlayerPixelY                 ;
     lda #1                              ;
-    jsr plot                            ; draw player (mode 1)
+    jsr plot                            ; draw player (plot mode 1)
 
     jsr checkForDeath                   ;
     jsr checkForSwitchFlipped           ;
@@ -9644,6 +9382,210 @@ toggleEnergyField
     cmp #0                              ;
     beq setEnergyFieldColour            ;
     jmp swapEnergyFieldSpritesWith0C00  ;
+
+; ***************************************************************************************
+toggleEugeneColour
+    lda eugeneColourMask                ;
+    eor #$0f                            ;
+    sta eugeneColourMask                ;
+
+    jsr updateVerticalGuardians         ;
+
+    lda #$ff                            ;
+    sta spriteColourMask                ;
+    rts                                 ;
+
+showScoreAndResetVerticalGuardians
+    jsr showScoreLivesAndLevel          ;
+    lda #$ff                            ;
+    sta currentVerticalGuardians        ;
+    rts                                 ;
+
+checkForSwitchFlipped
+    lda $332e                           ; screen address that becomes non-zero when the switch is flipped
+    cmp #0                              ;
+    bne switchFlipped                   ;
+    rts                                 ;
+
+switchFlipped
+    lda currentLevel                    ;
+    cmp #8                              ;
+    beq level8SwitchFlipped             ;
+    cmp #12                             ;
+    bne +                               ;
+
+    ; level 12 switch flipped - Return of the Alien Kong Beast
+    lda #$47                            ;
+    sta guardianPositions + 3           ;
++
+    rts                                 ;
+
+level8SwitchFlipped
+    lda #$47                            ;
+    sta guardianPositions + 7           ;
+return6
+    rts                                 ;
+
+; ***************************************************************************************
+updateAirEtc
+    lda airRemaining                    ;
+    cmp #0                              ;
+    beq deathJumper5                    ; if (out of air) then branch (die)
+
+    lda playerPixelY                    ;
+    cmp willyHighestPointReachedOnCurrentJump ;
+    bcs +                               ;
+    sta willyHighestPointReachedOnCurrentJump ;
++
+    lda playerPixelY                    ;
+    and #7                              ;
+    cmp #0                              ;
+    beq +                               ;
+    lda #0                              ;
+    sta willyIsOnGround                 ;
++
+    lda playerPixelY                    ;
+    and #7                              ;
+    cmp willyOffsetWithinCellY          ;
+    bne setOffsetYWithinCell            ;
+    cmp #0                              ;
+    bne setOffsetYWithinCell            ;
+
+    lda willyIsOnGround                 ;
+    cmp #0                              ;
+    bne setOffsetYWithinCell            ;
+
+    ; land (or die if fallen too far)
+    lda #$ff                            ;
+    sta willyIsOnGround                 ;
+    jsr updateAirAndCheckExit           ;
+    jsr drawConveyor                    ;
+    lda playerPixelY                    ;
+    sec                                 ;
+    sbc willyHighestPointReachedOnCurrentJump   ;
+    cmp #$28                            ;
+    bcc +                               ; if (fall is less than 40 pixels) then branch
+    jmp death                           ;
+
++
+    lda playerPixelY                            ;
+    sta willyHighestPointReachedOnCurrentJump   ;
+
+setOffsetYWithinCell
+    lda playerPixelY                    ;
+    and #7                              ;
+    sta willyOffsetWithinCellY          ;
+    rts                                 ;
+
+; ***************************************************************************************
+hitLevel20EnergyField
+    jsr swapEnergyFieldSpritesWith0C00  ;
+deathJumper5
+    jmp death                           ;
+
+; ***************************************************************************************
+checkForDeath
+    jsr updateAirEtc                    ;
+    lda currentLevel                    ;
+    cmp #20                             ;
+    bne return6                         ;
+    inc level20EnergyFieldsTimer        ;
+    jsr swapEnergyFieldSpritesWith0C00  ;
+    lda level20EnergyFieldsTimer        ;
+    and #$10                            ;
+    cmp #0                              ;
+    beq toggleLevel20EnergyFields       ;
+
+    ; check for collision
+    lda $4f42                           ; read screen byte directly
+    and #$80                            ;
+    cmp #0                              ; top bit set indicates a collision
+    bne hitLevel20EnergyField           ;
+
+    lda $3942                           ; read screen byte directly
+    and #$80                            ;
+    cmp #0                              ; top bit set indicates a collision
+    bne hitLevel20EnergyField           ;
+
+    lda $394a                           ; read screen byte directly
+    and #1                              ;
+    cmp #0                              ; bottom bit set indicates a collision
+    bne hitLevel20EnergyField           ;
+
+    lda $4f4a                           ; read screen byte directly
+    and #1                              ;
+    cmp #0                              ; bottom bit set indicates a collision
+    bne hitLevel20EnergyField           ;
+
+    lda level20EnergyFieldsTimer        ;
+    and #1                              ;
+    cmp #0                              ;
+    beq level20SwitchEnergyFieldSprite  ;
+    lda #0                              ;
+    sta energyFieldSpriteOffset         ;
+drawLevel20EnergyFieldString
+    ldx #0                              ;
+-
+    lda level20EnergyFieldsString,x     ;
+    jsr OSWRCH                          ;
+    inx                                 ;
+    cpx #5                              ;
+    beq +                               ;
+backToLevel20EnergyFieldString
+    cpx #8                              ;
+    bne -                               ;
+    jsr drawLevel20EnergyField          ;
+    jmp swapEnergyFieldSpritesWith0C00  ;
+
++
+    jsr drawLevel20EnergyField          ;
+    jmp backToLevel20EnergyFieldString  ;
+
+; ***************************************************************************************
+drawLevel20EnergyField
+    lda #$e0                            ;
+    clc                                 ;
+    adc energyFieldSpriteOffset         ;
+    jsr OSWRCH                          ; draw first character of energy field
+    tay                                 ;
+    iny                                 ;
+    lda #$0a                            ; move down
+    jsr OSWRCH                          ;
+    lda #8                              ; move left
+    jsr OSWRCH                          ;
+    tya                                 ;
+    jmp OSWRCH                          ; draw second character of energy field
+
+; ***************************************************************************************
+level20SwitchEnergyFieldSprite
+    lda #2                              ;
+    sta energyFieldSpriteOffset         ;
+    jmp drawLevel20EnergyFieldString    ;
+
+; ***************************************************************************************
+toggleLevel20EnergyFields
+    lda #4                              ;
+    sta energyFieldSpriteOffset         ;
+    lda level20EnergyFieldsTimer        ;
+    and #$0f                            ;
+    cmp #0                              ;
+    bne swapEnergyFieldSpritesWith0C00  ;
+    jmp drawLevel20EnergyFieldString    ;
+
+; ***************************************************************************************
+swapEnergyFieldSpritesWith0C00
+    ldx #$40                            ;
+-
+    lda softCharacterDefinitions,x      ;
+    tay                                 ;
+    lda energyFieldSprites,x            ;
+    sta softCharacterDefinitions,x      ;
+    tya                                 ;
+    sta energyFieldSprites,x            ;
+    dex                                 ;
+    bne -                               ;
+    rts                                 ;
+
 
     ; ***********************************************************************************
     !macro singleType .count, .spriteOffset {
@@ -13577,7 +13519,6 @@ kongBeastSprite
     !byte %###...#.
     !byte %#.......
 
-
 ; ***************************************************************************************
 ; Three bytes per horizontal guardian, specifying initial position and direction:
 ;   X1, Y + top bit, X2
@@ -13656,24 +13597,9 @@ levelTitles
     !text 6, "The Sixteenth Cavern"
     !text 9, "The Warehouse"
     !text 6, "Amoebatrons' Revenge"
-    !text 7, "The Meteor Storm     "        ; ... should really be the "Solar Power Generator" level
+    !text 7, "The Meteor Storm"             ; ... should really be the "Solar Power Generator" level
     !text 7, "The Final Barrier"
     !byte $0d                               ; terminator
-
-; ***************************************************************************************
-plotMessageStart
-    !byte 25                        ; VDU 25
-plotType
-    !byte $ea                       ;
-plotXLow
-    !byte $ea                       ;
-plotXHigh
-    !byte $ea                       ;
-plotYLow
-    !byte $ea                       ;
-plotYHigh
-    !byte $ea                       ;
-plotMessageEnd
 
 switchMessage2
     !byte $1f, $13, $01             ; TAB(19, 1)
@@ -13688,12 +13614,6 @@ switchMessage
     !byte charSPACE                 ; space
     !byte 10, 8, charSPACE          ; another space below. This removes a section of wall.
 switchMessageEnd
-
-crtcSetup
-    !byte 23, 0,  7,  30, $ff       ; VDU 23,0,7,30,0;0;0;0;   vertical sync position = 30
-    !byte 23, 1,  0,   0, $ff       ; VDU 23,0,1, 0,0;0;0;0;   horizontal displayed = 0
-    !byte 23, 0, 13, $50, $ff       ; set display address (low)
-crtcSetupEnd
 
 ; ***************************************************************************************
 pedestalMessage
@@ -13716,34 +13636,11 @@ keysToRead
     !byte $df, $8e, $8d, $8c, $eb, $8b, $8a, $e9, $89, $88
 keysToReadEnd
 
-; ***************************************************************************************
-oswordSoundBlock
-    !byte $01, $00, $00, $00, $00, $00, $00, $00    ;
-
-; ***************************************************************************************
-; uninitialized variables
-; ***************************************************************************************
-
-; ***************************************************************************************
-; sprite numbers to draw (level specific)
-levelFeatureArray
-levelFeature0
-    !byte $80                           ; floor
-levelFeature1
-    !byte $82                           ; crumble
-levelFeature2
-    !byte $8f                           ; wall
-levelFeature3
-    !byte $8b                           ; conveyor
-levelFeature4
-    !byte $8a                           ; ?
-levelFeature5
-    !byte $00                           ; ?
-
-; ***************************************************************************************
-levelColourArray
-    !byte $01, $01, $03, $02, $03       ;
-    !byte $00, $00, $00                 ; [unused?]
+crtcSetup
+    !byte 23, 0,  7,  30, $ff       ; VDU 23,0,7,30,0;0;0;0;   vertical sync position = 30
+    !byte 23, 1,  0,   0, $ff       ; VDU 23,0,1, 0,0;0;0;0;   horizontal displayed = 0
+    !byte 23, 0, 13, $50, $ff       ; set display address (low)
+crtcSetupEnd
 
 ; ***************************************************************************************
 screenAreaMinY
@@ -13801,6 +13698,64 @@ energyFieldString
 guardianColourMasks
     !byte $f0, $ff, $0f, $f0        ;
 
+
+; ***************************************************************************************
+; ***************************************************************************************
+; ***************************************************************************************
+; ***************************************************************************************
+; ***************************************************************************************
+; variables
+; ***************************************************************************************
+; ***************************************************************************************
+; ***************************************************************************************
+; ***************************************************************************************
+; ***************************************************************************************
+
+; ***************************************************************************************
+oswordSoundBlock
+    !byte $01, $00, $00, $00, $00, $00, $00, $00    ;
+
+; ***************************************************************************************
+plotMessageStart
+    !byte 25                        ; VDU 25
+plotType
+    !byte $ea                       ;
+plotXLow
+    !byte $ea                       ;
+plotXHigh
+    !byte $ea                       ;
+plotYLow
+    !byte $ea                       ;
+plotYHigh
+    !byte $ea                       ;
+plotMessageEnd
+
+
+; ***************************************************************************************
+; uninitialized variables
+; ***************************************************************************************
+
+; ***************************************************************************************
+; sprite numbers to draw (level specific)
+levelFeatureArray
+levelFeature0
+    !byte $80                           ; floor
+levelFeature1
+    !byte $82                           ; crumble
+levelFeature2
+    !byte $8f                           ; wall
+levelFeature3
+    !byte $8b                           ; conveyor
+levelFeature4
+    !byte $8a                           ; ?
+levelFeature5
+    !byte $00                           ; ?
+
+; ***************************************************************************************
+levelColourArray
+    !byte $01, $01, $03, $02, $03       ;
+    !byte $00, $00, $00                 ; [unused?]
+
 ; ***************************************************************************************
 keyXPositions
     !byte $ea, $ea, $ea, $ea, $ea   ;
@@ -13830,6 +13785,8 @@ keyGot
 ; ***************************************************************************************
 ; ***************************************************************************************
 ; ***************************************************************************************
+guardianPositionsCopy
+    !byte $00, $00, $00, $00, $00
 
 willySpriteAddressLow
     !byte $00
@@ -13841,22 +13798,71 @@ willySpriteAddressHigh
     !byte $00                       ; [UNUSED, but copied in and out of cache]
 
 ; ***************************************************************************************
-    ; Each vertical guardian has four bytes in this table
-    ; <x coord + top bit for direction + bit 6 for speed>, <y coord>, <Y extent 1>, <Y extent 2>
-currentVerticalGuardians
-    !byte $ea, $ea, $ea, $ea        ; first  guardian
-verticalGuardian2
-    !byte $ea, $ea, $ea, $ea        ; second guardian
-    !byte $ea, $ea, $ea, $ea        ; third  guardian
-    !byte $ea, $ea, $ea, $ea        ; fourth guardian
-endOfEverything
+creditsMessage
+    !byte 18, 0, 129                ; GCOL 0,129
+    !byte 24                        ; define graphics window
+    !word 20 * 32 - 8               ; left
+    !word 18 * 32                   ; bottom
+    !word 37 * 32 + 8               ; right
+    !word (32-7)*32                 ; top
+    !byte 16                        ; clear graphics area
 
-!if * > $8000 {
+    !byte 18, 0, 128                ; GCOL 0,128
+    !byte 26                        ; reset text window
+
+    !byte 17, 2                     ; COLOUR 1
+    !byte 31, 1, 18                 ; TAB(19,17)
+    !text "2021 Edition"            ;
+    !byte 31, 1, 19                 ;
+    !text "by TobyLobster"          ;
+    !byte 17, 3                     ;
+    !byte 31, 20, 3                 ; TAB(19,2)
+    !text "SOFTWARE PROJECTS"       ;
+;    !byte 31, 24, 5                ; TAB(23,4)
+    !byte 5                         ;
+    !byte 18, 0, 3                  ; GCOL 0,3
+    !byte 25, 4                     ;
+    !word 780, 864                  ;
+    !text "Presents"                ;
+    !byte 25, 4                     ;
+    !word 656, 512                  ;
+    !text "Original program"        ;
+    !byte 25, 4                     ;
+    !word 656, 460                  ;
+    !text "by Matthew Smith"        ;
+    !byte 25, 4                     ;
+    !word 876, 700                  ;
+    !text "by"                      ;
+    !byte 25, 4                     ;
+    !word 720, 700-32*2             ;
+    !text "D.J.COATHUPE"            ;
+
+    !byte 4                         ; VDU 4
+    !byte 23, 1, 0, 0,0,0,0,0,0,0,0 ; cursor off
+    !byte 17, 129                   ; COLOUR 129
+    !byte 31, 22, 12                ; TAB(21,11)
+    !byte 31, 20, 8                 ; TAB(19,7)
+creditsMessageEnd
+
+; ***************************************************************************************
+verticalGuardiansSpritesArray
+    ; vertical guardians for the later levels
+    ; Level     11,  12,  13,  14,  15,  16,  17,  18,  19,  20
+    !byte $ea, $03, $00, $04, $05, $06, $00, $07, $09, $08, $04
+
+
+!if * > $7fa0 {
     !error "space is wrong, ", *
 }
+free3 = $7fa0 - *
+    ; ***********************************************************************************
+    * = $7fa0
+backgroundCache
+    * = * + 16 * 6
 
+!if * != $8000 {
+    !error "space is wrong ", *
+}
 }
 
-
-free4 = $8000 - endOfEverything
-allFree = free1 + free2 + free3 + free4
+allFree = free1 + free2 + free3

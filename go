@@ -8,6 +8,7 @@ uniq miner2021.tmp miner2021.sym
 uniq loader.tmp loader.sym
 rm miner2021.tmp
 rm loader.tmp
+grep miner2021.sym -e 'allFree' | sed 's/^.*\([0-9a-f][0-9a-f][0-9a-f][0-9a-f]\).*/\1/' | awk '{printf "%d bytes free\n",(("0x" $1) + 0)}'
 
 echo
 # Create new SSD file with the appropriate files

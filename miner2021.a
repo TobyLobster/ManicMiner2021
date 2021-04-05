@@ -21,12 +21,12 @@ flashingmagentagreen                = 13
 flashingcyanred                     = 14
 flashingwhiteblack                  = 15
 
-keyCodeDELETE = $a6
-keyCodeESCAPE = $8f
-keyCodeS      = $ae
-keyCodeQ      = $ef
-keyCodeCOPY   = $96
-keyCodeSHIFT  = $ff
+keyCodeDELETE                       = $a6
+keyCodeESCAPE                       = $8f
+keyCodeS                            = $ae
+keyCodeQ                            = $ef
+keyCodeCOPY                         = $96
+keyCodeSHIFT                        = $ff
 
 
 ; OS memory locations
@@ -255,6 +255,33 @@ meteorXCoordinate               = $9c       ;
 meteorYCoordinate               = $9d       ;
 meteorAnimationState            = $9e       ;
 meteorIndex                     = $9f       ;
+
+; pixel collision variables
+;gotCollision                    = $a0       ;
+;dx                              = $a1       ;
+;dy                              = $a2       ;
+;mobjectXPosition                = $a3       ;
+;mobjectYPosition                = $a4       ;
+;newPlayerXPosition              = $a5       ;
+;newPlayerYPosition              = $a6       ;
+;checkLength                     = $a7       ;
+;sprite1OffsetWithinCell         = $a8       ;
+;sprite2OffsetWithinCell         = $a9       ;
+;collisionSprite1Width           = $aa       ;
+;collisionSprite2Width           = $ab       ;
+;collisionSprite1Height          = $ac       ;
+;collisionSprite2Height          = $ad       ;
+;collisionSprite1Stride          = $ae       ;
+;collisionSprite2Stride          = $af       ;
+;collisionLoopCounter            = $b0       ;
+;colSprite1Offset                = $b1       ;
+;colSprite2Offset                = $b2       ;
+;sprite1AddressLow               = $b3       ;
+;sprite1AddressHigh              = $b4       ;
+;sprite2AddressLow               = $b5       ;
+;sprite2AddressHigh              = $b6       ;
+;spriteLow                       = $b7       ;
+;spriteHigh                      = $b8       ;
 
 ; ***************************************************************************************
 verticalGuardianMODE1Address    = $0400     ;
@@ -2177,7 +2204,7 @@ afterGetSourceByte
     clc                                 ; }
     adc #$78                            ; }
     sta plotScreenAddressLow            ; }
-    lda plotScreenAddressHigh           ; } $0278 to (plotScreenAddress)
+    lda plotScreenAddressHigh           ; } add $0278 to (plotScreenAddress)
     adc #2                              ; }
     sta plotScreenAddressHigh           ; }
 
@@ -2270,7 +2297,7 @@ handleNotJumping
 -
     lda willySpriteAddressLow,x             ; }
     sta $77,x                               ; }
-    inx                                     ; } copy 5 bytes from ($1842-$1846) to ($77-$7B)
+    inx                                     ; } copy 5 bytes
     cpx #5                                  ; }
     bne -                                   ; }
 
@@ -3464,7 +3491,7 @@ readOrWriteCachedBackground
 
 ; ***************************************************************************************
 copyCache
-    ldy #0                              ; outer loop counter (number of rows * 32)
+    ldy #0                              ; outer loop counter (number of rows)
 readWriteBackgroundCacheLoop
     ldx #31                             ; inner loop counter (within one row)
 readFromMemory
@@ -3515,7 +3542,6 @@ otherDirection
     bcc +                               ; }
     inc readFromMemory + 2              ; }
 +
-
 
 checkForEndOfLoop
     iny                                 ;
@@ -4514,7 +4540,7 @@ copyGuardianPositionDataLoop
     iny                                 ;
     jmp copyGuardianPositionDataLoop    ;
 finishedReadingGuardians
-    sta guardianPositions,y             ;
+    sta guardianPositions,y             ; terminator
     rts                                 ;
 
 ; ***************************************************************************************
@@ -5029,26 +5055,28 @@ tempCellPlotA = * + 1
     adc #$ff                            ;
     and plotColourMask                  ;
     sta (cellScreenAddressLow),y        ; left side
+    dey                                 ;
+    bpl -                               ;
 
+    lda cellPlotSourceSpriteAddressLow  ;
+    sec                                 ;
+    sbc #8                              ;
+    sta cellPlotSourceSpriteAddressLow  ;
+    bcs +                               ;
+    dec cellPlotSourceSpriteAddressHigh ;
++
 
+    ldy #15                             ;
+-
     lda (cellPlotSourceSpriteAddressLow),y  ;
     and #$0f                            ;
     tax                                 ;
     lda toFullColour,x                  ;
     and plotColourMask                  ;
-    sta tempA                           ;
-    tya                                 ;
-    tax                                 ;
-    clc                                 ;
-    adc #8                              ;
-    tay                                 ;
-    lda tempA                           ;
     sta (cellScreenAddressLow),y        ; right side
-
-    txa                                 ;
-    tay                                 ;
     dey                                 ;
-    bpl -                               ;
+    cpy #7                              ;
+    bne -                               ;
 return10
     rts                                 ;
 
@@ -8123,6 +8151,463 @@ verticalGuardian2
     !byte $ea, $ea, $ea, $ea        ; third  guardian
     !byte $ea, $ea, $ea, $ea        ; fourth guardian
 
+!ifdef CRAZY_COLLISION_CODE {
+; ***************************************************************************************
+;
+; Pixel Collision Detection
+; -------------------------
+;
+; This is a description of a fine grained check for the collision of two sprites. We only execute the fine grained check if the current course grained test (checking for overlap of the 'cell' sized extents of the sprites) indicates a possible collision.
+;
+; Definition: A 'cell' is a 4x8 rectangle of pixels. All sprites are 1 or 2 cells wide (making a 'cell row'), and 1 or 2 cell rows high.
+;
+; Suppose we have cell heights of 2 for each sprite. Label the cell rows of the first sprite:
+;    A
+;    B
+;
+; and label the cell rows of the second sprite:
+;    C
+;    D
+;
+; Let (dx,dy) be the difference in sprite positions.
+;
+; Because of the course grained check we know that:
+;
+;    -7 <= dx <= 7
+;   -15 <= dy <= 15
+;
+; By swapping the sprites over if necessary we can assume (WLOG):
+;
+;    0 <= dx <= 7
+;
+; Different pairs of cell rows can overlap depending on dy. We look up the list of pairs of cell rows to check against each other.
+;
+;    Test dy                 | Pairs to check | # pixel rows to check ('length') | The start pixel row within each sprite row
+;    ------------------------+----------------+----------------------------------+------------------------------------------
+;    if dy in range [-15,-8] |       AD       |    AD: dy+16                     |    AD: (0,8-length)
+;    if dy in range [-7,-1]  |    AC AD BD    | AC,BD: dy+8      AD: -dy         | AC,BD: (0,8-length)      AD: (8-length,0)
+;    if dy in range [0,7]    |    AC BC BD    | AC,BD:  8-dy     BC:  dy         | AC,BD: (length,0)      BC: (0,8-length)
+;    if dy in range [8,15]   |       BC       |    BC: 16-dy                     |    BC: (8-length,0)
+;    ------------------------+----------------+----------------------------------+------------------------------------------
+;                                                                                  Format is '(first sprite, second sprite)'
+;
+; If height of either sprite is one, then just ignore pairs that include B or D as appropriate.
+;
+; The ranges in the above table are equivalent to this (which is easier to compute in 6502):
+;
+; let dY = dy+15        (Note capital Y)
+;
+;    Test dY                | Order to test      | Result in X register
+;    -----------------------+--------------------+---------------------
+;    if dY in range [0,7]   |    if dY < 8       | X = 3
+;    if dY in range [8,14]  |    else if dY < 15 | X = 2
+;    if dY in range [15,22] |    else if dY < 23 | X = 1
+;    if dY in range [23,30] |    else if dY < 31 | X = 0
+;
+; For each pixel row we want to test, we need to gather a 1 bit mask of the pixels set in that row. This will be 4 bits or 8 bits long depending on the sprite width. (See getBitMask routine below.)
+; Then shift left (ASL) the first mask by dx places left then 'AND' with the second mask.
+; If the result is non-zero there is a collision.
+
+; ***************************************************************************************
+startPixelCollisionDetection
+; On Entry:
+;   .sprite1                        ; First sprite number to test
+;   .sprite2                        ; Second sprite number to test
+;   .newPlayerX/YPosition           ; first sprite position on screen
+;   .mobjectX/YPosition             ; second sprite position on screen
+; On Exit:
+;   gotCollision is zero if no collision, 255 if there is.
+
+    LDA #0                              ;
+    STA gotCollision                    ;
+    LDA mobjectYPosition                ;
+    SEC                                 ;
+    SBC newPlayerYPosition              ;
+    STA dy                              ; Calculate dy
+    LDA mobjectXPosition                ;
+    SEC                                 ;
+    SBC newPlayerXPosition              ;
+    STA dx                              ; Calculate dx
+    BPL +                               ; if (dx >= 0) then branch to later (no swap required)
+.swapSprites
+    EOR #255                            ; otherwise swap sprite1 and 2
+    STA dx                              ;
+    INC dx                              ; dx = -dx
+    LDA dy                              ;
+    EOR #255                            ;
+    STA dy                              ;
+    INC dy                              ; dy = -dy
+
+    ; swap sprite addresses
+    LDA sprite1AddressLow               ;
+    TAX                                 ;
+    LDA sprite1AddressHigh              ;
+    TAY                                 ;
+    LDA sprite2AddressLow               ;
+    STA sprite1AddressLow               ;
+    LDA sprite2AddressHigh              ;
+    STA sprite1AddressHigh              ;
+    TXA                                 ;
+    STA sprite2AddressLow               ;
+    TYA                                 ;
+    STA sprite2AddressHigh              ;
+
+;    LDA .sprite2                        ; and swap sprite numbers
+;    TAX                                 ;
+;    LDA .sprite1                        ;
+;    STA .sprite2                        ;
+;    STX .sprite1                        ;
++
+;    LDA .sprite1                        ;
+;    JSR .getSpriteInfo                  ;
+;    LDA .spriteWidthArray,X             ;
+    LDA #2                              ;
+    STA collisionSprite1Width           ;
+    ASL                                 ;
+    ASL                                 ;
+    ASL                                 ;
+    STA collisionSprite1Stride          ;
+
+;    LDA .spriteHeightArray,X            ;
+    LDA #2                              ;
+    STA collisionSprite1Height          ; Get stride and height for sprite 1
+    CMP #1                              ;
+    BNE +                               ;
+    LDA #0                              ;
+    STA collisionSprite1Stride          ;
++
+
+;    LDA .sprite2                        ;
+;    JSR .getSpriteInfo                  ;
+;    LDA .spriteWidthArray,X             ;
+    LDA #2
+    STA collisionSprite2Width           ;
+    ASL                                 ;
+    ASL                                 ;
+    ASL                                 ;
+    STA collisionSprite2Stride          ;
+;    LDA .spriteHeightArray,X            ;
+    LDA #2
+    STA collisionSprite2Height          ; Get stride and height for sprite 2
+    CMP #1                              ;
+    BNE +                               ;
+    LDA #0                              ;
+    STA collisionSprite2Stride          ;
++
+
+    LDA collisionSprite1Width           ;
+    SEC                                 ;
+    SBC collisionSprite2Width           ;
+    TAX                                 ;
+    INX                                 ;
+    LDA addAmountX,X                    ;
+    CLC                                 ;
+    ADC dx                              ;
+    STA dx                              ; dx now represents how much to shift the bitmask for sprite1
+
+    LDX #3                              ; Find out which range in dy we are dealing with
+    LDA dy                              ;
+    CLC                                 ;
+    ADC #15                             ;
+loopCheckRange
+    CMP boundaryArray,X                 ; Check which range dy falls in.
+    BCC foundRange                      ; When the loop finishes X will hold the index for the
+    DEX                                 ; range in which dy falls (0-3)
+    BNE loopCheckRange                  ;
+foundRange
+    CPX #2                              ;
+    BEQ range8to14                      ; Branch to code for each range
+    BCS range0to7                       ;
+    CPX #1                              ;
+    BEQ range15to22                     ;
+range23To30
+    LDA #16                             ;
+    SEC                                 ;
+    SBC dy                              ;
+    STA checkLength                     ;
+    LDA #8                              ;
+    SEC                                 ;
+    SBC checkLength                     ;
+    STA sprite1OffsetWithinCell         ;
+    LDA #0                              ;
+    STA sprite2OffsetWithinCell         ;
+    JMP .checkBC                        ;
+range0to7
+    TAY                                 ;
+    INY                                 ;
+    STY checkLength                     ; checkLength = dy + 16
+    LDA #0                              ;
+    STA sprite1OffsetWithinCell         ; sprite1OffsetWithinCell= 0
+
+    LDA #8                              ;
+    SEC                                 ;
+    SBC checkLength                     ;
+    STA sprite2OffsetWithinCell         ; sprite2OffsetWithinCell= 8 - checkLength
+
+    JMP .checkAD                        ;
+range8to14
+    SEC                                 ;
+    SBC #7                              ;
+    STA checkLength                     ; checkLength = dY - 7 = dy + 8
+    LDA #8                              ;
+    SEC                                 ;
+    SBC checkLength                     ;
+    STA sprite2OffsetWithinCell         ;
+    LDA #0                              ;
+    STA sprite1OffsetWithinCell         ;
+    JSR .checkAC                        ;
+    JSR .checkBD                        ;
+    LDA dy                              ;
+    EOR #255                            ;
+    CLC                                 ;
+    ADC #1                              ;
+    STA checkLength                     ;
+    LDA #8                              ;
+    SEC                                 ;
+    SBC checkLength                     ;
+    STA sprite1OffsetWithinCell         ;
+    LDA #0                              ;
+    STA sprite2OffsetWithinCell         ;
+    JMP .checkAD                        ;
+range15to22
+    LDA #8                              ;
+    SEC                                 ;
+    SBC dy                              ;
+    STA checkLength                     ; checkLength = 8 - dy
+    LDA dy                              ;
+    STA sprite1OffsetWithinCell         ;
+    LDA #0                              ;
+    STA sprite2OffsetWithinCell         ;
+    JSR .checkAC                        ;
+    JSR .checkBD                        ;
+    LDA dy                              ;
+    BEQ +                               ;
+    STA checkLength                     ;
+    LDA #8                              ;
+    SEC                                 ;
+    SBC checkLength                     ;
+    STA sprite2OffsetWithinCell         ;
+    LDA #0                              ;
+    STA sprite1OffsetWithinCell         ;
+    JMP .checkBC                        ;
+
+addAmountX
+    !byte 4,0,0                         ; Difference in width (-1,0+1) determines amount to add to dx
+
+; ***************************************************************************************
+.checkAC
+; On Entry:
+;     sprite1OffsetWithinCell  is the byte offset (0-7) to start checking rows in sprite1
+;     sprite2OffsetWithinCell  is the byte offset (0-7) to start checking rows in sprite2
+;     checkLength  is the number of consecutive rows to check
+    LDA collisionSprite1Height          ;
+    CMP #1                              ;
+    BEQ +                               ; if(sprite1 is height 1) then branch (no AC collision)
+    LDA collisionSprite2Height          ;
+    CMP #1                              ;
+    BEQ +                               ; if(sprite2 is height 1) then branch (no AC collision)
+
+; check each row for collision
+.checkCollisionRows                     ;
+    LDA checkLength                     ;
+    STA collisionLoopCounter            ;
+    LDA sprite1OffsetWithinCell         ;
+    STA colSprite1Offset                ;
+    LDA sprite2OffsetWithinCell         ;
+    STA colSprite2Offset                ;
+.checkCollisionLoop
+;    LDY .sprite1                        ;
+;    JSR .getSpriteAddressY              ; TODO: This should be outside the loop, for performance!
+    LDA sprite1AddressLow               ;
+    STA spriteLow                       ;
+    LDA sprite1AddressHigh              ;
+    STA spriteHigh                      ;
+    LDX collisionSprite1Width           ;
+    LDY colSprite1Offset                ;
+    JSR .getBitMask                     ;
+    LDX dx                              ;
+-
+    DEX                                 ;
+    BMI .afterShifting                  ;
+    ASL                                 ;
+    JMP -                               ;
+.afterShifting
+    STA .compare1                       ;
+;    LDY .sprite2                        ;
+;    JSR .getSpriteAddressY              ; TODO: This should be outside the loop, for performance!
+    LDA sprite2AddressLow               ;
+    STA spriteLow                       ;
+    LDA sprite2AddressHigh              ;
+    STA spriteHigh                      ;
+    LDX collisionSprite2Width           ;
+    LDY colSprite2Offset                ;
+    JSR .getBitMask                     ;
+.compare1 = * + 1
+    AND #$FF                            ;
+    BNE .foundCollision                 ;
+    INC colSprite1Offset                ;
+    INC colSprite2Offset                ;
+    DEC collisionLoopCounter            ;
+    BNE .checkCollisionLoop             ;
++
+    RTS                                 ;
+
+; ***************************************************************************************
+.foundCollision
+    LDA #255                            ; Found a collision
+    STA gotCollision                    ;
+    RTS                                 ;
+
+; ***************************************************************************************
+.checkAD
+; On Entry:
+;     sprite1OffsetWithinCell  is the byte offset (0-7) to start checking rows in sprite1
+;     sprite2OffsetWithinCell  is the byte offset (0-7) to start checking rows in sprite2 (second half)
+;     checkLength  is the number of consecutive rows to check
+    LDA collisionSprite1Height          ;
+    CMP #1                              ;
+    BEQ +                               ; if(sprite1 is height 1) then branch (no collision)
+    LDA sprite2OffsetWithinCell         ;
+    CLC                                 ;
+    ADC collisionSprite2Stride          ;
+    STA sprite2OffsetWithinCell         ;
+    JSR .checkCollisionRows             ;
+    LDA sprite2OffsetWithinCell         ;
+    SEC                                 ;
+    SBC collisionSprite2Stride          ;
+    STA sprite2OffsetWithinCell         ;
++
+    RTS
+
+; ***************************************************************************************
+.checkBC
+; On Entry:
+;     sprite1OffsetWithinCell  is the byte offset (0-7) to start checking rows in sprite1 (second half)
+;     sprite2OffsetWithinCell  is the byte offset (0-7) to start checking rows in sprite2
+;     checkLength  is the number of consecutive rows to check
+    LDA collisionSprite2Height          ;
+    CMP #1                              ;
+    BEQ +                               ; if(sprite2 is height 1) then branch (no collision)
+    LDA sprite1OffsetWithinCell         ;
+    CLC                                 ;
+    ADC collisionSprite1Stride          ;
+    STA sprite1OffsetWithinCell         ;
+    JSR .checkCollisionRows             ;
+    LDA sprite1OffsetWithinCell         ;
+    SEC                                 ;
+    SBC collisionSprite1Stride          ;
+    STA sprite1OffsetWithinCell         ;
++
+    RTS                                 ;
+
+; ***************************************************************************************
+.checkBD
+; On Entry:
+;     sprite1OffsetWithinCell  is the byte offset (0-7) to start checking rows in sprite1 (second half)
+;     sprite2OffsetWithinCell  is the byte offset (0-7) to start checking rows in sprite2
+;     checkLength  is the number of consecutive rows to check
+    LDA sprite2OffsetWithinCell         ;
+    CLC                                 ;
+    ADC collisionSprite2Stride          ;
+    STA sprite2OffsetWithinCell         ;
+    LDA sprite1OffsetWithinCell         ;
+    CLC                                 ;
+    ADC collisionSprite1Stride          ;
+    STA sprite1OffsetWithinCell         ;
+    JSR .checkCollisionRows             ;
+    LDA sprite1OffsetWithinCell         ;
+    SEC                                 ;
+    SBC collisionSprite1Stride          ;
+    STA sprite1OffsetWithinCell         ;
+    LDA sprite2OffsetWithinCell         ;
+    SEC                                 ;
+    SBC collisionSprite2Stride          ;
+    STA sprite2OffsetWithinCell         ;
++
+    RTS                                 ;
+
+; ***************************************************************************************
+.getBitMask
+;   On Entry:
+;       .spriteLow is 2 byte pointer in zero page that points to start of the sprite
+;       X = the number of cells wide the sprite is (1 or 2)
+;       Y = byte offset within sprite
+;   On Exit:
+;       A = bit mask
+    LDA #0                              ;
+    STA .tempStore                      ;
+    CPX #1                              ;
+    BEQ +                               ; branch if one cell wide
+    LDA (spriteLow),Y                   ;
+    ASL                                 ;
+    ASL                                 ;
+    ASL                                 ;
+    ASL                                 ;
+    ORA (spriteLow),Y                   ;
+    AND #$F0                            ; Logical OR together the lower nybble and the upper nybble
+    STA .tempStore                      ; Remember
+    TYA                                 ;
+    CLC                                 ;
+    ADC #8                              ; Move on to second half of the 2 cell wide sprite
+    TAY                                 ;
++
+    LDA (spriteLow),Y                   ; Get the upper nybble, move it to the lower nybble
+    LSR                                 ;
+    LSR                                 ;
+    LSR                                 ;
+    LSR                                 ;
+    ORA (spriteLow),Y                   ; Logical OR with the original nybble
+    AND #$0F                            ;
+.tempStore = * + 1
+    ORA #$FF                            ; Logical OR in each nybble together
+    RTS                                 ;
+} ; CRAZY_COLLISION_CODE
+
+; ***************************************************************************************
+boundaryArray
+    !byte 255,23,15,8
+
+; ***************************************************************************************
+plotMessageStart
+    !byte 25                        ; VDU 25
+plotType
+    !byte $ea                       ;
+plotXLow
+    !byte $ea                       ;
+plotXHigh
+    !byte $ea                       ;
+plotYLow
+    !byte $ea                       ;
+plotYHigh
+    !byte $ea                       ;
+plotMessageEnd
+
+; ***************************************************************************************
+verticalGuardiansSpritesArray
+    ; vertical guardians for the later levels
+    ; Level     11,  12,  13,  14,  15,  16,  17,  18,  19,  20
+    !byte $ea, $03, $00, $04, $05, $06, $00, $07, $09, $08, $04
+
+; ***************************************************************************************
+keyXPositions
+    !byte $ea, $ea, $ea, $ea, $ea   ;
+keyYPositions
+    !byte $ea, $ea, $ea, $ea, $ea   ;
+keyGot
+    !byte $00, $00, $00, $00, $00   ;
+
+; ***************************************************************************************
+toFullColour
+    !byte $00, $11, $22, $33, $44, $55, $66, $77, $88, $99, $aa, $bb, $cc, $dd, $ee, $ff
+
+; ***************************************************************************************
+byteMaskGreen
+    !byte $f0, $f8, $fc, $fe
+
+; ***************************************************************************************
+byteMaskRed
+    !byte $0f, $8f, $cf, $ef
+
 
 !if (* > $3280 ) {
     !error "Code too big by ", * - $3280, " bytes"
@@ -9185,8 +9670,41 @@ possibleCollisionInY
 return8
     rts                                 ;
 
+; ***************************************************************************************
 checkPixelCollision
-; TODO
+;    lda guardianPositions,x             ;
+;    and #$fc                            ;
+;    sta mobjectXPosition                ;
+;    lda guardianPositions + 1,x         ;
+;    asl                                 ; get guardian pixel position
+;    asl                                 ;
+;    asl                                 ;
+;    sta mobjectYPosition                ;
+;
+;    lda playerPixelX                    ;
+;    sec                                 ;
+;    sbc #20                             ;
+;    asl                                 ; get true pixel X
+;    sta newPlayerXPosition              ;
+;    lda playerPixelY                    ;
+;    sta newPlayerYPosition              ;
+;
+;    jsr getPlayerSourceSpriteAddress    ;
+;    lda plotSourceSpriteAddressLow      ;
+;    sta sprite1AddressLow               ;
+;    lda plotSourceSpriteAddressHigh     ;
+;    sta sprite1AddressHigh              ;
+;
+;    sta sprite2AddressLow               ;
+;    sta sprite2AddressHigh              ;
+;
+;    txa                                 ;
+;    pha                                 ;
+;    jsr startPixelCollisionDetection    ;
+;    pla                                 ;
+;    tax                                 ;
+;    lda gotCollision                    ;
+;    beq return8                         ;
     jmp death                           ;
 
 ; ***************************************************************************************
@@ -13662,18 +14180,6 @@ yOffsetsTable
     !byte 16
 
 ; ***************************************************************************************
-toFullColour
-    !byte $00, $11, $22, $33, $44, $55, $66, $77, $88, $99, $aa, $bb, $cc, $dd, $ee, $ff
-
-; ***************************************************************************************
-byteMaskGreen
-    !byte $f0, $f8, $fc, $fe
-
-; ***************************************************************************************
-byteMaskRed
-    !byte $0f, $8f, $cf, $ef
-
-; ***************************************************************************************
 debugChangePalette
     ora paletteLookupTable                  ;
     sta videoULAPaletteRegister             ; store actual colour in register
@@ -13716,22 +14222,6 @@ oswordSoundBlock
     !byte $01, $00, $00, $00, $00, $00, $00, $00    ;
 
 ; ***************************************************************************************
-plotMessageStart
-    !byte 25                        ; VDU 25
-plotType
-    !byte $ea                       ;
-plotXLow
-    !byte $ea                       ;
-plotXHigh
-    !byte $ea                       ;
-plotYLow
-    !byte $ea                       ;
-plotYHigh
-    !byte $ea                       ;
-plotMessageEnd
-
-
-; ***************************************************************************************
 ; uninitialized variables
 ; ***************************************************************************************
 
@@ -13755,14 +14245,6 @@ levelFeature5
 levelColourArray
     !byte $01, $01, $03, $02, $03       ;
     !byte $00, $00, $00                 ; [unused?]
-
-; ***************************************************************************************
-keyXPositions
-    !byte $ea, $ea, $ea, $ea, $ea   ;
-keyYPositions
-    !byte $ea, $ea, $ea, $ea, $ea   ;
-keyGot
-    !byte $00, $00, $00, $00, $00   ;
 
 ; ***************************************************************************************
 ; ***************************************************************************************
@@ -13844,11 +14326,6 @@ creditsMessage
     !byte 31, 20, 8                 ; TAB(19,7)
 creditsMessageEnd
 
-; ***************************************************************************************
-verticalGuardiansSpritesArray
-    ; vertical guardians for the later levels
-    ; Level     11,  12,  13,  14,  15,  16,  17,  18,  19,  20
-    !byte $ea, $03, $00, $04, $05, $06, $00, $07, $09, $08, $04
 
 
 !if * > $7fa0 {

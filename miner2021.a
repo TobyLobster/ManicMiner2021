@@ -1,5 +1,6 @@
 ; miner2021.a
 ;
+;debugPixelCollision
 
 ; constants
 charSPACE                           = $20       ;
@@ -27,12 +28,13 @@ keyCodeS                            = $ae
 keyCodeQ                            = $ef
 keyCodeCOPY                         = $96
 keyCodeSHIFT                        = $ff
-
+keyCodeRETURN                       = $b6
+keyCodeZ                            = $9e
+keyCodeX                            = $bd
+keyCodeColon                        = $b7
+keyCodeForwardSlash                 = $97
 
 ; OS memory locations
-vduTextColourByteOR                 = $D2       ; } bytes to implement current foreground
-vduTextColourByteEOR                = $D3       ; } and background text colours
-vduWriteCursorScreenAddressLow      = $D8       ; address of the top of the cell
 interruptAccumulator                = $FC       ; RESERVED for INTERRUPTS
 irqv1                               = $204      ;
 irqv2                               = $206      ;
@@ -160,7 +162,7 @@ willyIsOnConveyor               = $4f       ;
 willyDirectionAgainstFlowOfConveyor = $50   ; $01 or $ff when moving against the flow of the conveyor
 spriteColourMask                = $51       ;
 currentGuardianColour           = $52       ;
-currentGuardianXPosition        = $53       ;
+unused53                        = $53       ; UNUSED
 drawGuardianLoopCounter         = $54       ;
 conveyorX                       = $55       ;
 conveyorY                       = $56       ;
@@ -256,33 +258,6 @@ meteorYCoordinate               = $9d       ;
 meteorAnimationState            = $9e       ;
 meteorIndex                     = $9f       ;
 
-; pixel collision variables
-;gotCollision                    = $a0       ;
-;dx                              = $a1       ;
-;dy                              = $a2       ;
-;mobjectXPosition                = $a3       ;
-;mobjectYPosition                = $a4       ;
-;newPlayerXPosition              = $a5       ;
-;newPlayerYPosition              = $a6       ;
-;checkLength                     = $a7       ;
-;sprite1OffsetWithinCell         = $a8       ;
-;sprite2OffsetWithinCell         = $a9       ;
-;collisionSprite1Width           = $aa       ;
-;collisionSprite2Width           = $ab       ;
-;collisionSprite1Height          = $ac       ;
-;collisionSprite2Height          = $ad       ;
-;collisionSprite1Stride          = $ae       ;
-;collisionSprite2Stride          = $af       ;
-;collisionLoopCounter            = $b0       ;
-;colSprite1Offset                = $b1       ;
-;colSprite2Offset                = $b2       ;
-;sprite1AddressLow               = $b3       ;
-;sprite1AddressHigh              = $b4       ;
-;sprite2AddressLow               = $b5       ;
-;sprite2AddressHigh              = $b6       ;
-;spriteLow                       = $b7       ;
-;spriteHigh                      = $b8       ;
-
 ; ***************************************************************************************
 verticalGuardianMODE1Address    = $0400     ;
 verticalGuardianMODE1Address1   = $0440     ;
@@ -316,6 +291,9 @@ initialize
     sta rasterArea                          ;
     sta channel2Frequency                   ;
     sta previousNoteByte                    ;
+!ifdef debugPixelCollision {
+    lda #0
+}
     sta musicEnabled                        ;
     jsr pauseMusic                          ;
 
@@ -2426,10 +2404,6 @@ checkIfSupported
     sta willyFalling                    ;
     jmp updatePlayerFalling             ;
 
-keyCodeRETURN   = $b6
-keyCodeZ        = $9e
-keyCodeX        = $bd
-
 ; ***************************************************************************************
 isKeyPressed
     ldy #$ff                                ;
@@ -2811,6 +2785,9 @@ updateConveyorAndPlayer
 
 ; ***************************************************************************************
 updatePlayerWithAnimation
+!ifdef debugPixelCollision {
+rts
+}
     jsr getPlayerSourceSpriteAddress    ;
 
     ldx newPlayerPixelX                 ;
@@ -3750,11 +3727,14 @@ updateVerticalGuardian
     lda currentLevel                ;
     cmp #19                         ;
     bne +                           ; if (not level 19 - The Meteor Storm) then branch
+
+    ; level 19 specific code
     lda spriteColourMask            ;
     cmp #$ff                        ;
     bne +                           ; if (not colour 3) then branch
     lda #$f0                        ; make the meteors in the Meteor Storm colour 2
     sta spriteColourMask            ;
+
 +
     lda currentGuardianX            ;
     and #$3f                        ;
@@ -4271,6 +4251,13 @@ drawGuardiansLoop
 
 ; ***************************************************************************************
 updateAndDrawGuardian
+!ifdef debugPixelCollision {
+    lda zpGuardianPositionX         ;
+    and #3                          ;
+    asl                             ;
+    sta zpGuardianAnimIndex         ; temp = 2 * (guardianX and 3)
+    jmp notAtCellXBoundary
+}
     lda zpGuardianPositionY         ;
     eor #$40                        ; flip bit 6
     sta zpGuardianPositionY         ;
@@ -4284,6 +4271,10 @@ updateAndDrawGuardian
     cmp #$40                        ;
     beq moveLeftOrRight             ; if (bit 6 set) then branch
     rts                             ;
+
+spriteToDraw
+    !byte $e0, $e1, $e8, $e9
+    !byte $f1, $f0, $f9, $f8
 
 ; ***************************************************************************************
 moveLeftOrRight
@@ -4302,9 +4293,8 @@ moveLeftOrRight
     clc                             ;
     adc #1                          ;
     and #$7f                        ;
-    sta currentGuardianXPosition    ;
+    sta zpGuardianPositionX         ;
 
-    lda zpGuardianPositionX         ;
     and #3                          ;
     asl                             ;
     sta zpGuardianAnimIndex         ; temp = 2 * (guardianX and 3)
@@ -4314,15 +4304,27 @@ moveLeftOrRight
     jsr eraseLeftOfGuardian         ;
 
 notAtCellXBoundary
+    jsr testForBounceHorizontal     ;
     jsr positionCursorAtGuardian    ;
+    jmp drawHorizontalGuardian      ;
+
+drawHorizontalGuardian
+    ldx #0
+    lda zpGuardianPositionY         ;
+    bmi +                           ;
+    ldx #4                          ;
++
     ; draw e0+temp, e1+temp
     ;      e8+temp, e9+temp
-    lda #$e0                        ;
+    ;
+    ; or   f1+temp, f0+temp
+    ;      f9+temp, f8+temp
+    lda spriteToDraw,x              ;
     clc                             ;
     adc zpGuardianAnimIndex         ;
     jsr drawIfNotOverExit           ;
 
-    lda #$e1                        ;
+    lda spriteToDraw + 1,x          ;
     clc                             ;
     adc zpGuardianAnimIndex         ;
     jsr drawIfNotOverExit           ;
@@ -4331,25 +4333,23 @@ notAtCellXBoundary
     dec cursorX                     ;
     dec cursorX                     ;
 
-    lda #$e8                        ;
+    lda spriteToDraw + 2,x          ;
     clc                             ;
     adc zpGuardianAnimIndex         ;
     jsr drawIfNotOverExit           ;
 
-    lda #$e9                        ;
+    lda spriteToDraw + 3,x          ;
     clc                             ;
     adc zpGuardianAnimIndex         ;
-    jsr drawIfNotOverExit           ;
-
-    jmp testForBounceHorizontal     ;
+    jmp drawIfNotOverExit           ;
 
 ; ***************************************************************************************
 setAnimIndexBasedOnX
-    lda zpGuardianPositionX         ;
-    and #3                          ;
-    asl                             ;
-    sta zpGuardianAnimIndex         ;
-    jmp notAtCellXBoundary          ;
+;    lda zpGuardianPositionX         ;
+;    and #3                          ;
+;    asl                             ;
+;    sta zpGuardianAnimIndex         ;
+;    jmp afterSetAnimIndex           ;
 
 ; ***************************************************************************************
 moveGuardianLeft
@@ -4357,8 +4357,7 @@ moveGuardianLeft
     sec                             ;
     sbc #1                          ;
     and #$7f                        ;
-    sta currentGuardianXPosition    ;
-    lda zpGuardianPositionX         ;
+    sta zpGuardianPositionX         ;
     and #3                          ;
     eor #3                          ;
     asl                             ;
@@ -4367,41 +4366,18 @@ moveGuardianLeft
 
     jsr positionCursorAtGuardian    ;
     jsr eraseRightOfGuardian        ;
-
 +
+;    lda currentLevel                ; }
+;    cmp #19                         ; }
+;    beq setAnimIndexBasedOnX        ; } these horizontal guardians reverse the direction
+;    cmp #15                         ; } of animation when moving left
+;    beq setAnimIndexBasedOnX        ; }
+
+afterSetAnimIndex
+    jsr testForBounceHorizontal     ;
     jsr positionCursorAtGuardian    ;
-    lda currentLevel                ;
-    cmp #19                         ;
-    beq setAnimIndexBasedOnX        ;
-    cmp #15                         ;
-    beq setAnimIndexBasedOnX        ;
 
-    ; draw f1+temp, f0+temp
-    ;      f9+temp, f8+temp
-    lda #$f1                        ;
-    clc                             ;
-    adc zpGuardianAnimIndex         ;
-    jsr drawIfNotOverExit           ;
-    lda #$f0                        ;
-    clc                             ;
-    adc zpGuardianAnimIndex         ;
-    jsr drawIfNotOverExit           ;
-
-    inc cursorY                     ;
-    dec cursorX                     ;
-    dec cursorX                     ;
-
-    lda #$f9                        ;
-    clc                             ;
-    adc zpGuardianAnimIndex         ;
-    jsr drawIfNotOverExit           ;
-
-    lda #$f8                        ;
-    clc                             ;
-    adc zpGuardianAnimIndex         ;
-    jsr drawIfNotOverExit           ;
-
-    jmp testForBounceHorizontal     ;
+    jmp drawHorizontalGuardian      ;
 
 ; ***************************************************************************************
 positionCursorAtGuardian
@@ -4443,12 +4419,16 @@ toggleGuardianDirection
     lda zpGuardianPositionY         ;
     eor #$80                        ; toggle direction
     sta zpGuardianPositionY         ;
+    lda zpGuardianAnimIndex         ;
+    lsr                             ;
+    eor #3                          ;
+    asl                             ;
+    sta zpGuardianAnimIndex         ;
     rts                             ;
 
 ; ***************************************************************************************
 testForBounceHorizontal
-    lda currentGuardianXPosition    ;
-    sta zpGuardianPositionX         ;
+    lda zpGuardianPositionX         ;
     cmp zpGuardianLimit1            ;
     beq toggleGuardianDirection     ;
     cmp zpGuardianLimit2            ;
@@ -4465,6 +4445,35 @@ copyGuardianSprites
     ldx currentLevel                    ;
     lda guardianSetForEachLevel - 1,x   ;
     sta zpGuardianPositionX             ;
+
+    ; Top Left
+    tax                                 ;
+    lda #32                             ;
+    sec                                 ;
+    sbc guardianToleranceTL - 1, x      ;
+    sta toleranceTL                     ;
+    sta toleranceReversedTR             ;
+
+    ; Top Right
+    lda #32                             ;
+    sec                                 ;
+    sbc guardianToleranceTR - 1, x      ;
+    sta toleranceTR                     ;
+    sta toleranceReversedTL             ;
+
+    ; Bottom Left
+    lda #32                             ;
+    sec                                 ;
+    sbc guardianToleranceBL - 1, x      ;
+    sta toleranceBL                     ;
+    sta toleranceReversedBR             ;
+
+    ; Bottom Right
+    lda #32                             ;
+    sec                                 ;
+    sbc guardianToleranceBR - 1, x      ;
+    sta toleranceBR                     ;
+    sta toleranceReversedBL             ;
 
     ldx #1                              ;
 -
@@ -4603,6 +4612,8 @@ setCursorScreenAddress
 ; ***************************************************************************************
 drawIfNotOverExit
     sta rememberCharacterToDraw         ;
+    txa                                 ;
+    pha                                 ;
     jsr isOverExit                      ;
     beq moveForward                     ;
 
@@ -4622,6 +4633,8 @@ drawIfNotOverExit
 
 moveForward
     inc cursorX                         ; move forward
+    pla                                 ;
+    tax                                 ;
     rts                                 ;
 
 ; ***************************************************************************************
@@ -7333,6 +7346,7 @@ drawExitCell
     inc cellPlotSourceSpriteAddressHigh ;
 +
     rts                                 ;
+
 ; ***************************************************************************************
 reachedExit
     lda #$4c                        ;
@@ -7412,7 +7426,9 @@ updateAir
     lda airRemainingDelayCounter    ;
     and #$07                        ;
     cmp #0                          ;
+!ifndef debugPixelCollision {
     beq loseAir                     ;
+}
     rts                             ;
 
 airStartAddress = $5d86
@@ -8104,41 +8120,51 @@ guardianSetForEachLevel
     ; level 1,   2,   3,   4,   5,   6,   7,  8,    9,  10,  11,  12,  13,  14,  15,  16,  17,  18,  19,  20
     !byte $01, $02, $03, $04, $05, $06, $07, $08, $09, $0a, $0b, $08, $0c, $00, $0d, $0e, $0f, $09, $10, $01
 
+guardianToleranceTL
+    ;     duck, penguin, ostrich, seal, toilet, pacman, kanga, barrel. wheels, endorian, spinner, ore mac, money, flag, speader, mirror
+    !byte    3,       4,    6,      5,      0,     2,      3,      4,        4,       1,       4,       1,     5,    4,       1,      5
+guardianToleranceTR
+    !byte    5,      10,    8,      8,     11,     7,      9,       9,      10,      11,       10,      7,    8,    11,       9,      9
+guardianToleranceBL
+    !byte    3,       3,    4,      1,      0,     3,      0,      3,        1,       1,       3,       2,     0,    3,       0,      1
+guardianToleranceBR
+    !byte    7,       9,    9,      6,      8,     8,      8,      9,        7,       8,       7,       8,     8,    6,      12,      7
+
 penOffsetX = 4
 penOffsetY = -10
     ; A Penrose triangle as encoded PLOT statements
 penroseTriangle
     !byte $fe, 1                                    ; GCOL 0,1
-    !byte $04, $12 + penOffsetX, $AC+penOffsetY     ; MOVE
-    !byte $04, $12 + penOffsetX, $B8+penOffsetY     ; MOVE
-    !byte $55, $78 + penOffsetX, $79+penOffsetY     ; TRI
-    !byte $55, $6c + penOffsetX, $8B+penOffsetY     ; TRI
-    !byte $55, $78 + penOffsetX, $D3+penOffsetY     ; TRI
-    !byte $55, $6c + penOffsetX, $CD+penOffsetY     ; TRI
+    !byte $04, $12 + penOffsetX, $ac + penOffsetY   ; MOVE
+    !byte $04, $12 + penOffsetX, $b8 + penOffsetY   ; MOVE
+    !byte $55, $78 + penOffsetX, $79 + penOffsetY   ; TRI
+    !byte $55, $6c + penOffsetX, $8b + penOffsetY   ; TRI
+    !byte $55, $78 + penOffsetX, $d3 + penOffsetY   ; TRI
+    !byte $55, $6c + penOffsetX, $cd + penOffsetY   ; TRI
     !byte $fe, 2                                    ; GCOL 0,2
-    !byte $04, $78 + penOffsetX, $79+penOffsetY     ; MOVE
-    !byte $04, $83 + penOffsetX, $7F+penOffsetY     ; MOVE
-    !byte $55, $78 + penOffsetX, $D3+penOffsetY     ; TRI
-    !byte $55, $83 + penOffsetX, $E4+penOffsetY     ; TRI
-    !byte $55, $37 + penOffsetX, $B3+penOffsetY     ; TRI
-    !byte $55, $2d + penOffsetX, $B8+penOffsetY     ; TRI
+    !byte $04, $78 + penOffsetX, $79 + penOffsetY   ; MOVE
+    !byte $04, $83 + penOffsetX, $7f + penOffsetY   ; MOVE
+    !byte $55, $78 + penOffsetX, $d3 + penOffsetY   ; TRI
+    !byte $55, $83 + penOffsetX, $e4 + penOffsetY   ; TRI
+    !byte $55, $37 + penOffsetX, $b3 + penOffsetY   ; TRI
+    !byte $55, $2d + penOffsetX, $b8 + penOffsetY   ; TRI
     !byte $fe, 3                                    ; GCOL 0,3
-    !byte $04, $6c + penOffsetX, $CC+penOffsetY     ; MOVE
-    !byte $05, $6c + penOffsetX, $98+penOffsetY     ; DRAW
-    !byte $05, $2c + penOffsetX, $B8+penOffsetY     ; DRAW
-    !byte $05, $83 + penOffsetX, $E4+penOffsetY     ; DRAW
-    !byte $05, $77 + penOffsetX, $EA+penOffsetY     ; DRAW
-    !byte $05, $12 + penOffsetX, $B8+penOffsetY     ; DRAW
-    !byte $05, $12 + penOffsetX, $AC+penOffsetY     ; DRAW
-    !byte $05, $78 + penOffsetX, $79+penOffsetY     ; DRAW
-    !byte $05, $83 + penOffsetX, $7F+penOffsetY     ; DRAW
-    !byte $05, $83 + penOffsetX, $E4+penOffsetY     ; DRAW
-    !byte $04, $78 + penOffsetX, $79+penOffsetY     ; MOVE
-    !byte $05, $78 + penOffsetX, $D3+penOffsetY     ; DRAW
-    !byte $05, $37 + penOffsetX, $B3+penOffsetY     ; DRAW
-    !byte $04, $6c + penOffsetX, $99+penOffsetY     ; MOVE
-    !byte $05, $6c + penOffsetX, $8B+penOffsetY     ; DRAW
-    !byte $05, $12 + penOffsetX, $B8+penOffsetY     ; DRAW
+    !byte $04, $6c + penOffsetX, $cc + penOffsetY   ; MOVE
+    !byte $05, $6c + penOffsetX, $98 + penOffsetY   ; DRAW
+    !byte $05, $2c + penOffsetX, $b8 + penOffsetY   ; DRAW
+    !byte $05, $83 + penOffsetX, $e4 + penOffsetY   ; DRAW
+    !byte $05, $77 + penOffsetX, $ea + penOffsetY   ; DRAW
+    !byte $05, $12 + penOffsetX, $b8 + penOffsetY   ; DRAW
+    !byte $05, $12 + penOffsetX, $ac + penOffsetY   ; DRAW
+    !byte $05, $78 + penOffsetX, $79 + penOffsetY   ; DRAW
+    !byte $05, $83 + penOffsetX, $7f + penOffsetY   ; DRAW
+    !byte $05, $83 + penOffsetX, $e4 + penOffsetY   ; DRAW
+    !byte $04, $78 + penOffsetX, $79 + penOffsetY   ; MOVE
+    !byte $05, $78 + penOffsetX, $d3 + penOffsetY   ; DRAW
+    !byte $05, $37 + penOffsetX, $b3 + penOffsetY   ; DRAW
+    !byte $04, $6c + penOffsetX, $99 + penOffsetY   ; MOVE
+    !byte $05, $6c + penOffsetX, $8b + penOffsetY   ; DRAW
+    !byte $05, $12 + penOffsetX, $b8 + penOffsetY   ; DRAW
     !byte $ff                                       ; TERMINATOR
 
 ; ***************************************************************************************
@@ -8150,418 +8176,6 @@ verticalGuardian2
     !byte $ea, $ea, $ea, $ea        ; second guardian
     !byte $ea, $ea, $ea, $ea        ; third  guardian
     !byte $ea, $ea, $ea, $ea        ; fourth guardian
-
-!ifdef CRAZY_COLLISION_CODE {
-; ***************************************************************************************
-;
-; Pixel Collision Detection
-; -------------------------
-;
-; This is a description of a fine grained check for the collision of two sprites. We only execute the fine grained check if the current course grained test (checking for overlap of the 'cell' sized extents of the sprites) indicates a possible collision.
-;
-; Definition: A 'cell' is a 4x8 rectangle of pixels. All sprites are 1 or 2 cells wide (making a 'cell row'), and 1 or 2 cell rows high.
-;
-; Suppose we have cell heights of 2 for each sprite. Label the cell rows of the first sprite:
-;    A
-;    B
-;
-; and label the cell rows of the second sprite:
-;    C
-;    D
-;
-; Let (dx,dy) be the difference in sprite positions.
-;
-; Because of the course grained check we know that:
-;
-;    -7 <= dx <= 7
-;   -15 <= dy <= 15
-;
-; By swapping the sprites over if necessary we can assume (WLOG):
-;
-;    0 <= dx <= 7
-;
-; Different pairs of cell rows can overlap depending on dy. We look up the list of pairs of cell rows to check against each other.
-;
-;    Test dy                 | Pairs to check | # pixel rows to check ('length') | The start pixel row within each sprite row
-;    ------------------------+----------------+----------------------------------+------------------------------------------
-;    if dy in range [-15,-8] |       AD       |    AD: dy+16                     |    AD: (0,8-length)
-;    if dy in range [-7,-1]  |    AC AD BD    | AC,BD: dy+8      AD: -dy         | AC,BD: (0,8-length)      AD: (8-length,0)
-;    if dy in range [0,7]    |    AC BC BD    | AC,BD:  8-dy     BC:  dy         | AC,BD: (length,0)      BC: (0,8-length)
-;    if dy in range [8,15]   |       BC       |    BC: 16-dy                     |    BC: (8-length,0)
-;    ------------------------+----------------+----------------------------------+------------------------------------------
-;                                                                                  Format is '(first sprite, second sprite)'
-;
-; If height of either sprite is one, then just ignore pairs that include B or D as appropriate.
-;
-; The ranges in the above table are equivalent to this (which is easier to compute in 6502):
-;
-; let dY = dy+15        (Note capital Y)
-;
-;    Test dY                | Order to test      | Result in X register
-;    -----------------------+--------------------+---------------------
-;    if dY in range [0,7]   |    if dY < 8       | X = 3
-;    if dY in range [8,14]  |    else if dY < 15 | X = 2
-;    if dY in range [15,22] |    else if dY < 23 | X = 1
-;    if dY in range [23,30] |    else if dY < 31 | X = 0
-;
-; For each pixel row we want to test, we need to gather a 1 bit mask of the pixels set in that row. This will be 4 bits or 8 bits long depending on the sprite width. (See getBitMask routine below.)
-; Then shift left (ASL) the first mask by dx places left then 'AND' with the second mask.
-; If the result is non-zero there is a collision.
-
-; ***************************************************************************************
-startPixelCollisionDetection
-; On Entry:
-;   .sprite1                        ; First sprite number to test
-;   .sprite2                        ; Second sprite number to test
-;   .newPlayerX/YPosition           ; first sprite position on screen
-;   .mobjectX/YPosition             ; second sprite position on screen
-; On Exit:
-;   gotCollision is zero if no collision, 255 if there is.
-
-    LDA #0                              ;
-    STA gotCollision                    ;
-    LDA mobjectYPosition                ;
-    SEC                                 ;
-    SBC newPlayerYPosition              ;
-    STA dy                              ; Calculate dy
-    LDA mobjectXPosition                ;
-    SEC                                 ;
-    SBC newPlayerXPosition              ;
-    STA dx                              ; Calculate dx
-    BPL +                               ; if (dx >= 0) then branch to later (no swap required)
-.swapSprites
-    EOR #255                            ; otherwise swap sprite1 and 2
-    STA dx                              ;
-    INC dx                              ; dx = -dx
-    LDA dy                              ;
-    EOR #255                            ;
-    STA dy                              ;
-    INC dy                              ; dy = -dy
-
-    ; swap sprite addresses
-    LDA sprite1AddressLow               ;
-    TAX                                 ;
-    LDA sprite1AddressHigh              ;
-    TAY                                 ;
-    LDA sprite2AddressLow               ;
-    STA sprite1AddressLow               ;
-    LDA sprite2AddressHigh              ;
-    STA sprite1AddressHigh              ;
-    TXA                                 ;
-    STA sprite2AddressLow               ;
-    TYA                                 ;
-    STA sprite2AddressHigh              ;
-
-;    LDA .sprite2                        ; and swap sprite numbers
-;    TAX                                 ;
-;    LDA .sprite1                        ;
-;    STA .sprite2                        ;
-;    STX .sprite1                        ;
-+
-;    LDA .sprite1                        ;
-;    JSR .getSpriteInfo                  ;
-;    LDA .spriteWidthArray,X             ;
-    LDA #2                              ;
-    STA collisionSprite1Width           ;
-    ASL                                 ;
-    ASL                                 ;
-    ASL                                 ;
-    STA collisionSprite1Stride          ;
-
-;    LDA .spriteHeightArray,X            ;
-    LDA #2                              ;
-    STA collisionSprite1Height          ; Get stride and height for sprite 1
-    CMP #1                              ;
-    BNE +                               ;
-    LDA #0                              ;
-    STA collisionSprite1Stride          ;
-+
-
-;    LDA .sprite2                        ;
-;    JSR .getSpriteInfo                  ;
-;    LDA .spriteWidthArray,X             ;
-    LDA #2
-    STA collisionSprite2Width           ;
-    ASL                                 ;
-    ASL                                 ;
-    ASL                                 ;
-    STA collisionSprite2Stride          ;
-;    LDA .spriteHeightArray,X            ;
-    LDA #2
-    STA collisionSprite2Height          ; Get stride and height for sprite 2
-    CMP #1                              ;
-    BNE +                               ;
-    LDA #0                              ;
-    STA collisionSprite2Stride          ;
-+
-
-    LDA collisionSprite1Width           ;
-    SEC                                 ;
-    SBC collisionSprite2Width           ;
-    TAX                                 ;
-    INX                                 ;
-    LDA addAmountX,X                    ;
-    CLC                                 ;
-    ADC dx                              ;
-    STA dx                              ; dx now represents how much to shift the bitmask for sprite1
-
-    LDX #3                              ; Find out which range in dy we are dealing with
-    LDA dy                              ;
-    CLC                                 ;
-    ADC #15                             ;
-loopCheckRange
-    CMP boundaryArray,X                 ; Check which range dy falls in.
-    BCC foundRange                      ; When the loop finishes X will hold the index for the
-    DEX                                 ; range in which dy falls (0-3)
-    BNE loopCheckRange                  ;
-foundRange
-    CPX #2                              ;
-    BEQ range8to14                      ; Branch to code for each range
-    BCS range0to7                       ;
-    CPX #1                              ;
-    BEQ range15to22                     ;
-range23To30
-    LDA #16                             ;
-    SEC                                 ;
-    SBC dy                              ;
-    STA checkLength                     ;
-    LDA #8                              ;
-    SEC                                 ;
-    SBC checkLength                     ;
-    STA sprite1OffsetWithinCell         ;
-    LDA #0                              ;
-    STA sprite2OffsetWithinCell         ;
-    JMP .checkBC                        ;
-range0to7
-    TAY                                 ;
-    INY                                 ;
-    STY checkLength                     ; checkLength = dy + 16
-    LDA #0                              ;
-    STA sprite1OffsetWithinCell         ; sprite1OffsetWithinCell= 0
-
-    LDA #8                              ;
-    SEC                                 ;
-    SBC checkLength                     ;
-    STA sprite2OffsetWithinCell         ; sprite2OffsetWithinCell= 8 - checkLength
-
-    JMP .checkAD                        ;
-range8to14
-    SEC                                 ;
-    SBC #7                              ;
-    STA checkLength                     ; checkLength = dY - 7 = dy + 8
-    LDA #8                              ;
-    SEC                                 ;
-    SBC checkLength                     ;
-    STA sprite2OffsetWithinCell         ;
-    LDA #0                              ;
-    STA sprite1OffsetWithinCell         ;
-    JSR .checkAC                        ;
-    JSR .checkBD                        ;
-    LDA dy                              ;
-    EOR #255                            ;
-    CLC                                 ;
-    ADC #1                              ;
-    STA checkLength                     ;
-    LDA #8                              ;
-    SEC                                 ;
-    SBC checkLength                     ;
-    STA sprite1OffsetWithinCell         ;
-    LDA #0                              ;
-    STA sprite2OffsetWithinCell         ;
-    JMP .checkAD                        ;
-range15to22
-    LDA #8                              ;
-    SEC                                 ;
-    SBC dy                              ;
-    STA checkLength                     ; checkLength = 8 - dy
-    LDA dy                              ;
-    STA sprite1OffsetWithinCell         ;
-    LDA #0                              ;
-    STA sprite2OffsetWithinCell         ;
-    JSR .checkAC                        ;
-    JSR .checkBD                        ;
-    LDA dy                              ;
-    BEQ +                               ;
-    STA checkLength                     ;
-    LDA #8                              ;
-    SEC                                 ;
-    SBC checkLength                     ;
-    STA sprite2OffsetWithinCell         ;
-    LDA #0                              ;
-    STA sprite1OffsetWithinCell         ;
-    JMP .checkBC                        ;
-
-addAmountX
-    !byte 4,0,0                         ; Difference in width (-1,0+1) determines amount to add to dx
-
-; ***************************************************************************************
-.checkAC
-; On Entry:
-;     sprite1OffsetWithinCell  is the byte offset (0-7) to start checking rows in sprite1
-;     sprite2OffsetWithinCell  is the byte offset (0-7) to start checking rows in sprite2
-;     checkLength  is the number of consecutive rows to check
-    LDA collisionSprite1Height          ;
-    CMP #1                              ;
-    BEQ +                               ; if(sprite1 is height 1) then branch (no AC collision)
-    LDA collisionSprite2Height          ;
-    CMP #1                              ;
-    BEQ +                               ; if(sprite2 is height 1) then branch (no AC collision)
-
-; check each row for collision
-.checkCollisionRows                     ;
-    LDA checkLength                     ;
-    STA collisionLoopCounter            ;
-    LDA sprite1OffsetWithinCell         ;
-    STA colSprite1Offset                ;
-    LDA sprite2OffsetWithinCell         ;
-    STA colSprite2Offset                ;
-.checkCollisionLoop
-;    LDY .sprite1                        ;
-;    JSR .getSpriteAddressY              ; TODO: This should be outside the loop, for performance!
-    LDA sprite1AddressLow               ;
-    STA spriteLow                       ;
-    LDA sprite1AddressHigh              ;
-    STA spriteHigh                      ;
-    LDX collisionSprite1Width           ;
-    LDY colSprite1Offset                ;
-    JSR .getBitMask                     ;
-    LDX dx                              ;
--
-    DEX                                 ;
-    BMI .afterShifting                  ;
-    ASL                                 ;
-    JMP -                               ;
-.afterShifting
-    STA .compare1                       ;
-;    LDY .sprite2                        ;
-;    JSR .getSpriteAddressY              ; TODO: This should be outside the loop, for performance!
-    LDA sprite2AddressLow               ;
-    STA spriteLow                       ;
-    LDA sprite2AddressHigh              ;
-    STA spriteHigh                      ;
-    LDX collisionSprite2Width           ;
-    LDY colSprite2Offset                ;
-    JSR .getBitMask                     ;
-.compare1 = * + 1
-    AND #$FF                            ;
-    BNE .foundCollision                 ;
-    INC colSprite1Offset                ;
-    INC colSprite2Offset                ;
-    DEC collisionLoopCounter            ;
-    BNE .checkCollisionLoop             ;
-+
-    RTS                                 ;
-
-; ***************************************************************************************
-.foundCollision
-    LDA #255                            ; Found a collision
-    STA gotCollision                    ;
-    RTS                                 ;
-
-; ***************************************************************************************
-.checkAD
-; On Entry:
-;     sprite1OffsetWithinCell  is the byte offset (0-7) to start checking rows in sprite1
-;     sprite2OffsetWithinCell  is the byte offset (0-7) to start checking rows in sprite2 (second half)
-;     checkLength  is the number of consecutive rows to check
-    LDA collisionSprite1Height          ;
-    CMP #1                              ;
-    BEQ +                               ; if(sprite1 is height 1) then branch (no collision)
-    LDA sprite2OffsetWithinCell         ;
-    CLC                                 ;
-    ADC collisionSprite2Stride          ;
-    STA sprite2OffsetWithinCell         ;
-    JSR .checkCollisionRows             ;
-    LDA sprite2OffsetWithinCell         ;
-    SEC                                 ;
-    SBC collisionSprite2Stride          ;
-    STA sprite2OffsetWithinCell         ;
-+
-    RTS
-
-; ***************************************************************************************
-.checkBC
-; On Entry:
-;     sprite1OffsetWithinCell  is the byte offset (0-7) to start checking rows in sprite1 (second half)
-;     sprite2OffsetWithinCell  is the byte offset (0-7) to start checking rows in sprite2
-;     checkLength  is the number of consecutive rows to check
-    LDA collisionSprite2Height          ;
-    CMP #1                              ;
-    BEQ +                               ; if(sprite2 is height 1) then branch (no collision)
-    LDA sprite1OffsetWithinCell         ;
-    CLC                                 ;
-    ADC collisionSprite1Stride          ;
-    STA sprite1OffsetWithinCell         ;
-    JSR .checkCollisionRows             ;
-    LDA sprite1OffsetWithinCell         ;
-    SEC                                 ;
-    SBC collisionSprite1Stride          ;
-    STA sprite1OffsetWithinCell         ;
-+
-    RTS                                 ;
-
-; ***************************************************************************************
-.checkBD
-; On Entry:
-;     sprite1OffsetWithinCell  is the byte offset (0-7) to start checking rows in sprite1 (second half)
-;     sprite2OffsetWithinCell  is the byte offset (0-7) to start checking rows in sprite2
-;     checkLength  is the number of consecutive rows to check
-    LDA sprite2OffsetWithinCell         ;
-    CLC                                 ;
-    ADC collisionSprite2Stride          ;
-    STA sprite2OffsetWithinCell         ;
-    LDA sprite1OffsetWithinCell         ;
-    CLC                                 ;
-    ADC collisionSprite1Stride          ;
-    STA sprite1OffsetWithinCell         ;
-    JSR .checkCollisionRows             ;
-    LDA sprite1OffsetWithinCell         ;
-    SEC                                 ;
-    SBC collisionSprite1Stride          ;
-    STA sprite1OffsetWithinCell         ;
-    LDA sprite2OffsetWithinCell         ;
-    SEC                                 ;
-    SBC collisionSprite2Stride          ;
-    STA sprite2OffsetWithinCell         ;
-+
-    RTS                                 ;
-
-; ***************************************************************************************
-.getBitMask
-;   On Entry:
-;       .spriteLow is 2 byte pointer in zero page that points to start of the sprite
-;       X = the number of cells wide the sprite is (1 or 2)
-;       Y = byte offset within sprite
-;   On Exit:
-;       A = bit mask
-    LDA #0                              ;
-    STA .tempStore                      ;
-    CPX #1                              ;
-    BEQ +                               ; branch if one cell wide
-    LDA (spriteLow),Y                   ;
-    ASL                                 ;
-    ASL                                 ;
-    ASL                                 ;
-    ASL                                 ;
-    ORA (spriteLow),Y                   ;
-    AND #$F0                            ; Logical OR together the lower nybble and the upper nybble
-    STA .tempStore                      ; Remember
-    TYA                                 ;
-    CLC                                 ;
-    ADC #8                              ; Move on to second half of the 2 cell wide sprite
-    TAY                                 ;
-+
-    LDA (spriteLow),Y                   ; Get the upper nybble, move it to the lower nybble
-    LSR                                 ;
-    LSR                                 ;
-    LSR                                 ;
-    LSR                                 ;
-    ORA (spriteLow),Y                   ; Logical OR with the original nybble
-    AND #$0F                            ;
-.tempStore = * + 1
-    ORA #$FF                            ; Logical OR in each nybble together
-    RTS                                 ;
-} ; CRAZY_COLLISION_CODE
 
 ; ***************************************************************************************
 boundaryArray
@@ -8607,6 +8221,308 @@ byteMaskGreen
 ; ***************************************************************************************
 byteMaskRed
     !byte $0f, $8f, $cf, $ef
+
+collisionPlayerX
+    !byte 0
+collisionGuardianX
+    !byte 0
+collisionGuardianY
+    !byte 0
+collisionLow
+    !byte 0
+collisionHigh
+    !byte 0
+
+toleranceTL
+    !byte 0
+toleranceTR
+    !byte 0
+toleranceBL
+    !byte 0
+toleranceBR
+    !byte 0
+toleranceReversedTL
+    !byte 0
+toleranceReversedTR
+    !byte 0
+toleranceReversedBL
+    !byte 0
+toleranceReversedBR
+    !byte 0
+
+playerTolerance
+    !byte 3, 8, 1, 8, 3, 8, 1, 8
+
+; ***************************************************************************************
+;
+;   Check collision shapes with the corners chopped off:
+;      ______
+;   a /      \ b
+;    /        \
+;   |  player |
+;   |    p    |
+;    \        /
+;   c \______/ d
+;
+;           ______
+;        e /      \ f
+;         /        \
+;        | guardian|
+;        |    g    |
+;         \       /
+;        g \_____/ h
+;
+; reject if any one of the following is true:
+;
+;    (pX + pY) - (gX + gY) + a >= 32 - h
+;    (gX + gY) - (pX + pY) + d >= 32 - e
+;    (pX - pY) - (gX - gY) + c >= 32 - f
+;    (gX - gY) - (pX - pY) + b >= 32 - g
+;
+; calculations are 16 bit signed. Probably this could be done in 8 bits.
+;
+; On Entry:
+;     collisionPlayerX        player position
+;     playerPixelY
+;     collisionGuardianX      guardian position
+;     collisionGuardianY
+;
+; ***************************************************************************************
+checkPixelCollision
+    txa                                 ;
+    pha                                 ;
+
+    lda guardianPositions + 1,x         ;
+    bpl +                               ;
+
+    ldx #0                              ;
+    jmp afterSettingX                   ;
+
++
+    ldx #4                              ;
+
+afterSettingX
+    ldy #4
+    lda willyAnimationEOR               ;
+    bne +
+    ldy #0
++
+
+    lda #0                              ;
+    sta collisionHigh                   ;
+    lda collisionPlayerX                ;
+    clc                                 ;
+    adc playerPixelY                    ;
+    bcc +                               ;
+    inc collisionHigh                   ;
++
+    sec                                 ;
+    sbc collisionGuardianX              ;
+    bcs +                               ;
+    dec collisionHigh                   ;
++
+    sec                                 ;
+    sbc collisionGuardianY              ;
+    sta collisionLow                    ;
+    bcs +                               ;
+    dec collisionHigh                   ;
++
+    lda collisionHigh                   ;
+    bmi test2                           ;
+    lda collisionLow                    ;
+    clc                                 ;
+    adc playerTolerance,y               ; value + a
+    cmp toleranceBR,x                   ; 32 - h
+    bcs finishUp1                       ;
+
+test2
+    lda collisionLow                    ;
+    eor #$ff                            ;
+    sta collisionLow                    ;
+    lda collisionHigh                   ;
+    eor #$ff                            ;
+    sta collisionHigh                   ;
+    bmi test3                           ;
+    lda collisionLow                    ;
+    clc                                 ;
+    adc playerTolerance + 3,y           ; value + d
+    cmp toleranceTL,x                   ; 32 - e
+    bcs finishUp1                       ;
+
+test3
+    lda #0                              ;
+    sta collisionHigh                   ;
+    lda collisionPlayerX                ;
+    sec                                 ;
+    sbc playerPixelY                    ;
+    bcs +                               ;
+    dec collisionHigh                   ;
++
+    sec                                 ;
+    sbc collisionGuardianX              ;
+    bcs +                               ;
+    dec collisionHigh                   ;
++
+    clc
+    adc collisionGuardianY              ;
+    sta collisionLow                    ;
+    bcc +                               ;
+    inc collisionHigh                   ;
++
+    lda collisionHigh                   ;
+    bmi test4                           ;
+    lda collisionLow                    ;
+    clc                                 ;
+    adc playerTolerance + 2,y           ; value + c
+    cmp toleranceTR,x                   ; 32 - f
+    bcs finishUp1                       ;
+
+test4
+    lda collisionLow                    ;
+    eor #$ff                            ;
+    sta collisionLow                    ;
+    lda collisionHigh                   ;
+    eor #$ff                            ;
+    sta collisionHigh                   ;
+    bmi +                               ;
+    lda collisionLow                    ;
+    clc                                 ;
+    adc playerTolerance + 1,y           ; value + b
+    cmp toleranceBL,x                   ; 32 - g
+    bcs finishUp1                        ;
++
+!ifdef debugPixelCollision {
+    lda #$0f
+    sta $3280
+    pla
+    tax
+    rts
+} else {
+    pla                                 ;
+    tax                                 ;
+    jmp death                           ;
+}
+finishUp1
+!ifdef debugPixelCollision {
+    lda #$f0
+    sta $3280
+}
+    pla                                 ;
+    tax                                 ;
+    rts                                 ;
+
+!ifdef debugPixelCollision {
+; ***************************************************************************************
+debugDrawVerticalLine
+    php
+    sta tempLineA
+    pha
+    txa
+    pha
+    tya
+    pha
+    lda #0
+    sta debugStartX+1
+tempLineA = * + 1
+    lda #0
+    asl
+    rol debugStartX+1
+    asl
+    rol debugStartX+1
+    clc
+    adc #160
+    sta debugStartX
+    sta debugEndX
+    lda debugStartX+1
+    adc #0
+    sta debugStartX+1
+    sta debugEndX + 1
+
+    ldx #0
+-
+    lda debugLineData,x
+    jsr OSWRCH
+    inx
+    cpx #debugLineDataEnd - debugLineData
+    bne -
+    pla
+    tay
+    pla
+    tax
+    pla
+    plp
+    rts
+
+debugLineData
+    !byte 18,0,2
+    !byte 25, 4
+debugStartX
+    !word 0,512
+    !byte 25,5
+debugEndX
+    !word 0,800
+debugLineDataEnd
+}
+
+energyFieldString
+    !byte $1f, 15, 5                    ; TAB(15, 5)
+    !byte $2a                           ;
+    !byte $1f, 15, 9                    ; TAB(15, 9)
+    !byte $2a                           ;
+    !byte $1f, 24, 5                    ;
+    !byte $2a                           ;
+    !byte $1f, 24, 9                    ; TAB(24, 9)
+    !byte $2a                           ;
+
+guardianPositionsCopy
+    !byte $00, $00, $00, $00, $00
+
+willySpriteAddressLow
+    !byte $00
+willySpriteAddressHigh
+    !byte $00
+
+    !byte $00                       ; [UNUSED, but copied in and out of cache]
+    !byte $00                       ; [UNUSED, but copied in and out of cache]
+    !byte $00                       ; [UNUSED, but copied in and out of cache]
+
+; ***************************************************************************************
+oswordSoundBlock
+    !byte $01, $00, $00, $00, $00, $00, $00, $00    ;
+
+; ***************************************************************************************
+debugChangePalette
+    ora paletteLookupTable                  ;
+    sta videoULAPaletteRegister             ; store actual colour in register
+    eor #$10                                ;
+    sta videoULAPaletteRegister             ; store actual colour in register
+    eor #$50                                ;
+    sta videoULAPaletteRegister             ; store actual colour in register
+    eor #$10                                ;
+    sta videoULAPaletteRegister             ; store actual colour in register
+    rts
+
+; ***************************************************************************************
+; sprite numbers to draw (level specific)
+levelFeatureArray
+levelFeature0
+    !byte $80                           ; floor
+levelFeature1
+    !byte $82                           ; crumble
+levelFeature2
+    !byte $8f                           ; wall
+levelFeature3
+    !byte $8b                           ; conveyor
+levelFeature4
+    !byte $8a                           ; ?
+levelFeature5
+    !byte $00                           ; ?
+
+; ***************************************************************************************
+levelColourArray
+    !byte $01, $01, $03, $02, $03       ;
+    !byte $00, $00, $00                 ; [unused?]
+
 
 
 !if (* > $3280 ) {
@@ -9584,13 +9500,60 @@ footDescendingLoop
     jsr delayAndClearPedestalSprite ;
     jmp showTitleScreen             ;
 
+
+; ***************************************************************************************
+!ifdef debugPixelCollision {
+debugX
+    !byte 0
+}
 playerLeftmostPixelOffset
-    !byte 0, 1, 0, -1
+    !byte 0, 1, 0, -1, 1, 2, 3, 2
 playerRightmostPixelOffset
-    !byte 7, 6, 7, 8
+    !byte 7, 5, 7, 9, 9, 7, 5, 7
+
 
 ; ***************************************************************************************
 checkForCollisions
+!ifdef debugPixelCollision {
+    jsr getPlayerSourceSpriteAddress    ;
+    ldx newPlayerPixelX                 ; have been drawn (which could have erased part of a nearby player)
+    ldy newPlayerPixelY                 ;
+    lda #2                              ;
+    jsr plot                            ; draw player (plot mode 1)
+
+    jsr updateHorizontalGuardians       ;
+
+debugPixelX = * + 1
+    lda #$2e                            ;
+    sta newPlayerPixelX                 ;
+    sta playerPixelX                    ;
+debugPixelY = * + 1
+    lda #$7f                            ;
+    sta newPlayerPixelY                 ;
+    sta playerPixelY                    ;
+
+    ldx #keyCodeX                       ; }
+    jsr isKeyPressed                    ; } is X pressed
+    bne +
+    inc debugPixelX
++
+    ldx #keyCodeZ                       ; }
+    jsr isKeyPressed                    ; } is X pressed
+    bne +                               ;
+    dec debugPixelX                     ;
++
+    ldx #keyCodeForwardSlash            ; }
+    jsr isKeyPressed                    ; } is / pressed
+    bne +                               ;
+    inc debugPixelY                     ;
++
+    ldx #keyCodeColon                   ; }
+    jsr isKeyPressed                    ; } is : pressed
+    bne +                               ;
+    dec debugPixelY                     ;
++
+}
+
     jsr getPlayerSourceSpriteAddress    ; This redraws the player after the guardians
     ldx newPlayerPixelX                 ; have been drawn (which could have erased part of a nearby player)
     ldy newPlayerPixelY                 ;
@@ -9602,19 +9565,38 @@ checkForCollisions
     jsr collideWithVerticalGuardians    ;
 
 collideWithHorizontalGuardians
+
+    ; debug
+!ifdef debugPixelCollision {
+    lda #$1c
+    sta guardianPositions
+    lda #13
+    sta guardianPositions + 1
+
+    lda #0
+    sta $3280
+}
+
     lda playerPixelX                    ;
     and #3                              ;
-    eor willyAnimationEOR               ;
+    ldx willyAnimationEOR               ;
+    cpx #0                              ;
+    beq +                               ;
+    clc                                 ;
+    adc #4                              ;
++
     tax                                 ;
+!ifdef debugPixelCollision {
+    sta debugX                          ;
+}
     lda playerPixelX                    ;
     sec                                 ;
     sbc #20                             ;
-    asl                                 ; get true pixel X
-    pha                                 ;
+    asl                                 ;
+    sta collisionPlayerX                ;
     clc                                 ;
     adc playerLeftmostPixelOffset, x    ;
     sta collisionLimit1                 ;
-    pla
     clc                                 ;
     adc playerRightmostPixelOffset, x   ;
     sta collisionLimit2                 ;
@@ -9626,7 +9608,7 @@ checkCollisionLoop
     lda guardianPositions,x             ;
     cmp #$ff                            ;
     beq return8                         ; if (out of guardians) then return
-    asl                                 ; get pixel X
+    asl                                 ;
     jsr checkCollisionForOneGuardian    ;
     txa                                 ;
     clc                                 ;
@@ -9636,22 +9618,40 @@ checkCollisionLoop
 
 ; ***************************************************************************************
 checkCollisionForOneGuardian
+    cmp #0
+    beq +
+    sec
+    sbc #1
++
+    sta collisionGuardianX              ;
+
+    ; debug
+;    jsr debugDrawVerticalLine           ;
+;    clc                                 ;
+;    adc #11                             ; average guardian width
+;    jsr debugDrawVerticalLine           ;
+;    sec                                 ;
+;    sbc #11                             ;
+
 collisionLimit2 = * + 1
     cmp #$ff                            ;
     bcs return8                         ;
     clc                                 ;
-    adc #7                              ;
+    adc #11                             ; average guardian width
 collisionLimit1 = * + 1
     cmp #$ff                            ;
     bcc return8                         ;
 
 possibleCollisionInX
     lda guardianPositions + 1,x         ; get guardian cell Y
+    clc                                 ;
+    adc #1                              ;
+    asl                                 ;
+    asl                                 ;
+    asl                                 ;
+    sta collisionGuardianY              ;
     sec                                 ;
-    sbc #1                              ;
-    asl                                 ;
-    asl                                 ;
-    asl                                 ;
+    sbc #16                             ;
     cmp playerPixelY                    ;
     bcc possibleCollisionInY            ; if ((guardianCellY - 1) * 8) < playerY then branch
     rts                                 ;
@@ -9666,46 +9666,11 @@ possibleCollisionInY
     sec                                 ;
     sbc #1                              ;
     cmp playerPixelY                    ; if (((guardian cell Y + 3) * 8) - 1) > playerY then branch (collision found)
-    bcs checkPixelCollision             ;
+    bcc return8                         ;
+    jmp checkPixelCollision             ;
 return8
     rts                                 ;
 
-; ***************************************************************************************
-checkPixelCollision
-;    lda guardianPositions,x             ;
-;    and #$fc                            ;
-;    sta mobjectXPosition                ;
-;    lda guardianPositions + 1,x         ;
-;    asl                                 ; get guardian pixel position
-;    asl                                 ;
-;    asl                                 ;
-;    sta mobjectYPosition                ;
-;
-;    lda playerPixelX                    ;
-;    sec                                 ;
-;    sbc #20                             ;
-;    asl                                 ; get true pixel X
-;    sta newPlayerXPosition              ;
-;    lda playerPixelY                    ;
-;    sta newPlayerYPosition              ;
-;
-;    jsr getPlayerSourceSpriteAddress    ;
-;    lda plotSourceSpriteAddressLow      ;
-;    sta sprite1AddressLow               ;
-;    lda plotSourceSpriteAddressHigh     ;
-;    sta sprite1AddressHigh              ;
-;
-;    sta sprite2AddressLow               ;
-;    sta sprite2AddressHigh              ;
-;
-;    txa                                 ;
-;    pha                                 ;
-;    jsr startPixelCollisionDetection    ;
-;    pla                                 ;
-;    tax                                 ;
-;    lda gotCollision                    ;
-;    beq return8                         ;
-    jmp death                           ;
 
 ; ***************************************************************************************
 collideWithVerticalGuardians
@@ -14043,7 +14008,7 @@ kongBeastSprite
 ;   top bit indicates initial direction (set = left), initial bounce at X2
 guardianLevelData
     ; level 1 - Central Cavern
-    !byte $ff, $1a, $87, $3a
+    !byte $ff, $1c, $87, $3b
     ; level 2 - The Cold Room
     !byte $ff, $47, $03, $01, $72, $0d, $2d
     ; level 3 - The Menagerie
@@ -14179,28 +14144,6 @@ yOffsetsTable
     !byte 8,0,0,0,0,0,0,0
     !byte 16
 
-; ***************************************************************************************
-debugChangePalette
-    ora paletteLookupTable                  ;
-    sta videoULAPaletteRegister             ; store actual colour in register
-    eor #$10                                ;
-    sta videoULAPaletteRegister             ; store actual colour in register
-    eor #$50                                ;
-    sta videoULAPaletteRegister             ; store actual colour in register
-    eor #$10                                ;
-    sta videoULAPaletteRegister             ; store actual colour in register
-    rts
-
-energyFieldString
-    !byte $1f, 15, 5                    ; TAB(15, 5)
-    !byte $2a                           ;
-    !byte $1f, 15, 9                    ; TAB(15, 9)
-    !byte $2a                           ;
-    !byte $1f, 24, 5                    ;
-    !byte $2a                           ;
-    !byte $1f, 24, 9                    ; TAB(24, 9)
-    !byte $2a                           ;
-
 guardianColourMasks
     !byte $f0, $ff, $0f, $f0        ;
 
@@ -14218,33 +14161,8 @@ guardianColourMasks
 ; ***************************************************************************************
 
 ; ***************************************************************************************
-oswordSoundBlock
-    !byte $01, $00, $00, $00, $00, $00, $00, $00    ;
-
-; ***************************************************************************************
 ; uninitialized variables
 ; ***************************************************************************************
-
-; ***************************************************************************************
-; sprite numbers to draw (level specific)
-levelFeatureArray
-levelFeature0
-    !byte $80                           ; floor
-levelFeature1
-    !byte $82                           ; crumble
-levelFeature2
-    !byte $8f                           ; wall
-levelFeature3
-    !byte $8b                           ; conveyor
-levelFeature4
-    !byte $8a                           ; ?
-levelFeature5
-    !byte $00                           ; ?
-
-; ***************************************************************************************
-levelColourArray
-    !byte $01, $01, $03, $02, $03       ;
-    !byte $00, $00, $00                 ; [unused?]
 
 ; ***************************************************************************************
 ; ***************************************************************************************
@@ -14267,17 +14185,6 @@ levelColourArray
 ; ***************************************************************************************
 ; ***************************************************************************************
 ; ***************************************************************************************
-guardianPositionsCopy
-    !byte $00, $00, $00, $00, $00
-
-willySpriteAddressLow
-    !byte $00
-willySpriteAddressHigh
-    !byte $00
-
-    !byte $00                       ; [UNUSED, but copied in and out of cache]
-    !byte $00                       ; [UNUSED, but copied in and out of cache]
-    !byte $00                       ; [UNUSED, but copied in and out of cache]
 
 ; ***************************************************************************************
 creditsMessage
@@ -14325,8 +14232,6 @@ creditsMessage
     !byte 31, 22, 12                ; TAB(21,11)
     !byte 31, 20, 8                 ; TAB(19,7)
 creditsMessageEnd
-
-
 
 !if * > $7fa0 {
     !error "space is wrong, ", *

@@ -7386,7 +7386,7 @@ drawExitCell
     jsr cellPlot                        ;
     lda cellPlotSourceSpriteAddressLow  ;
     clc                                 ;
-    adc #8                              ;
+    adc #16                             ;
     sta cellPlotSourceSpriteAddressLow  ;
     bcc +                               ;
     inc cellPlotSourceSpriteAddressHigh ;

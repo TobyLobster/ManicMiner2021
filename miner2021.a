@@ -164,7 +164,7 @@ willyIsOnConveyor               = $4f       ;
 willyDirectionAgainstFlowOfConveyor = $50   ; $01 or $ff when moving against the flow of the conveyor
 spriteColourMask                = $51       ;
 currentGuardianColour           = $52       ;
-unused53                        = $53       ; UNUSED
+exitColour                      = $53       ;
 drawGuardianLoopCounter         = $54       ;
 conveyorX                       = $55       ;
 conveyorY                       = $56       ;
@@ -210,7 +210,7 @@ plotScreenAddressHigh           = $76       ;
 plotSourceSpriteAddressLow      = $77       ;
 plotSourceSpriteAddressHigh     = $78       ;
 
-levelFeatureIndex               = $79       ;
+currentLevelFeatureIndex        = $79       ;
 
 ; ***************************************************************************************
 ; level decode
@@ -259,6 +259,10 @@ meteorXCoordinate               = $9c       ;
 meteorYCoordinate               = $9d       ;
 meteorAnimationState            = $9e       ;
 meteorIndex                     = $9f       ;
+
+; ***************************************************************************************
+sideWallColour1                 = $a0       ;
+sideWallColour2                 = $a1       ;
 
 ; ***************************************************************************************
 verticalGuardianMODE1Address    = $0400     ;
@@ -1730,6 +1734,7 @@ currentCrumbleSprites
     !byte %........
     !byte %########
 
+    ; empty - used for erasing areas of the level
     ; $0c50
     !byte %........                 ; char 138 ($8A, $AA, $CA, $EA)
     !byte %........
@@ -5317,14 +5322,14 @@ injectAddressHigh = * + 2
 
 ; ***************************************************************************************
 level10Init
-    lda #$e1                        ;
-    sta levelFeature3               ;
-    lda #2                          ;
-    sta levelColourArray + 1        ;
-    sta levelColourArray + 2        ;
-    lda #3                          ;
-    sta levelColourArray + 3        ;
-    jmp levelInitContinued          ;
+    lda #$e1                            ; } use alternative floor as conveyor (not used?)
+    sta levelFeatureConveyorOrLadder    ; }
+    lda #2                              ;
+    sta levelColourArray + 1            ;
+    sta levelColourArray + 2            ;
+    lda #3                              ;
+    sta levelColourArray + 3            ;
+    jmp levelInitContinued              ;
 
 ; ***************************************************************************************
 drawSwitches
@@ -5352,8 +5357,8 @@ drawSwitches
     jmp nonLevel10Init              ;
 
 level13Init
-    lda #$f5                        ; thread?
-    sta levelFeature1               ;
+    lda #$f5                        ; ladder
+    sta levelFeatureCrumble         ;
     lda #3                          ;
     sta levelColourArray + 1        ;
     jmp levelInitContinued          ;
@@ -5394,8 +5399,8 @@ initLevel
     lda #>levelDefinitions          ; } read data from level definitions upwards
     sta readByteOffsetX + 2         ; }
 
-    lda #$8b                        ;
-    sta levelFeature3               ; default to the wall for feature 3
+    lda #$8b                         ;
+    sta levelFeatureConveyorOrLadder ; default conveyor is the regular crumble floor sprite
 
     lda currentLevel                ;
     cmp #10                         ;
@@ -5406,8 +5411,8 @@ initLevel
     beq drawSwitches                ; }
 
 nonLevel10Init
-    lda #$eb                        ; }
-    sta levelFeature3               ; }
+    lda #$eb                         ; } alternative conveyor (thin)
+    sta levelFeatureConveyorOrLadder ; }
     lda #3                          ; }
     sta levelColourArray + 2        ; } values for all levels except level 10 - The Endorian Forest
     lda #1                          ; }
@@ -5418,8 +5423,8 @@ nonLevel10Init
     lda currentLevel                ;
     cmp #13                         ;
     beq level13Init                 ;
-    lda #$e2                        ;
-    sta levelFeature1               ;
+    lda #$e2                        ; crumble floor
+    sta levelFeatureCrumble         ;
 
 levelInitContinued
     ldx #0                          ;
@@ -5429,13 +5434,11 @@ findLevelDataLoop
     jsr readByteOffsetX             ;
     inx                             ;
     cpx #0                          ;
-    beq addToHighByte               ;
+    bne +                           ;
+    inc readByteOffsetX + 2         ; increment high byte
++
     cmp #$ff                        ;
     beq +                           ;
-    jmp findLevelDataLoop           ;
-
-addToHighByte
-    inc readByteOffsetX + 2         ;
     jmp findLevelDataLoop           ;
 
 +
@@ -5477,30 +5480,19 @@ foundLevelData
     adc #0                          ; }
     sta readLevelDataByte + 2       ; }
 
-    ; the first two bytes of the level data contain 3 colours, stored in nybbles
-    ldx #0                          ;
-    jsr readLevelDataByte           ; read first byte of level data (colours)
-    sta levelColours                ; store it
-    inx                             ;
-    jsr readLevelDataByte           ; read second byte of level data
-    sta levelColours2               ; store it
+    ; *****************************
+    ; get level colours
+    ; *****************************
+    ldx currentLevel                ;
+    lda levelColoursArray - 1, x    ;
+    sta levelColours                ;
+    lda levelColours2Array - 1, x   ;
+    sta levelColours2               ;
 
-    jsr setBlackPalette             ;
-
-    ; next read header information (4 bytes) into $83-$86
-    ldx #2                          ;
--
-    jsr readLevelDataByte           ; read the next four bytes of level data
-    sta $81,x                       ; store them at the level address
-    inx                             ;
-    cpx #6                          ;
-    bne -                           ;
-
-    ; ************************************
-    ; ($83) top nybble is the floor sprite
-    ; ************************************
-    ;
-    lda $83                         ; top nybble contains sprite to copy
+    ; *****************************
+    ; get floor sprite
+    ; *****************************
+    lda levelFloorCrumbleArray - 1, x   ;
     and #$f0                        ;
     lsr                             ;
     tax                             ;
@@ -5515,10 +5507,11 @@ foundLevelData
     cpy #16                         ;
     bne -                           ;
 
-    ; ************************************
-    ; ($83) lower nybble is the crumble sprite
-    ; ************************************
-    lda $83                         ;
+    ; *****************************
+    ; get crumble floor sprites
+    ; *****************************
+    ldx currentLevel                    ;
+    lda levelFloorCrumbleArray - 1, x   ;
     and #$0f                        ;
     clc                             ;
     rol                             ;
@@ -5574,11 +5567,31 @@ storeAddressLow = * + 1
     cmp #8                          ;
     bne tempLoop                    ;
 
-    ; ************************************
-    ; ($84) bottom three bits contain the conveyor sprite to use
-    ; ************************************
-    ; We transform abcdefgh -> fgh00000
+    ; *****************************
+    ; get side wall colours
+    ; *****************************
+    ldx currentLevel                                ;
+    lda levelSideWallColoursConveyorArray - 1, x    ;
     lda $84                         ;
+    lsr                             ;
+    lsr                             ;
+    lsr                             ;
+    lsr                             ;
+    tay                             ;
+    and #3                          ;
+    sta sideWallColour1             ;
+    tya                             ;
+    lsr                             ;
+    lsr                             ;
+    clc                             ;
+    adc #$80                        ;
+    sta sideWallColour2             ;
+
+    ; *****************************
+    ; get conveyor sprite
+    ; *****************************
+    ; We transform abcdefgh -> fgh00000
+    lda levelSideWallColoursConveyorArray - 1, x    ;
     asl                             ;
     asl                             ;
     asl                             ;
@@ -5596,13 +5609,14 @@ storeAddressLow = * + 1
     cpy #$20                        ;
     bne -                           ;
 
-    ; ************************************
-    ; ($85) upper nybble is the side wall sprite to use
-    ; ************************************
-    lda $85                         ;
-    and #$f0                        ; get upper nybble
-    lsr                             ; divide by 2
-    tax                             ;
+    ; *****************************
+    ; get side wall sprite
+    ; *****************************
+    ldx currentLevel                    ;
+    lda levelSideWallKeyArray - 1, x    ;
+    and #$f0                            ; get upper nybble
+    lsr                                 ; divide by 2
+    tax                                 ;
 
     ; copy side wall sprite from wallSprites+X to currentWallSprite for 8 bytes
     ldy #0                          ;
@@ -5614,10 +5628,11 @@ storeAddressLow = * + 1
     cpy #8                          ;
     bne -                           ;
 
-    ; ************************************
-    ; ($85) lower nybble holds the key sprite
-    ; ************************************
-    lda $85                         ;
+    ; *****************************
+    ; get key sprite
+    ; *****************************
+    ldx currentLevel                    ;
+    lda levelSideWallKeyArray - 1, x    ;
     and #$0f                        ; get lower nybble
     asl                             ;
     asl                             ;
@@ -5635,6 +5650,7 @@ storeAddressLow = * + 1
     bne -                           ;
 
     jsr getExitSprite               ;
+    jsr setBlackPalette             ;
     jmp drawLevel                   ;
 
 ; ***************************************************************************************
@@ -5647,7 +5663,8 @@ getExitSprite
     ;   10 = 8x16 exit sprite reflected in the Y axis (lower bits are the sprite number)
     ;   11 = 8x8 exit sprite reflected four times (lower 5 bits are sprite number)
     ;
-    lda $86                         ;
+    ldx currentLevel                    ;
+    lda levelExitTypeSpriteArray - 1, x ;
     and #$c0                        ; get top two bits
     beq getExit8x8                  ; if (neither bit set) then branch
     cmp #$80                        ;
@@ -5656,7 +5673,7 @@ getExitSprite
     beq getExit8x8Reflected         ;
 
 getExit16x16
-    lda $86                         ;
+    lda levelExitTypeSpriteArray - 1, x ;
     asl                             ;
     asl                             ;
     asl                             ;
@@ -5675,7 +5692,7 @@ getExit16x16
     rts                             ;
 
 getExit8x8Reflected
-    lda $86                         ;
+    lda levelExitTypeSpriteArray - 1, x     ;
     asl                             ;
     asl                             ;
     asl                             ; multiply by eight
@@ -5708,7 +5725,7 @@ getExit8x8Reflected
     rts                             ;
 
 getExit8x8
-    lda $86                         ;
+    lda levelExitTypeSpriteArray - 1, x     ;
     asl                             ;
     asl                             ;
     asl                             ; multiply by eight
@@ -5731,7 +5748,7 @@ getExit8x8
 getExit8x16
     lda #>exitSprites1x2            ;
     sta getExitSourceByte + 2       ;
-    lda $86                         ;
+    lda levelExitTypeSpriteArray - 1, x ;
     asl                             ;
     asl                             ;
     asl                             ;
@@ -5785,14 +5802,17 @@ reverseBits
 
 ; ***************************************************************************************
 drawExit
-    ldx #7                          ;
-    jsr readLevelDataByte           ;
-    sta $70                         ;
-    sta exitPositionX               ;
-    inx                             ; read level exit position (index 7 and 8 into level data)
-    jsr readLevelDataByte           ;
-    sta $71                         ;
-    sta exitPositionY               ;
+    ldx currentLevel                    ;
+    lda levelExitColourArray - 1, x     ;
+    sta exitColour                      ;
+    sta plotColourMask                  ;
+    ldx currentLevel                    ;
+    lda levelExitPositionXArray - 1, x  ;
+    sta $70                             ;
+    sta exitPositionX                   ;
+    lda levelExitPositionYArray - 1, x  ;
+    sta $71                             ;
+    sta exitPositionY                   ;
 
     jmp flashExit                   ;
 
@@ -5838,21 +5858,27 @@ setRoomColours
     rts                             ;
 
 ; ***************************************************************************************
+;
+; Level decoding and drawing
+;
+; ***************************************************************************************
+
+; ***************************************************************************************
 command255IncrementFeatureIndex
     stx levelDataOffset             ;
-    lda levelFeatureIndex           ;
+    lda currentLevelFeatureIndex    ;
     cmp #5                          ;
-    beq setRoomColours              ;
-    inc levelFeatureIndex           ;
-    jmp decodeLevelData             ;
+    beq setRoomColours              ; if (feature 5) then branch (we have finished)
+    inc currentLevelFeatureIndex    ; increment current level feature
+    jmp decodeNextFeature           ;
 
 ; ***************************************************************************************
 command253SetType
     inx                             ;
     jsr readLevelDataByte           ; read next byte
-    sta levelFeatureIndex           ; store next byte
+    sta currentLevelFeatureIndex    ; store as the current feature index
     stx $70                         ; record incremented index
-    jmp decodeLevelData             ;
+    jmp decodeNextFeature           ;
 
 ; ***************************************************************************************
 command254Rectangle
@@ -5870,26 +5896,28 @@ command254Rectangle
     stx levelDataOffset             ;
 
     jsr drawRectangularFeature      ;
-    jmp decodeLevelData             ;
+    jmp decodeNextFeature           ;
 
 ; ***************************************************************************************
 drawRectangularFeature
     jsr commandDrawHorizontalStrip      ;
-    inc $72                             ;
+    inc $72                             ; increment y cell
     lda $72                             ;
     cmp $74                             ;
-    bne drawRectangularFeature          ;
+    bne drawRectangularFeature          ; if (not at limit) then branch (loop back)
     rts                                 ;
 
 ; ***************************************************************************************
 drawLevel
     jsr drawSideWallsAndFloor           ;
-    lda #8                              ;
+    lda #$ff                            ;
     sta levelDataOffset                 ;
     lda #0                              ;
-    sta levelFeatureIndex               ;
+    sta currentLevelFeatureIndex        ;
+    ; fall through...
 
-decodeLevelData
+; ***************************************************************************************
+decodeNextFeature
     inc levelDataOffset                 ;
     ldx levelDataOffset                 ;
     jsr readLevelDataByte               ; read next byte of data
@@ -5900,6 +5928,8 @@ decodeLevelData
     cmp #$fd                            ;
     beq command253SetType               ; if (253) then branch
 
+    ; we have a level strip (3 bytes)
+    ; decode into $71, $72, $73 (X, Y, length)
     ldy #0                              ;
     ldx levelDataOffset                 ;
 -
@@ -5912,12 +5942,14 @@ decodeLevelData
     dex                                 ;
     stx levelDataOffset                 ; remember incremented level data offset
 
+    ; draw the strip
     jsr commandDrawHorizontalStrip      ;
-    jmp decodeLevelData                 ;
+
+    jmp decodeNextFeature               ;
 
 ; ***************************************************************************************
 setColourAndDrawLevel7Platform
-    lda levelFeatureIndex               ;
+    lda currentLevelFeatureIndex        ;
     cmp #1                              ;
     bne setColourAndDrawPlatform        ;
     lda #2                              ; COLOUR 2
@@ -5926,7 +5958,7 @@ setColourAndDrawLevel7Platform
 
 ; ***************************************************************************************
 setColourAndDrawLevel14Platform
-    lda levelFeatureIndex               ;
+    lda currentLevelFeatureIndex        ;
     cmp #0                              ;
     bne setColourAndDrawPlatform        ;
 
@@ -5960,7 +5992,7 @@ commandDrawHorizontalStrip
     beq setColourAndDrawLevel14Platform ;
 
 setColourAndDrawPlatform
-    ldx levelFeatureIndex               ;
+    ldx currentLevelFeatureIndex        ;
     lda levelColourArray,x              ;
     jsr setTextColour                   ;
 
@@ -5976,11 +6008,11 @@ drawPlatform
     adc #1                              ;
     jsr OSWRCH                          ;
 
-    ldx levelFeatureIndex               ;
+    ldx currentLevelFeatureIndex        ;
     lda levelFeatureArray,x             ;
     cmp #$8f                            ;
     bne +                               ; walls have background colour 129
-setColour129
+wallBackgroundColour = * + 1
     lda #129                            ;
     jsr setTextColour                   ;
 +
@@ -5991,7 +6023,7 @@ setColour129
     iny                                 ;
     cpy $73                             ;
     bne -                               ;
-    lda levelFeatureIndex               ;
+    lda currentLevelFeatureIndex        ;
     cmp #3                              ;
     beq +                               ;
 
@@ -6004,14 +6036,20 @@ restoreBackgroundColour
     lda currentLevel                    ;
     cmp #10                             ; level 10 specific feature
     beq +                               ;
-    lda #$f6                            ;
-    sta levelFeature3                   ;
+    lda #$f6                            ; Set to ladder sprite ('T')
+    sta levelFeatureConveyorOrLadder    ;
 
 +
     jsr restoreBackgroundColour         ;
     jmp drawFooterTextOrReturn          ;
 
 drawSideWallsAndFloor
+
+    lda sideWallColour1                 ;
+    jsr setTextColour                   ;
+    lda sideWallColour2                 ;
+    sta wallBackgroundColour            ;
+    jsr setTextColour                   ;
 
     ; draw left edge wall
     lda #$ff                            ; }
@@ -6025,7 +6063,7 @@ drawSideWallsAndFloor
     sta $74                             ; }
 
     lda #2                              ;
-    sta levelFeatureIndex               ;
+    sta currentLevelFeatureIndex        ;
     jsr drawRectangularFeature          ; draw
 
     ; draw right edge wall
@@ -6038,9 +6076,12 @@ drawSideWallsAndFloor
     sta $74                             ; } to (30, 16)
     jsr drawRectangularFeature          ; draw
 
+    lda #129                            ;
+    sta wallBackgroundColour            ;
+
     ; draw floor
     lda #0                              ;
-    sta levelFeatureIndex               ;
+    sta currentLevelFeatureIndex        ;
     lda #0                              ; }
     sta $71                             ; }
     lda #15                             ; } at (0,15)
@@ -6048,8 +6089,7 @@ drawSideWallsAndFloor
 
     lda #30                             ; }
     sta $73                             ; } 30 is end X coordinate
-    jsr commandDrawHorizontalStrip      ; [use JMP commandDrawHorizontalStrip to avoid needing the next RTS]
-    rts                                 ;
+    jmp commandDrawHorizontalStrip      ;
 
 ; ***************************************************************************************
 ;
@@ -7350,10 +7390,13 @@ flashExit
     and #4                          ;
     cmp #4                          ;
     beq +                           ;
-    lda #$f0                        ; plot colour 2
+    lda exitColour                  ; plot colour for exit
     jmp setColourAndShowExit
 +
-    lda #$ff                        ; plot colour 3
+    lda exitColour                  ;
+    eor #$ff                        ; 'invert' exit colour
+    bne setColourAndShowExit        ; make sure it's not colour zero
+    lda #$0f                        ; plot colour 1 instead
 setColourAndShowExit
     sta plotColourMask              ;
 
@@ -8104,19 +8147,19 @@ meteorAndTailSprites
 ;
 ; ***************************************************************************************
 verticalGuardianPositions
-    !byte $00, $00, $00, $00, $00, $00, $00, $00    ; [UNUSED]
-    !byte $85, $0d, $cb, $0d, $94, $0d, $d9, $0d    ; level 9 - Wacky Amoebatrons
-    !byte $00, $00, $00, $00, $00, $00, $00, $00    ; [UNUSED]
-    !byte $83, $4d, $8c, $07, $95, $6d, $da, $0d    ; level 11 - Attack of the Mutant Telephones
-    !byte $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff    ; level 12 - Return of the Alien Kong Beast
-    !byte $85, $1d, $ff, $ff, $ff, $ff, $ff, $ff    ; level 13 - Ore Refinery
-    !byte $c1, $09, $8b, $04, $d5, $07, $ff, $ff    ; level 14 - Skylab Landing Bay
-    !byte $89, $4d, $8f, $5d, $d5, $4d, $ff, $ff    ; level 15 - The Bank
-    !byte $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff    ; level 16 - The Sixteenth Cavern
-    !byte $83, $8d, $4a, $c0, $13, $80, $db, $0c    ; level 17 - The Warehouse
-    !byte $c5, $1d, $8a, $1d, $d4, $1d, $99, $1d    ; level 18 - Amoebatrons' Revenge
-    !byte $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff    ; level 19 - The Meteor Storm
-    !byte $82, $06, $da, $4d, $ff, $ff, $ff, $ff    ; level 20 - The Final Barrier
+    !byte $00, $00,  $00, $00,  $00, $00,  $00, $00    ; [UNUSED]
+    !byte $85, $0d,  $cb, $0d,  $94, $0d,  $d9, $0d    ; level 9 - Wacky Amoebatrons
+    !byte $00, $00,  $00, $00,  $00, $00,  $00, $00    ; [UNUSED]
+    !byte $83, $4d,  $8c, $07,  $95, $6d,  $da, $0d    ; level 11 - Attack of the Mutant Telephones
+    !byte $ff, $ff,  $ff, $ff,  $ff, $ff,  $ff, $ff    ; level 12 - Return of the Alien Kong Beast
+    !byte $85, $1d,  $ff, $ff,  $ff, $ff,  $ff, $ff    ; level 13 - Ore Refinery
+    !byte $c1, $09,  $8b, $04,  $d5, $07,  $ff, $ff    ; level 14 - Skylab Landing Bay
+    !byte $89, $4d,  $8f, $5d,  $d5, $4d,  $ff, $ff    ; level 15 - The Bank
+    !byte $ff, $ff,  $ff, $ff,  $ff, $ff,  $ff, $ff    ; level 16 - The Sixteenth Cavern
+    !byte $83, $8d,  $4a, $c0,  $13, $80,  $db, $0c    ; level 17 - The Warehouse
+    !byte $c5, $1d,  $8a, $1d,  $d4, $1d,  $99, $1d    ; level 18 - Amoebatrons' Revenge
+    !byte $ff, $ff,  $ff, $ff,  $ff, $ff,  $ff, $ff    ; level 19 - The Meteor Storm
+    !byte $82, $06,  $da, $4d,  $ff, $ff,  $ff, $ff    ; level 20 - The Final Barrier
 
 ; ***************************************************************************************
 verticalGuardiansSpritesArray
@@ -8598,23 +8641,23 @@ debugChangePalette
 ; ***************************************************************************************
 ; sprite numbers to draw (level specific)
 levelFeatureArray
-levelFeature0
+levelFeatureFloor
     !byte $80                           ; floor
-levelFeature1
+levelFeatureCrumble
     !byte $82                           ; crumble
-levelFeature2
+levelFeatureWall
     !byte $8f                           ; wall
-levelFeature3
+levelFeatureConveyorOrLadder
     !byte $8b                           ; conveyor
-levelFeature4
-    !byte $8a                           ; ?
+levelFeaturEmpty
+    !byte $8a                           ; empty
 levelFeature5
-    !byte $00                           ; ?
+    !byte $00                           ; [accessed in error, set to zero to avoid side-effects]
 
 ; ***************************************************************************************
 levelColourArray
-    !byte $01, $01, $03, $02, $03       ;
-    !byte $00, $00, $00                 ; [unused?]
+    ;   floor, crumble, wall, conveyor, clear
+    !byte $01, $01,      $03,      $02, $03       ;
 
 verticalGuardianTolerancesTL
 ;         eugene, kong, telephone, eye, skylab, safe, triangle, amoebatron, wacky am.
@@ -8656,21 +8699,37 @@ playerStartPositions
     !byte $ff
 }
 
-!macro levelColours .col1, .col2, .col3 {
+!macro levelColours1 .col1, .col2 {
     !byte .col2 * 16 + .col1
+}
+
+!macro levelColours2 .col3 {
     !byte .col3
 }
 
-!macro levelSprites .floor,.crumble, .conveyor, .sideWall, .key {
+!macro levelFloorCrumbleSprites .floor,.crumble {
     !byte .floor * 16 + .crumble
-    !byte .conveyor
+}
+
+!macro levelSideWallColoursConveyor .conveyor, .sideWallColour1, .sideWallColour2{
+    !byte (.sideWallColour2 * 4 + .sideWallColour1) * 16 + .conveyor
+}
+
+!macro levelSideWallKeySprites .sideWall, .key {
     !byte .sideWall * 16 + .key
 }
 
-!macro levelExit .exitType, .exitSprite, .exitX, .exitY {
+!macro levelExitTypeSprite .exitType, .exitSprite {
     !byte .exitType + .exitSprite
-    !byte 0         ; unused
+}
+!macro levelExitColour .colour {
+    !byte .colour
+}
+
+!macro levelExitPositionX .exitX {
     !byte .exitX
+}
+!macro levelExitPositionY .exitY {
     !byte .exitY
 }
 
@@ -8683,14 +8742,222 @@ exitType2x2     = $40
 exitType1x2     = $80
 exitType1x1Ref  = $c0
 
+; ***************************************************************************************
+; Physical colours given for logical colours 0 and 1
+levelColoursArray
+    +levelColours1 black, red       ; level 1 - Central Cavern
+    +levelColours1 blue, magenta    ; level 2 - The Cold Room
+    +levelColours1 black, cyan      ; level 3 - The Menagerie
+    +levelColours1 black, green     ; level 4 - Abandoned Uranium Workings
+    +levelColours1 red, cyan        ; level 5 - Eugene's Lair
+    +levelColours1 black, green     ; level 6 - Processing Plant
+    +levelColours1 black, green     ; level 7 - The Vat
+    +levelColours1 black, red       ; level 8 - Miner Willy meets the Kong Beast
+    +levelColours1 black, red       ; level 9 - Wacky Amoebatrons
+    +levelColours1 black, green     ; level 10 - The Endorian Forest
+    +levelColours1 blue, cyan       ; level 11 - Attack of the Mutant Telephones
+    +levelColours1 black, magenta   ; level 12 - Return of the Alien Kong Beast
+    +levelColours1 black, cyan      ; level 13 - Ore Refinery
+    +levelColours1 blue, green      ; level 14 - Skylab Landing Bay
+    +levelColours1 black, blue      ; level 15 - The Bank
+    +levelColours1 black, red       ; level 16 - The Sixteenth Cavern
+    +levelColours1 black, green     ; level 17 - The Warehouse
+    +levelColours1 black, red       ; level 18 - Amoebatrons' Revenge
+    +levelColours1 blue, green      ; level 19 - The Meteor Storm
+    +levelColours1 black, green     ; level 20 - The Final Barrier
+
+; ***************************************************************************************
+; Physical colour for logical colour 2
+levelColours2Array
+    +levelColours2 green            ; level 1 - Central Cavern
+    +levelColours2 white            ; level 2 - The Cold Room
+    +levelColours2 magenta          ; level 3 - The Menagerie
+    +levelColours2 magenta          ; level 4 - Abandoned Uranium Workings
+    +levelColours2 white            ; level 5 - Eugene's Lair
+    +levelColours2 cyan             ; level 6 - Processing Plant
+    +levelColours2 red              ; level 7 - The Vat
+    +levelColours2 green            ; level 8 - Miner Willy meets the Kong Beast
+    +levelColours2 green            ; level 9 - Wacky Amoebatrons
+    +levelColours2 red              ; level 10 - The Endorian Forest
+    +levelColours2 white            ; level 11 - Attack of the Mutant Telephones
+    +levelColours2 cyan             ; level 12 - Return of the Alien Kong Beast
+    +levelColours2 white            ; level 13 - Ore Refinery
+    +levelColours2 magenta          ; level 14 - Skylab Landing Bay
+    +levelColours2 cyan             ; level 15 - The Bank
+    +levelColours2 cyan             ; level 16 - The Sixteenth Cavern
+    +levelColours2 blue             ; level 17 - The Warehouse
+    +levelColours2 cyan             ; level 18 - Amoebatrons' Revenge
+    +levelColours2 white            ; level 19 - The Meteor Storm
+    +levelColours2 cyan             ; level 20 - The Final Barrier
+
+; ***************************************************************************************
+levelFloorCrumbleArray
+    ;                      floor, crumble
+    +levelFloorCrumbleSprites  0,       0   ; level 1 - Central Cavern
+    +levelFloorCrumbleSprites  0,       0   ; level 2 - The Cold Room
+    +levelFloorCrumbleSprites  1,       1   ; level 3 - The Menagerie
+    +levelFloorCrumbleSprites  0,       0   ; level 4 - Abandoned Uranium Workings
+    +levelFloorCrumbleSprites  0,       0   ; level 5 - Eugene's Lair
+    +levelFloorCrumbleSprites  2,       0   ; level 6 - Processing Plant
+    +levelFloorCrumbleSprites  0,       3   ; level 7 - The Vat
+    +levelFloorCrumbleSprites  0,       0   ; level 8 - Miner Willy meets the Kong Beast
+    +levelFloorCrumbleSprites  0,       0   ; level 9 - Wacky Amoebatrons
+    +levelFloorCrumbleSprites  3,       2   ; level 10 - The Endorian Forest
+    +levelFloorCrumbleSprites  0,       0   ; level 11 - Attack of the Mutant Telephones
+    +levelFloorCrumbleSprites  0,       0   ; level 12 - Return of the Alien Kong Beast
+    +levelFloorCrumbleSprites  5,       0   ; level 13 - Ore Refinery
+    +levelFloorCrumbleSprites  6,       0   ; level 14 - Skylab Landing Bay
+    +levelFloorCrumbleSprites  0,       0   ; level 15 - The Bank
+    +levelFloorCrumbleSprites  0,       0   ; level 16 - The Sixteenth Cavern
+    +levelFloorCrumbleSprites  0,       3   ; level 17 - The Warehouse
+    +levelFloorCrumbleSprites  0,       0   ; level 18 - Amoebatrons' Revenge
+    +levelFloorCrumbleSprites  0,       0   ; level 19 - The Meteor Storm
+    +levelFloorCrumbleSprites  0,       0   ; level 20 - The Final Barrier
+
+; ***************************************************************************************
+levelSideWallColoursConveyorArray
+    ;                            conveyor, wall colour, wall colour
+    +levelSideWallColoursConveyor       1,           3,           1    ; level 1 - Central Cavern
+    +levelSideWallColoursConveyor       1,           3,           1    ; level 2 - The Cold Room
+    +levelSideWallColoursConveyor       2,           1,           3    ; level 3 - The Menagerie
+    +levelSideWallColoursConveyor       1,           3,           1    ; level 4 - Abandoned Uranium Workings
+    +levelSideWallColoursConveyor       2,           3,           1    ; level 5 - Eugene's Lair
+    +levelSideWallColoursConveyor       1,           3,           1    ; level 6 - Processing Plant
+    +levelSideWallColoursConveyor       0,           3,           1    ; level 7 - The Vat
+    +levelSideWallColoursConveyor       2,           3,           1    ; level 8 - Miner Willy meets the Kong Beast
+    +levelSideWallColoursConveyor       2,           3,           1    ; level 9 - Wacky Amoebatrons
+    +levelSideWallColoursConveyor       1,           3,           1    ; level 10 - The Endorian Forest
+    +levelSideWallColoursConveyor       0,           3,           1    ; level 11 - Attack of the Mutant Telephones
+    +levelSideWallColoursConveyor       2,           3,           1    ; level 12 - Return of the Alien Kong Beast
+    +levelSideWallColoursConveyor       2,           3,           1    ; level 13 - Ore Refinery
+    +levelSideWallColoursConveyor       2,           3,           1    ; level 14 - Skylab Landing Bay
+    +levelSideWallColoursConveyor       0,           3,           1    ; level 15 - The Bank
+    +levelSideWallColoursConveyor       2,           3,           1    ; level 16 - The Sixteenth Cavern
+    +levelSideWallColoursConveyor       1,           3,           1    ; level 17 - The Warehouse
+    +levelSideWallColoursConveyor       0,           3,           1    ; level 18 - Amoebatrons' Revenge
+    +levelSideWallColoursConveyor       1,           3,           1    ; level 19 - The Meteor Storm
+    +levelSideWallColoursConveyor       1,           3,           1    ; level 20 - The Final Barrier
+
+; ***************************************************************************************
+levelSideWallKeyArray
+    ;                         side, key
+    +levelSideWallKeySprites     0,   0        ; level 1 - Central Cavern
+    +levelSideWallKeySprites     0,   1        ; level 2 - The Cold Room
+    +levelSideWallKeySprites     1,   0        ; level 3 - The Menagerie
+    +levelSideWallKeySprites     0,   0        ; level 4 - Abandoned Uranium Workings
+    +levelSideWallKeySprites     0,   2        ; level 5 - Eugene's Lair
+    +levelSideWallKeySprites     0,   0        ; level 6 - Processing Plant
+    +levelSideWallKeySprites     0,   0        ; level 7 - The Vat
+    +levelSideWallKeySprites     0,   3        ; level 8 - Miner Willy meets the Kong Beast
+    +levelSideWallKeySprites     8,   0        ; level 9 - Wacky Amoebatrons
+    +levelSideWallKeySprites     3,   4        ; level 10 - The Endorian Forest
+    +levelSideWallKeySprites     7,   6        ; level 11 - Attack of the Mutant Telephones
+    +levelSideWallKeySprites     0,   3        ; level 12 - Return of the Alien Kong Beast
+    +levelSideWallKeySprites     8,   5        ; level 13 - Ore Refinery
+    +levelSideWallKeySprites     2,   7        ; level 14 - Skylab Landing Bay
+    +levelSideWallKeySprites     7,   8        ; level 15 - The Bank
+    +levelSideWallKeySprites     0,   9        ; level 16 - The Sixteenth Cavern
+    +levelSideWallKeySprites     5,   0        ; level 17 - The Warehouse
+    +levelSideWallKeySprites     4,   0        ; level 18 - Amoebatrons' Revenge
+    +levelSideWallKeySprites     0,   0        ; level 19 - The Meteor Storm
+    +levelSideWallKeySprites     0,   0        ; level 20 - The Final Barrier
+
+; ***************************************************************************************
+levelExitTypeSpriteArray
+    +levelExitTypeSprite exitType1x1Rep, 0
+    +levelExitTypeSprite exitType1x1Ref, 0
+    +levelExitTypeSprite exitType2x2,    2
+    +levelExitTypeSprite exitType1x1Rep, 1
+    +levelExitTypeSprite exitType1x1Ref, 0
+    +levelExitTypeSprite exitType1x1Ref, 1
+    +levelExitTypeSprite exitType1x1Rep, 2
+    +levelExitTypeSprite exitType1x2,    0
+    +levelExitTypeSprite exitType1x1Ref, 2
+    +levelExitTypeSprite exitType2x2,    3
+    +levelExitTypeSprite exitType2x2,    4
+    +levelExitTypeSprite exitType1x1Ref, 3
+    +levelExitTypeSprite exitType2x2,    0
+    +levelExitTypeSprite exitType1x1Ref, 4
+    +levelExitTypeSprite exitType2x2,    1
+    +levelExitTypeSprite exitType1x1Ref, 8
+    +levelExitTypeSprite exitType1x2,    1
+    +levelExitTypeSprite exitType1x1Ref, 6
+    +levelExitTypeSprite exitType1x1Ref, 7
+    +levelExitTypeSprite exitType1x2,    2
+
+; ***************************************************************************************
+levelExitColourArray
+    +levelExitColour $f0
+    +levelExitColour $f0
+    +levelExitColour $ff
+    +levelExitColour $f0
+    +levelExitColour $f0
+    +levelExitColour $f0
+    +levelExitColour $f0
+    +levelExitColour $f0
+    +levelExitColour $f0
+    +levelExitColour $f0
+    +levelExitColour $ff
+    +levelExitColour $ff
+    +levelExitColour $f0
+    +levelExitColour $ff
+    +levelExitColour $f0
+    +levelExitColour $f0
+    +levelExitColour $0f
+    +levelExitColour $f0
+    +levelExitColour $f0
+    +levelExitColour $f0
+
+; ***************************************************************************************
+levelExitPositionXArray
+    +levelExitPositionX 33
+    +levelExitPositionX 33
+    +levelExitPositionX 33
+    +levelExitPositionX 33
+    +levelExitPositionX 19
+    +levelExitPositionX 33
+    +levelExitPositionX 19
+    +levelExitPositionX 19
+    +levelExitPositionX 5
+    +levelExitPositionX 17
+    +levelExitPositionX 5
+    +levelExitPositionX 19
+    +levelExitPositionX 5
+    +levelExitPositionX 19
+    +levelExitPositionX 5
+    +levelExitPositionX 16
+    +levelExitPositionX 33
+    +levelExitPositionX 33
+    +levelExitPositionX 19
+    +levelExitPositionX 33
+
+; ***************************************************************************************
+levelExitPositionYArray
+    +levelExitPositionY 16
+    +levelExitPositionY 16
+    +levelExitPositionY 14
+    +levelExitPositionY  4
+    +levelExitPositionY 16
+    +levelExitPositionY  3
+    +levelExitPositionY 16
+    +levelExitPositionY 16
+    +levelExitPositionY  3
+    +levelExitPositionY 16
+    +levelExitPositionY  4
+    +levelExitPositionY 16
+    +levelExitPositionY 16
+    +levelExitPositionY  3
+    +levelExitPositionY  6
+    +levelExitPositionY  8
+    +levelExitPositionY  4
+    +levelExitPositionY  3
+    +levelExitPositionY  7
+    +levelExitPositionY  4
+
 levelDefinitions
     ; ***********************************************************************************
     ; level 1 - Central Cavern
     !byte $ff, $ff
-    +levelColours black, red, green
-    ;          floor, crumble, conveyor, side, key
-    +levelSprites  0,       0,        1,    0,   0
-    +levelExit exitType1x1Rep, 0, 33, 16
 
     ; floors
     +levelStrip 4, 13, 15
@@ -8723,10 +8990,6 @@ levelDefinitions
     ; ***********************************************************************************
     ; level 2 - The Cold Room
     !byte $ff, $ff
-    +levelColours blue, magenta, white
-    ;          floor, crumble, conveyor, side, key
-    +levelSprites  0,       0,        1,    0,   1
-    +levelExit exitType1x1Ref, 0, 33, 16
 
     ; floors
     +levelStrip 13, 12, 4
@@ -8761,10 +9024,6 @@ levelDefinitions
     ; ***********************************************************************************
     ; level 3 - The Menagerie
     !byte $ff, $ff
-    +levelColours black, cyan, magenta
-    ;          floor, crumble, conveyor, side, key
-    +levelSprites  1,       1,        2,    1,   0
-    +levelExit exitType2x2, 2, 33, 14
 
     ; floors
     +levelStrip  4, 12,  6
@@ -8793,11 +9052,6 @@ levelDefinitions
     ; ***********************************************************************************
     ; level 4 - Abandoned Uranium Workings
     !byte $ff, $ff
-    +levelColours black, green, magenta
-    ;          floor, crumble, conveyor, side, key
-    +levelSprites  0,       0,        1,    0,   0
-
-    +levelExit exitType1x1Rep, 1, 33,  4
 
     ; floors
     +levelStrip  5, 12,  2
@@ -8835,10 +9089,6 @@ levelDefinitions
     ; ***********************************************************************************
     ; level 5 - Eugene's Lair
     !byte $ff, $ff
-    +levelColours red, cyan, white
-    ;          floor, crumble, conveyor, side, key
-    +levelSprites  0,       0,        2,    0,   2
-    +levelExit exitType1x1Ref, 0, 19, 16
 
     ; floors
     +levelStrip 0, 13, 2
@@ -8872,10 +9122,6 @@ levelDefinitions
     ; ***********************************************************************************
     ; level 6 - Processing Plant
     !byte $ff, $ff
-    +levelColours black, green, cyan
-    ;          floor, crumble, conveyor, side, key
-    +levelSprites  2,       0,        1,    0,   0
-    +levelExit exitType1x1Ref, 1, 33, 3
 
     ; floors
     +levelStrip 0, 9, 2
@@ -8908,10 +9154,6 @@ levelDefinitions
     ; ***********************************************************************************
     ; level 7 - The Vat
     !byte $ff, $ff
-    +levelColours black, green, red
-    ;          floor, crumble, conveyor, side, key
-    +levelSprites  0,       3,        0,    0,   0
-    +levelExit exitType1x1Rep, 2, 19, 16
 
     ; floors
     +levelStrip 8, 13, 3
@@ -8944,10 +9186,6 @@ levelDefinitions
     ; ***********************************************************************************
     ; level 8 - Miner Willy meets the Kong Beast
     !byte $ff, $ff
-    +levelColours black, red, green
-    ;          floor, crumble, conveyor, side, key
-    +levelSprites  0,       0,        2,    0,   3
-    +levelExit exitType1x2, 0, 19, 16
 
     ; floors
     +levelStrip 3, 12, 2
@@ -8990,10 +9228,6 @@ levelDefinitions
     ; ***********************************************************************************
     ; level 9 - Wacky Amoebatrons
     !byte $ff, $ff
-    +levelColours black, red, green
-    ;          floor, crumble, conveyor, side, key
-    +levelSprites  0,       0,        2,    8,   0
-    +levelExit exitType1x1Ref, 2, 5, 3
 
     ; floors
     +levelStrip 2, 12, 26
@@ -9021,7 +9255,7 @@ levelDefinitions
 
     +levelSetType 4
 
-    ; clear
+    ; empty
     +levelRect 4, 4, 2, 14
     +levelRect 10, 4, 2, 14
     +levelRect 19, 4, 2, 14
@@ -9032,10 +9266,6 @@ levelDefinitions
     ; ***********************************************************************************
     ; level 10 - The Endorian Forest
     !byte $ff, $ff
-    +levelColours black, green, red
-    ;          floor, crumble, conveyor, side, key
-    +levelSprites  3,       2,        1,    3,   4
-    +levelExit exitType2x2, 3, 17, 16
 
     ; floors
     +levelStrip 0, 13, 3
@@ -9077,10 +9307,6 @@ levelDefinitions
     ; ***********************************************************************************
     ; level 11 - Attack of the Mutant Telephones
     !byte $ff, $ff
-    +levelColours blue, cyan, white
-    ;          floor, crumble, conveyor, side, key
-    +levelSprites  0,       0,        0,    7,   6
-    +levelExit exitType2x2, 4, 5, 4
 
     ; floors
     +levelStrip 0, 3, 4
@@ -9114,10 +9340,6 @@ levelDefinitions
     ; ***********************************************************************************
     ; level 12 - Return of the Alien Kong Beast
     !byte $ff, $ff
-    +levelColours black, magenta, cyan
-    ;          floor, crumble, conveyor, side, key
-    +levelSprites  0,       0,        2,    0,   3
-    +levelExit exitType1x1Ref, 3, 19, 16
 
     ; floors
     +levelStrip 10, 13, 3
@@ -9158,10 +9380,6 @@ levelDefinitions
     ; ***********************************************************************************
     ; level 13 - Ore Refinery
     !byte $ff, $ff
-    +levelColours black, green, white
-    ;          floor, crumble, conveyor, side, key
-    +levelSprites  5,       0,        2,    8,   5
-    +levelExit exitType2x2, 0, 5, 16
 
     ; floors
     +levelStrip 0, 15, 30
@@ -9187,6 +9405,7 @@ levelDefinitions
 
     +levelSetType 4
 
+    ; empty
     +levelStrip 8, 6, 2
     +levelStrip 9, 12, 2
     +levelStrip 21, 6, 2
@@ -9205,10 +9424,6 @@ levelDefinitions
     ; ***********************************************************************************
     ; level 14 - Skylab Landing Bay
     !byte $ff, $ff
-    +levelColours blue, green, magenta
-    ;          floor, crumble, conveyor, side, key
-    +levelSprites  6,       0,        2,    2,   7
-    +levelExit exitType1x1Ref, 4, 19, 3
 
     ; floors
     +levelStrip 0, 11, 0
@@ -9240,10 +9455,6 @@ levelDefinitions
     ; ***********************************************************************************
     ; level 15 - The Bank
     !byte $ff, $ff
-    +levelColours black, green, cyan
-    ;          floor, crumble, conveyor, side, key
-    +levelSprites  0,       0,        0,    7,   8
-    +levelExit exitType2x2, 1, 5, 6
 
     ; floors
     +levelStrip 0, 10, 2
@@ -9281,10 +9492,6 @@ levelDefinitions
     ; ***********************************************************************************
     ; level 16 - The Sixteenth Cavern
     !byte $ff, $ff
-    +levelColours black, red, cyan
-    ;          floor, crumble, conveyor, side, key
-    +levelSprites  0,       0,        2,    0,   9
-    +levelExit exitType1x1Ref, 8, 16, 8
 
     ; floors
     +levelStrip  0, 12, 9
@@ -9321,10 +9528,6 @@ levelDefinitions
     ; ***********************************************************************************
     ; level 17 - The Warehouse
     !byte $ff, $ff
-    +levelColours black, green, cyan
-    ;          floor, crumble, conveyor, side, key
-    +levelSprites  0,       3,        1,    5,   0
-    +levelExit exitType1x2, 1, 33, 4
 
     ; floors
     +levelStrip 26, 14, 4
@@ -9361,10 +9564,6 @@ levelDefinitions
     ; ***********************************************************************************
     ; level 18 - Amoebatrons' Revenge
     !byte $ff, $ff
-    +levelColours black, red, cyan
-    ;          floor, crumble, conveyor, side, key
-    +levelSprites  0,       0,        0,    4,   0
-    +levelExit exitType1x1Ref, 6, 33, 3
 
     ;  floors
     +levelStrip 0, 15, 30
@@ -9394,10 +9593,6 @@ levelDefinitions
     ; ***********************************************************************************
     ; level 19 - The Meteor Storm
     !byte $ff, $ff
-    +levelColours blue, green, white
-    ;          floor, crumble, conveyor, side, key
-    +levelSprites  0,       0,        1,    0,   0
-    +levelExit exitType1x1Ref, 7, 19, 7
 
     ; floors
     +levelStrip 0, 5, 2
@@ -9410,7 +9605,7 @@ levelDefinitions
     +levelStrip 26, 5, 4
     +levelStrip 27, 9, 3
 
-    +levelIncrementType
+    +levelIncrementType ; [redundant]
 
     +levelSetType 2
 
@@ -9433,10 +9628,6 @@ levelDefinitions
     ; ***********************************************************************************
     ; level 20 - The Final Barrier
     !byte $ff, $ff
-    +levelColours black, green, cyan
-    ;          floor, crumble, conveyor, side, key
-    +levelSprites  0,       0,        1,    0,   0
-    +levelExit exitType1x2, 2, 33, 4
 
     ; floors
     +levelStrip 7, 5, 7

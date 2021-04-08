@@ -14142,6 +14142,7 @@ kongBeastSprite
     !byte %###...#.
     !byte %#.......
 
+
 ; ***************************************************************************************
 ; Three bytes per horizontal guardian, specifying initial position and direction:
 ;   X1, Y + top bit, X2
@@ -14150,44 +14151,44 @@ horizontalGuardianPositionData
     ; level 1 - Central Cavern
     !byte $ff, $1c, $87, $3b
     ; level 2 - The Cold Room
-    !byte $ff, $47, $03, $01, $72, $0d, $2d
+    !byte $ff, $47, $03, $01,  $73, $0d, $2d
     ; level 3 - The Menagerie
-    !byte $ff, $3f, $03, $01, $4a, $0d, $01, $45, $83, $72
+    !byte $ff, $3f, $03, $01,  $4a, $0d, $01,  $45, $83, $72
     ; level 4 - Abandoned Uranium Workings
-    !byte $ff, $01, $8d, $26, $15, $8d, $3a
+    !byte $ff, $01, $8d, $26,  $15, $8d, $3a
     ; level 5 - Eugene's Lair
-    !byte $ff, $0c, $87, $2f, $2f, $03, $01
+    !byte $ff, $0c, $87, $2f,  $2f, $03, $01
     ; level 6 - Processing Plant
-    !byte $ff, $14, $88, $32, $34, $88, $52, $19, $8d, $4e, $5d, $8d, $72
+    !byte $ff, $14, $88, $32,  $34, $88, $52,  $19, $8d, $4e,  $5d, $8d, $72
     ; level 7 - The Vat
-    !byte $ff, $38, $81, $72, $27, $08, $05, $41, $8d, $72
+    !byte $ff, $38, $81, $72,  $27, $08, $05,  $41, $8d, $72
     ; level 8 - Miner Willy meets the Kong Beast
-    !byte $ff, $22, $0d, $01, $29, $ab, $3a, $45, $87, $52
+    !byte $ff, $22, $0d, $01,  $29, $ab, $3a,  $45, $87, $52
     ; level 9 - Wacky Amoebatrons
-    !byte $ff, $31, $83, $46, $31, $aa, $46
+    !byte $ff, $31, $83, $46,  $31, $aa, $46
     ; level 10 - The Endorian Forest
-    !byte $ff, $41, $85, $52, $20, $87, $36, $0d, $8d, $66, $36, $2a, $1c
+    !byte $ff, $41, $85, $52,  $20, $87, $36,  $0d, $8d, $66,  $36, $2a, $1c
     ; level 11 - Attack of the Mutant Telephones
-    !byte $ff, $14, $8d, $4a, $38, $83, $5b, $35, $a7, $49
+    !byte $ff, $14, $8d, $4a,  $38, $83, $5b,  $35, $a7, $49
     ; level 12 - Return of the Alien Kong Beast
-    !byte $ff, $26, $ab, $3a, $22, $0d, $02, $5e, $86, $6e
+    !byte $ff, $26, $ab, $3a,  $22, $0d, $02,  $5e, $86, $6e
     ; level 13 - Ore Refinery
-    !byte $ff, $1a, $81, $6e, $6e, $24, $1a, $62, $07, $26, $5a, $2a, $1a
+    !byte $ff, $1a, $81, $6e,  $6e, $24, $1a,  $62, $07, $26,  $5a, $2a, $1a
     ; level 14 - Skylab Landing Bay
     !byte $ff
     ; level 15 - The Bank
     !byte $ff, $40, $ad, $4b
     ; level 16 - The Sixteenth Cavern
-    !byte $ff, $65, $a5, $72, $4a, $0d, $02, $45, $87, $5e, $02, $8a, $1e
+    !byte $ff, $65, $a5, $72,  $4a, $0d, $02,  $45, $87, $5e,  $02, $8a, $1e
     ; level 17 - The Warehouse
-    !byte $ff, $10, $ad, $1f, $2c, $8d, $62
+    !byte $ff, $10, $ad, $1f,  $2c, $8d, $62
     ; level 18 - Amoebatrons' Revenge
-    !byte $ff, $2e, $a3, $46, $46, $06, $2e, $2e, $aa, $46, $42, $0d, $2e
+    !byte $ff, $2e, $a3, $46,  $46, $06, $2e,  $2e, $aa, $46,  $42, $0d, $2e
     ; level 19 - The Meteor Storm
-    !byte $ff, $4a, $0b, $1e, $72, $0d, $5a, $1a, $0d, $02
+    !byte $ff, $4a, $0b, $1e,  $72, $0d, $5a,  $1a, $0d, $02
     ; level 20 - The Final Barrier
-    !byte $ff, $1a, $83, $2e, $4a, $21, $30, $29, $29, $05
-    !byte $ff
+    !byte $ff, $1a, $83, $2e,  $4a, $21, $30,  $29, $29, $05
+    !byte $ff   ; terminator
 
 ; ***************************************************************************************
 levelTitles

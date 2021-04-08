@@ -3659,14 +3659,15 @@ drawRegularVerticalGuardians
     lda verticalAnimationCounter        ;
     lsr                                 ;
     and #3                              ;
-    sta eugenePositionY                 ; animation state: here 'eugenePositionY' used as temporary storage
+    sta verticalAnimationIndex          ; animation state
     ldx #0                              ;
     lda #<verticalGuardianMODE1Address  ; }
     sta tempGuardianSpriteAddrLow       ; } address of vertical guardian sprite
     lda #>verticalGuardianMODE1Address  ; }
     sta tempGuardianSpriteAddrHigh      ; }
 -
-    cpx eugenePositionY                 ; animation state: here 'eugenePositionY' used as temporary storage
+verticalAnimationIndex = * + 1
+    cpx #$ff                            ; animation state
     beq gotSpriteAddress                ; multiplication by repeated addition
     inx                                 ;
     lda tempGuardianSpriteAddrLow       ; }
@@ -6361,8 +6362,7 @@ return2
     rts                             ;
 
 ; ***************************************************************************************
-updateVerticalGuardiansAndJumpAndFallSounds
-    jsr updateVerticalGuardians     ;
+updateJumpAndFallSounds
     lda isJumping                   ;
     cmp #1                          ;
     bne notInAir                    ; if (not in air) then branch
@@ -6990,8 +6990,9 @@ playCurrentLevel
     sta tempScreenAddressHigh               ; }
 
     jsr animateKeysUpdateHorizontalGuardiansAndLevel19EnergyFields  ;
+    jsr updateVerticalGuardians                                     ;
     jsr checkForCollisions                                          ;
-    jsr updateVerticalGuardiansAndJumpAndFallSounds                 ;
+    jsr updateJumpAndFallSounds                                     ;
 
     ; wait for tick
 -
@@ -7786,6 +7787,17 @@ death
     ldx #$c8                        ; } Play death sound
     ldy #$01                        ; }
     jsr playSoundAXY                ; }
+
+    ; pause for a very short time
+    lda #5                          ;
+-
+    pha                             ;
+    lda #19                         ;
+    jsr OSBYTE                      ;
+    pla                             ;
+    sec                             ;
+    sbc #1                          ;
+    bne -                           ;
 
     ldx #$fd                        ;
     txs                             ; fix the stack pointer!!
@@ -9905,7 +9917,7 @@ checkVerticalCollision
     adc #8                              ;
     sec                                 ;
     sbc playerPixelY                    ;
-    cmp #19                             ;
+    cmp #17                             ;
     bcc verticalCheckPixelCollision     ; if ( guardianY + 8 - playerY < 19) then branch
 largestYExtent = * + 1
     cmp #$f0                            ; if (guardianY + 8 - playerY > largestYExtent) then branch

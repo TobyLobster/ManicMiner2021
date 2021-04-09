@@ -263,6 +263,8 @@ meteorIndex                     = $9f       ;
 ; ***************************************************************************************
 sideWallColour1                 = $a0       ;
 sideWallColour2                 = $a1       ;
+newSingleItemColour             = $a2       ;
+conveyorColour                  = $a3       ;
 
 ; ***************************************************************************************
 verticalGuardianMODE1Address    = $0400     ;
@@ -5024,22 +5026,37 @@ drawScoreLevelLives
 
 ; ***************************************************************************************
 nonLevel10
+    lda #1                          ;
+    sta conveyorDirection           ; direction = $01
     ldy currentLevel                ;
     lda fixedText - 1,y             ;
-    and #$80                        ;
-    clc                             ;
-    adc $71                         ;
+    bmi +                           ; conveyor direction
+    lda #255
+    sta conveyorDirection           ; direction = $ff
++
+    lda $71                         ;
     clc                             ;
     adc #5                          ;
     sta conveyorX                   ;
 
     lda $72                         ;
+    and #$1f                        ;
     clc                             ;
     adc #1                          ;
     sta conveyorY                   ;
 
     lda $73                         ;
+    and #$1f                        ;
     sta conveyorLength              ;
+
+    lda $73                         ;
+    asl                             ;
+    rol                             ;
+    rol                             ;
+    and #3                          ;
+    tax                             ;
+    lda maskColourTable, x          ;
+    sta conveyorColour              ;
 
 drawFixedString
     ldx #4                          ;
@@ -5155,8 +5172,8 @@ drawConveyor
     beq return10                        ;
 
     lda conveyorX                       ;
-    and #$80                            ;
-    beq +                               ;
+    ldx conveyorDirection               ;
+    bne +                               ;
     lda #3                              ;
 +
     eor conveyorSpriteOffset            ;
@@ -5172,14 +5189,13 @@ drawConveyor
     sta cellPlotSourceSpriteAddressHigh ;
 
     lda conveyorX                       ;
-    and #$7f                            ; remove top bit (direction)
     sta cursorX                         ;
 
     lda conveyorY                       ;
     sta cursorY                         ;
 
     jsr setCursorScreenAddress          ;
-    lda #$f0                            ;
+    lda conveyorColour                  ;
     sta plotColourMask                  ; plot colour 2
 
     jsr cellPlot                        ; plot first conveyor
@@ -5324,15 +5340,13 @@ injectAddressHigh = * + 2
 level10Init
     lda #$e1                            ; } use alternative floor as conveyor (not used?)
     sta levelFeatureConveyorOrLadder    ; }
-    lda #2                              ;
-    sta levelColourArray + 1            ;
-    sta levelColourArray + 2            ;
-    lda #3                              ;
-    sta levelColourArray + 3            ;
     jmp levelInitContinued              ;
 
 ; ***************************************************************************************
 drawSwitches
+    lda #3                          ;
+    jsr setTextColour               ;
+
     lda #31                         ; }
     jsr OSWRCH                      ; }
     lda #10                         ; }
@@ -5359,8 +5373,6 @@ drawSwitches
 level13Init
     lda #$f5                        ; ladder
     sta levelFeatureCrumble         ;
-    lda #3                          ;
-    sta levelColourArray + 1        ;
     jmp levelInitContinued          ;
 
 ; ***************************************************************************************
@@ -5413,12 +5425,6 @@ initLevel
 nonLevel10Init
     lda #$eb                         ; } alternative conveyor (thin)
     sta levelFeatureConveyorOrLadder ; }
-    lda #3                          ; }
-    sta levelColourArray + 2        ; } values for all levels except level 10 - The Endorian Forest
-    lda #1                          ; }
-    sta levelColourArray + 1        ; }
-    lda #2                          ; }
-    sta levelColourArray + 3        ; }
 
     lda currentLevel                ;
     cmp #13                         ;
@@ -5572,7 +5578,6 @@ storeAddressLow = * + 1
     ; *****************************
     ldx currentLevel                                ;
     lda levelSideWallColoursConveyorArray - 1, x    ;
-    lda $84                         ;
     lsr                             ;
     lsr                             ;
     lsr                             ;
@@ -5583,8 +5588,6 @@ storeAddressLow = * + 1
     tya                             ;
     lsr                             ;
     lsr                             ;
-    clc                             ;
-    adc #$80                        ;
     sta sideWallColour2             ;
 
     ; *****************************
@@ -5903,7 +5906,8 @@ drawRectangularFeature
     jsr commandDrawHorizontalStrip      ;
     inc $72                             ; increment y cell
     lda $72                             ;
-    cmp $74                             ;
+    eor $74                             ;
+    and #$1f                            ;
     bne drawRectangularFeature          ; if (not at limit) then branch (loop back)
     rts                                 ;
 
@@ -5948,15 +5952,6 @@ decodeNextFeature
     jmp decodeNextFeature               ;
 
 ; ***************************************************************************************
-setColourAndDrawLevel7Platform
-    lda currentLevelFeatureIndex        ;
-    cmp #1                              ;
-    bne setColourAndDrawPlatform        ;
-    lda #2                              ; COLOUR 2
-    jsr setTextColour                   ;
-    jmp drawPlatform                    ;
-
-; ***************************************************************************************
 setColourAndDrawLevel14Platform
     lda currentLevelFeatureIndex        ;
     cmp #0                              ;
@@ -5986,42 +5981,49 @@ setColourAndDrawLevel14Platform
 ; ***************************************************************************************
 commandDrawHorizontalStrip
     lda currentLevel                    ;
-    cmp #7                              ;
-    beq setColourAndDrawLevel7Platform  ;
     cmp #14                             ;
     beq setColourAndDrawLevel14Platform ;
 
 setColourAndDrawPlatform
-    ldx currentLevelFeatureIndex        ;
-    lda levelColourArray,x              ;
-    jsr setTextColour                   ;
-
 drawPlatform
     lda #31                             ;
     jsr OSWRCH                          ;
+
     lda $71                             ;
     clc                                 ;
     adc #5                              ;
     jsr OSWRCH                          ; TAB($71 + 5, $72 + 1)
+
     lda $72                             ;
+    and #$1f                            ;
     clc                                 ;
     adc #1                              ;
     jsr OSWRCH                          ;
 
+    lda $73                             ;
+    and #$1f                            ;
+    tay                                 ; Y is the width to draw
+    lda $73                             ;
+    asl                                 ;
+    rol                                 ;
+    rol                                 ;
+    and #3                              ; extract foreground colour
+    jsr setTextColour                   ;
+
+    lda $72                             ;
+    asl                                 ;
+    rol                                 ;
+    rol                                 ;
+    and #3                              ; extract background colour
+    clc                                 ;
+    adc #$80                            ;
+    jsr setTextColour                   ;
+
     ldx currentLevelFeatureIndex        ;
     lda levelFeatureArray,x             ;
-    cmp #$8f                            ;
-    bne +                               ; walls have background colour 129
-wallBackgroundColour = * + 1
-    lda #129                            ;
-    jsr setTextColour                   ;
-+
-    lda levelFeatureArray,x             ;
-    ldy #0                              ;
 -
     jsr OSWRCH                          ;
-    iny                                 ;
-    cpy $73                             ;
+    dey                                 ;
     bne -                               ;
     lda currentLevelFeatureIndex        ;
     cmp #3                              ;
@@ -6043,52 +6045,63 @@ restoreBackgroundColour
     jsr restoreBackgroundColour         ;
     jmp drawFooterTextOrReturn          ;
 
+; ***************************************************************************************
 drawSideWallsAndFloor
-
-    lda sideWallColour1                 ;
-    jsr setTextColour                   ;
-    lda sideWallColour2                 ;
-    sta wallBackgroundColour            ;
-    jsr setTextColour                   ;
-
     ; draw left edge wall
     lda #$ff                            ; }
     sta $71                             ; }
-    lda #0                              ; } from (-1, 0)
+    lda sideWallColour2                 ; }
+    lsr                                 ; }
+    ror                                 ; }
+    ror                                 ; } from (-1, 0), colour sideWallColour1
     sta $72                             ; }
 
-    lda #1                              ; }
-    sta $73                             ; } width 1
+    lda sideWallColour1                 ; }
+    lsr                                 ; }
+    ror                                 ; }
+    ror                                 ; }
+    clc                                 ; }
+    adc #1                              ; }
+    sta $73                             ; } width 1, colour sideWallColour2
+
     lda #16                             ; } to (-1, 16)
     sta $74                             ; }
 
-    lda #2                              ;
+    lda #2                              ; wall
     sta currentLevelFeatureIndex        ;
     jsr drawRectangularFeature          ; draw
 
     ; draw right edge wall
     lda #30                             ; }
     sta $71                             ; }
-    lda #0                              ; } from (30,0)
+    lda sideWallColour2                 ; }
+    lsr                                 ; }
+    ror                                 ; }
+    ror                                 ; } from (30, 0), colour sideWallColour1
     sta $72                             ; }
-                                        ; } (width 1 still)
+
+    lda sideWallColour1                 ; }
+    lsr                                 ; }
+    ror                                 ; }
+    ror                                 ; }
+    clc                                 ; }
+    adc #1                              ; }
+    sta $73                             ; } width 1,  colour sideWallColour2
+
     lda #16                             ; }
     sta $74                             ; } to (30, 16)
     jsr drawRectangularFeature          ; draw
-
-    lda #129                            ;
-    sta wallBackgroundColour            ;
 
     ; draw floor
     lda #0                              ;
     sta currentLevelFeatureIndex        ;
     lda #0                              ; }
     sta $71                             ; }
-    lda #15                             ; } at (0,15)
+    lda #(0 * 64) + 15                  ; } at (0,15) background colour 0
     sta $72                             ; }
 
-    lda #30                             ; }
-    sta $73                             ; } 30 is end X coordinate
+    lda #(1 * 64) + 30                  ; }
+    sta $73                             ; } 30 is width, foreground colour 1
     jmp commandDrawHorizontalStrip      ;
 
 ; ***************************************************************************************
@@ -6611,6 +6624,9 @@ skipToTerminator
     lda #$f0                            ;
     sta singleItemSprite                ; singleItemSprite = $f0
     jsr setSingleOffsetX5               ; singleItemOffsetX = 5, type++
+
+    lda #255                            ;
+    sta newSingleItemColour             ;
     ldx #0                              ;
     jmp decodeNextSingleItem            ;
 
@@ -6626,7 +6642,7 @@ drawExtraSpikes
 
 ; ***************************************************************************************
 drawSpecialSpikes
-    lda #3                              ; COLOUR 3
+    lda #2                              ; COLOUR 2
     jsr setTextColour                   ;
 
     lda #31                             ; }
@@ -6668,6 +6684,14 @@ setSingleItemNextTypeCommand
     jmp decodeNextSingleItem            ;
 
 ; ***************************************************************************************
+setSingleItemColourCommand
+    clc                                 ;
+    adc #7                              ;
+    sta newSingleItemColour             ;
+    jsr setTextColour                   ;
+    jmp decodeNextSingleItem            ;
+
+; ***************************************************************************************
 toggleAlternativeSingleItemSprite
     jsr setSingleOffsetX5               ; X offset 5, type++
     ldx #0                              ;
@@ -6689,6 +6713,8 @@ decodeNextSingleItem
     beq setSingleItemOffset15Command    ; if (command 254) then set X offset to 15
     cmp #$fd                            ;
     beq setSingleItemNextTypeCommand    ; if (command 253) then type += offset; set X offset to 5
+    cmp #$fa                            ;
+    bcs setSingleItemColourCommand      ; if (command 250) then set colour 'command - 249'
 
     dec singleItemType                  ;
 
@@ -6717,16 +6743,13 @@ decodeNextSingleItem
     adc #1                              ;
     jsr OSWRCH                          ; Y pos
 
-    lda #2                              ; COLOUR 2
-    jsr setTextColour                   ;
-
     lda singleItemSprite                ;
     cmp #$ee                            ;
     beq drawSpiderAndThread             ; if (spider) then branch
     cmp #$f0                            ;
     beq handleKey                       ; if (key) then branch
     cmp #$eb                            ;
-    bne handleColour1SingleItem         ; if (colour 1 item) then branch
+    bne handleSpike                     ; if (spike) then branch
 drawSingleItem
     lda singleItemSprite                    ;
     jsr OSWRCH                              ;
@@ -6737,13 +6760,17 @@ drawSingleItem
 
 ; ***************************************************************************************
 handleKey
-    lda #3                          ; COLOUR 3
-    jsr setTextColour               ;
-    jmp recordKey                   ;
+    lda #3                              ; COLOUR 3
+    jsr setTextColour                   ;
+    jsr recordKey                       ;
+    rts                                 ;
 
 ; ***************************************************************************************
-handleColour1SingleItem
+handleSpike
+    lda newSingleItemColour         ;
+    bpl +                           ;
     lda #1                          ; COLOUR 1
++
     jsr setTextColour               ;
     jmp drawSingleItem              ;
 
@@ -6785,6 +6812,12 @@ drawSpiderAndThread
     jsr incrementLevelDataPointer   ;
     jsr getLevelDataByte            ;
     sta decodeLevelByte             ;
+
+    lda newSingleItemColour         ;
+    bpl +                           ;
+    lda #2                          ; COLOUR 2
++
+    jsr setTextColour               ;
 
     ; draw line of vertical thread
     ldx #0                          ; loop counter
@@ -6831,13 +6864,11 @@ recordKey
 colourCycleKeys
     ldx currentKeyIndex             ; }
     inx                             ; }
-    cpx keyPositionCounter          ; } cycle between zero and the number of keys
+    cpx #5                          ; } cycle between zero and the number of keys
     bcc +                           ; }
     ldx #0                          ; }
-    stx currentKeyIndex             ; }
-
 +
-    stx currentKeyIndex             ;
+    stx currentKeyIndex             ; }
 
     ; cycle around colours 0,1,2
     inc keyColourCounter            ;
@@ -6847,6 +6878,10 @@ colourCycleKeys
     lda #0                          ;
     sta keyColourCounter            ;
 +
+
+    lda currentKeyIndex             ;
+    cmp keyPositionCounter          ;
+    bcs return12                    ;
 
     lda keyGot,x                    ;
     bne return12                    ; if (got) then skip animating
@@ -7273,18 +7308,6 @@ afterLooking
     lda willyGraphicsPage           ;
     sta willySpriteAddressHigh      ;
 
-    lda conveyorX                   ;
-    and #$80                        ;
-    cmp #$80                        ;
-    beq +                           ;
-
-    lda #$ff                        ;
-    sta conveyorDirection           ;
-    jmp copySpikeSprites            ;
-
-+
-    lda #1                          ;
-    sta conveyorDirection           ;
     jmp copySpikeSprites            ;
 
 lookRight
@@ -8222,6 +8245,9 @@ soundFrequenciesSecond
 guardianColourTable
     !byte $ff, $f0, $0f, $ff        ;
 
+maskColourTable
+    !byte $00, $0f, $f0, $ff        ;
+
 guardianSetForEachLevel
     ; level 1,   2,   3,   4,   5,   6,   7,  8,    9,  10,  11,  12,  13,  14,  15,  16,  17,  18,  19,  20
     !byte $01, $02, $03, $04, $05, $06, $07, $08, $09, $0a, $0b, $08, $0c, $00, $0d, $0e, $0f, $09, $10, $01
@@ -8655,10 +8681,6 @@ levelFeature5
     !byte $00                           ; [accessed in error, set to zero to avoid side-effects]
 
 ; ***************************************************************************************
-levelColourArray
-    ;   floor, crumble, wall, conveyor, clear
-    !byte $01, $01,      $03,      $02, $03       ;
-
 verticalGuardianTolerancesTL
 ;         eugene, kong, telephone, eye, skylab, safe, triangle, amoebatron, wacky am.
     !byte 6     , 3   , 4        , 8  , 1     , 1   , 6       , 4         , 5
@@ -8682,17 +8704,24 @@ playerStartPositions
     ;level  1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,  16,  17,  18,  19,  20
     !byte $0e, $0e, $0e, $de, $04, $74, $0e, $0e, $0e, $05, $12, $0e, $ee, $8e, $0e, $4e, $04, $de, $0e, $0e
 
-    ; ***********************************************************************************
-!macro levelStrip .x, .y, .width {
-    !byte .x, .y, .width
+; ***************************************************************************************
+!macro levelStrip .x, .y, .width, .backgroundColour, .colour {
+    !byte .x
+    !byte .y + 64 * .backgroundColour
+    !byte .width + 64 * .colour
 }
 
-!macro levelRect .x, .y, .width, .y_max {
-    !byte $fe, .x, .y, .width, .y_max
+!macro levelRect .x, .y, .width, .y_max, .backgroundColour, .colour {
+    !byte $fe
+    !byte .x
+    !byte .y + 64 * .backgroundColour
+    !byte .width + 64 * .colour
+    !byte .y_max
 }
 
 !macro levelSetType .type {
-    !byte $fd, .type
+    !byte $fd
+    !byte .type
 }
 
 !macro levelIncrementType {
@@ -8733,15 +8762,6 @@ playerStartPositions
     !byte .exitY
 }
 
-;   00 = 8x8 exit sprite repeated four times (lower 3 bits are sprite number)
-;   01 = 16x16 exit sprite (lower 3 bits are the sprite number)
-;   10 = 8x16 exit sprite reflected in the Y axis (lower bits are the sprite number)
-;   11 = 8x8 exit sprite reflected four times (lower 5 bits are sprite number)
-exitType1x1Rep  = 0
-exitType2x2     = $40
-exitType1x2     = $80
-exitType1x1Ref  = $c0
-
 ; ***************************************************************************************
 ; Physical colours given for logical colours 0 and 1
 levelColoursArray
@@ -8755,7 +8775,7 @@ levelColoursArray
     +levelColours1 black, red       ; level 8 - Miner Willy meets the Kong Beast
     +levelColours1 black, red       ; level 9 - Wacky Amoebatrons
     +levelColours1 black, green     ; level 10 - The Endorian Forest
-    +levelColours1 blue, cyan       ; level 11 - Attack of the Mutant Telephones
+    +levelColours1 black, blue      ; level 11 - Attack of the Mutant Telephones
     +levelColours1 black, magenta   ; level 12 - Return of the Alien Kong Beast
     +levelColours1 black, cyan      ; level 13 - Ore Refinery
     +levelColours1 blue, green      ; level 14 - Skylab Landing Bay
@@ -8820,23 +8840,23 @@ levelSideWallColoursConveyorArray
     +levelSideWallColoursConveyor       1,           3,           1    ; level 1 - Central Cavern
     +levelSideWallColoursConveyor       1,           3,           1    ; level 2 - The Cold Room
     +levelSideWallColoursConveyor       2,           1,           3    ; level 3 - The Menagerie
-    +levelSideWallColoursConveyor       1,           3,           1    ; level 4 - Abandoned Uranium Workings
+    +levelSideWallColoursConveyor       1,           2,           1    ; level 4 - Abandoned Uranium Workings
     +levelSideWallColoursConveyor       2,           3,           1    ; level 5 - Eugene's Lair
-    +levelSideWallColoursConveyor       1,           3,           1    ; level 6 - Processing Plant
-    +levelSideWallColoursConveyor       0,           3,           1    ; level 7 - The Vat
+    +levelSideWallColoursConveyor       1,           3,           0    ; level 6 - Processing Plant
+    +levelSideWallColoursConveyor       0,           2,           1    ; level 7 - The Vat
     +levelSideWallColoursConveyor       2,           3,           1    ; level 8 - Miner Willy meets the Kong Beast
     +levelSideWallColoursConveyor       2,           3,           1    ; level 9 - Wacky Amoebatrons
-    +levelSideWallColoursConveyor       1,           3,           1    ; level 10 - The Endorian Forest
+    +levelSideWallColoursConveyor       1,           2,           3    ; level 10 - The Endorian Forest
     +levelSideWallColoursConveyor       0,           3,           1    ; level 11 - Attack of the Mutant Telephones
-    +levelSideWallColoursConveyor       2,           3,           1    ; level 12 - Return of the Alien Kong Beast
+    +levelSideWallColoursConveyor       2,           2,           1    ; level 12 - Return of the Alien Kong Beast
     +levelSideWallColoursConveyor       2,           3,           1    ; level 13 - Ore Refinery
-    +levelSideWallColoursConveyor       2,           3,           1    ; level 14 - Skylab Landing Bay
+    +levelSideWallColoursConveyor       2,           2,           0    ; level 14 - Skylab Landing Bay
     +levelSideWallColoursConveyor       0,           3,           1    ; level 15 - The Bank
-    +levelSideWallColoursConveyor       2,           3,           1    ; level 16 - The Sixteenth Cavern
+    +levelSideWallColoursConveyor       2,           3,           2    ; level 16 - The Sixteenth Cavern
     +levelSideWallColoursConveyor       1,           3,           1    ; level 17 - The Warehouse
     +levelSideWallColoursConveyor       0,           3,           1    ; level 18 - Amoebatrons' Revenge
-    +levelSideWallColoursConveyor       1,           3,           1    ; level 19 - The Meteor Storm
-    +levelSideWallColoursConveyor       1,           3,           1    ; level 20 - The Final Barrier
+    +levelSideWallColoursConveyor       1,           3,           0    ; level 19 - The Meteor Storm
+    +levelSideWallColoursConveyor       1,           3,           0    ; level 20 - The Final Barrier
 
 ; ***************************************************************************************
 levelSideWallKeyArray
@@ -8863,96 +8883,107 @@ levelSideWallKeyArray
     +levelSideWallKeySprites     0,   0        ; level 20 - The Final Barrier
 
 ; ***************************************************************************************
+;   $00 = 8x8 exit sprite repeated four times (lower 3 bits are sprite number)
+;   $40 = 16x16 exit sprite (lower 3 bits are the sprite number)
+;   $80 = 8x16 exit sprite reflected in the Y axis (lower bits are the sprite number)
+;   $c0 = 8x8 exit sprite reflected four times (lower 5 bits are sprite number)
+exitType1x1Rep  = $00
+exitType2x2     = $40
+exitType1x2     = $80
+exitType1x1Ref  = $c0
+
+; ***************************************************************************************
 levelExitTypeSpriteArray
-    +levelExitTypeSprite exitType1x1Rep, 0
-    +levelExitTypeSprite exitType1x1Ref, 0
-    +levelExitTypeSprite exitType2x2,    2
-    +levelExitTypeSprite exitType1x1Rep, 1
-    +levelExitTypeSprite exitType1x1Ref, 0
-    +levelExitTypeSprite exitType1x1Ref, 1
-    +levelExitTypeSprite exitType1x1Rep, 2
-    +levelExitTypeSprite exitType1x2,    0
-    +levelExitTypeSprite exitType1x1Ref, 2
-    +levelExitTypeSprite exitType2x2,    3
-    +levelExitTypeSprite exitType2x2,    4
-    +levelExitTypeSprite exitType1x1Ref, 3
-    +levelExitTypeSprite exitType2x2,    0
-    +levelExitTypeSprite exitType1x1Ref, 4
-    +levelExitTypeSprite exitType2x2,    1
-    +levelExitTypeSprite exitType1x1Ref, 8
-    +levelExitTypeSprite exitType1x2,    1
-    +levelExitTypeSprite exitType1x1Ref, 6
-    +levelExitTypeSprite exitType1x1Ref, 7
-    +levelExitTypeSprite exitType1x2,    2
+;                             exit type, exit sprite
+    +levelExitTypeSprite exitType1x1Rep, 0        ; level 1 - Central Cavern
+    +levelExitTypeSprite exitType1x1Ref, 0        ; level 2 - The Cold Room
+    +levelExitTypeSprite exitType2x2,    2        ; level 3 - The Menagerie
+    +levelExitTypeSprite exitType1x1Rep, 1        ; level 4 - Abandoned Uranium Workings
+    +levelExitTypeSprite exitType1x1Ref, 0        ; level 5 - Eugene's Lair
+    +levelExitTypeSprite exitType1x1Ref, 1        ; level 6 - Processing Plant
+    +levelExitTypeSprite exitType1x1Rep, 2        ; level 7 - The Vat
+    +levelExitTypeSprite exitType1x2,    0        ; level 8 - Miner Willy meets the Kong Beast
+    +levelExitTypeSprite exitType1x1Ref, 2        ; level 9 - Wacky Amoebatrons
+    +levelExitTypeSprite exitType2x2,    3        ; level 10 - The Endorian Forest
+    +levelExitTypeSprite exitType2x2,    4        ; level 11 - Attack of the Mutant Telephones
+    +levelExitTypeSprite exitType1x1Ref, 3        ; level 12 - Return of the Alien Kong Beast
+    +levelExitTypeSprite exitType2x2,    0        ; level 13 - Ore Refinery
+    +levelExitTypeSprite exitType1x1Ref, 4        ; level 14 - Skylab Landing Bay
+    +levelExitTypeSprite exitType2x2,    1        ; level 15 - The Bank
+    +levelExitTypeSprite exitType1x1Ref, 8        ; level 16 - The Sixteenth Cavern
+    +levelExitTypeSprite exitType1x2,    1        ; level 17 - The Warehouse
+    +levelExitTypeSprite exitType1x1Ref, 6        ; level 18 - Amoebatrons' Revenge
+    +levelExitTypeSprite exitType1x1Ref, 7        ; level 19 - The Meteor Storm
+    +levelExitTypeSprite exitType1x2,    2        ; level 20 - The Final Barrier
 
 ; ***************************************************************************************
 levelExitColourArray
-    +levelExitColour $f0
-    +levelExitColour $f0
-    +levelExitColour $ff
-    +levelExitColour $f0
-    +levelExitColour $f0
-    +levelExitColour $f0
-    +levelExitColour $f0
-    +levelExitColour $f0
-    +levelExitColour $f0
-    +levelExitColour $f0
-    +levelExitColour $ff
-    +levelExitColour $ff
-    +levelExitColour $f0
-    +levelExitColour $ff
-    +levelExitColour $f0
-    +levelExitColour $f0
-    +levelExitColour $0f
-    +levelExitColour $f0
-    +levelExitColour $f0
-    +levelExitColour $f0
+    +levelExitColour $f0        ; level 1 - Central Cavern
+    +levelExitColour $f0        ; level 2 - The Cold Room
+    +levelExitColour $ff        ; level 3 - The Menagerie
+    +levelExitColour $f0        ; level 4 - Abandoned Uranium Workings
+    +levelExitColour $f0        ; level 5 - Eugene's Lair
+    +levelExitColour $ff        ; level 6 - Processing Plant
+    +levelExitColour $f0        ; level 7 - The Vat
+    +levelExitColour $f0        ; level 8 - Miner Willy meets the Kong Beast
+    +levelExitColour $f0        ; level 9 - Wacky Amoebatrons
+    +levelExitColour $f0        ; level 10 - The Endorian Forest
+    +levelExitColour $ff        ; level 11 - Attack of the Mutant Telephones
+    +levelExitColour $ff        ; level 12 - Return of the Alien Kong Beast
+    +levelExitColour $f0        ; level 13 - Ore Refinery
+    +levelExitColour $ff        ; level 14 - Skylab Landing Bay
+    +levelExitColour $f0        ; level 15 - The Bank
+    +levelExitColour $ff        ; level 16 - The Sixteenth Cavern
+    +levelExitColour $0f        ; level 17 - The Warehouse
+    +levelExitColour $f0        ; level 18 - Amoebatrons' Revenge
+    +levelExitColour $f0        ; level 19 - The Meteor Storm
+    +levelExitColour $f0        ; level 20 - The Final Barrier
 
 ; ***************************************************************************************
 levelExitPositionXArray
-    +levelExitPositionX 33
-    +levelExitPositionX 33
-    +levelExitPositionX 33
-    +levelExitPositionX 33
-    +levelExitPositionX 19
-    +levelExitPositionX 33
-    +levelExitPositionX 19
-    +levelExitPositionX 19
-    +levelExitPositionX 5
-    +levelExitPositionX 17
-    +levelExitPositionX 5
-    +levelExitPositionX 19
-    +levelExitPositionX 5
-    +levelExitPositionX 19
-    +levelExitPositionX 5
-    +levelExitPositionX 16
-    +levelExitPositionX 33
-    +levelExitPositionX 33
-    +levelExitPositionX 19
-    +levelExitPositionX 33
+    +levelExitPositionX 33        ; level 1 - Central Cavern
+    +levelExitPositionX 33        ; level 2 - The Cold Room
+    +levelExitPositionX 33        ; level 3 - The Menagerie
+    +levelExitPositionX 33        ; level 4 - Abandoned Uranium Workings
+    +levelExitPositionX 19        ; level 5 - Eugene's Lair
+    +levelExitPositionX 33        ; level 6 - Processing Plant
+    +levelExitPositionX 19        ; level 7 - The Vat
+    +levelExitPositionX 19        ; level 8 - Miner Willy meets the Kong Beast
+    +levelExitPositionX 5         ; level 9 - Wacky Amoebatrons
+    +levelExitPositionX 17        ; level 10 - The Endorian Forest
+    +levelExitPositionX 5         ; level 11 - Attack of the Mutant Telephones
+    +levelExitPositionX 19        ; level 12 - Return of the Alien Kong Beast
+    +levelExitPositionX 5         ; level 13 - Ore Refinery
+    +levelExitPositionX 19        ; level 14 - Skylab Landing Bay
+    +levelExitPositionX 5         ; level 15 - The Bank
+    +levelExitPositionX 16        ; level 16 - The Sixteenth Cavern
+    +levelExitPositionX 33        ; level 17 - The Warehouse
+    +levelExitPositionX 33        ; level 18 - Amoebatrons' Revenge
+    +levelExitPositionX 19        ; level 19 - The Meteor Storm
+    +levelExitPositionX 33        ; level 20 - The Final Barrier
 
 ; ***************************************************************************************
 levelExitPositionYArray
-    +levelExitPositionY 16
-    +levelExitPositionY 16
-    +levelExitPositionY 14
-    +levelExitPositionY  4
-    +levelExitPositionY 16
-    +levelExitPositionY  3
-    +levelExitPositionY 16
-    +levelExitPositionY 16
-    +levelExitPositionY  3
-    +levelExitPositionY 16
-    +levelExitPositionY  4
-    +levelExitPositionY 16
-    +levelExitPositionY 16
-    +levelExitPositionY  3
-    +levelExitPositionY  6
-    +levelExitPositionY  8
-    +levelExitPositionY  4
-    +levelExitPositionY  3
-    +levelExitPositionY  7
-    +levelExitPositionY  4
+    +levelExitPositionY 16        ; level 1 - Central Cavern
+    +levelExitPositionY 16        ; level 2 - The Cold Room
+    +levelExitPositionY 14        ; level 3 - The Menagerie
+    +levelExitPositionY  4        ; level 4 - Abandoned Uranium Workings
+    +levelExitPositionY 16        ; level 5 - Eugene's Lair
+    +levelExitPositionY  3        ; level 6 - Processing Plant
+    +levelExitPositionY 16        ; level 7 - The Vat
+    +levelExitPositionY 16        ; level 8 - Miner Willy meets the Kong Beast
+    +levelExitPositionY  3        ; level 9 - Wacky Amoebatrons
+    +levelExitPositionY 16        ; level 10 - The Endorian Forest
+    +levelExitPositionY  4        ; level 11 - Attack of the Mutant Telephones
+    +levelExitPositionY 16        ; level 12 - Return of the Alien Kong Beast
+    +levelExitPositionY 16        ; level 13 - Ore Refinery
+    +levelExitPositionY  3        ; level 14 - Skylab Landing Bay
+    +levelExitPositionY  6        ; level 15 - The Bank
+    +levelExitPositionY  8        ; level 16 - The Sixteenth Cavern
+    +levelExitPositionY  4        ; level 17 - The Warehouse
+    +levelExitPositionY  3        ; level 18 - Amoebatrons' Revenge
+    +levelExitPositionY  7        ; level 19 - The Meteor Storm
+    +levelExitPositionY  4        ; level 20 - The Final Barrier
 
 levelDefinitions
     ; ***********************************************************************************
@@ -8960,464 +8991,464 @@ levelDefinitions
     !byte $ff, $ff
 
     ; floors
-    +levelStrip 4, 13, 15
-    +levelStrip 27, 12, 3
-    +levelStrip 28, 10, 2
-    +levelStrip 0, 9, 4
-    +levelStrip 0, 7, 3
-    +levelStrip 0, 5, 14
-    +levelStrip 17, 5, 1
-    +levelStrip 22, 5, 8
+    +levelStrip 4, 13, 15,      0, 1
+    +levelStrip 27, 12, 3,      0, 1
+    +levelStrip 28, 10, 2,      0, 1
+    +levelStrip 0, 9, 4,        0, 1
+    +levelStrip 0, 7, 3,        0, 1
+    +levelStrip 0, 5, 14,       0, 1
+    +levelStrip 17, 5, 1,       0, 1
+    +levelStrip 22, 5, 8,       0, 1
 
     +levelIncrementType
 
     ; crumble floors
-    +levelStrip 22, 12, 5
-    +levelStrip 13, 5, 4
-    +levelStrip 18, 5, 4
+    +levelStrip 22, 12, 5,      0, 1
+    +levelStrip 13, 5, 4,       0, 1
+    +levelStrip 18, 5, 4,       0, 1
 
     +levelIncrementType
 
     ; walls
-    +levelStrip 19, 12, 3
-    +levelStrip 16, 8, 3
+    +levelStrip 19, 12, 3,      1, 3
+    +levelStrip 16, 8, 3,       1, 3
 
     +levelIncrementType
 
     ; conveyor
-    +levelStrip 7, 9, 20
+    +levelStrip 7, 9, 20,       0, 2
 
     ; ***********************************************************************************
     ; level 2 - The Cold Room
     !byte $ff, $ff
 
     ; floors
-    +levelStrip 13, 12, 4
-    +levelStrip 8, 9, 7
-    +levelStrip 0, 7, 1
-    +levelStrip 0, 5, 19
-    +levelStrip 20, 6, 4
-    +levelStrip 23, 3, 1
+    +levelStrip 13, 12, 4,      0, 1
+    +levelStrip 8, 9, 7,        0, 1
+    +levelStrip 0, 7, 1,        0, 1
+    +levelStrip 0, 5, 19,       0, 1
+    +levelStrip 20, 6, 4,       0, 1
+    +levelStrip 23, 3, 1,       0, 1
 
     +levelIncrementType
 
     ; crumble floors
-    +levelStrip 7, 13, 4
-    +levelStrip 18, 10, 4
-    +levelStrip 20, 3, 3
-    +levelStrip 1, 7, 5
-    +levelStrip 25, 6, 2
-    +levelRect 25, 8, 2, 13
+    +levelStrip 7, 13, 4,       0, 1
+    +levelStrip 18, 10, 4,      0, 1
+    +levelStrip 20, 3, 3,       0, 1
+    +levelStrip 1, 7, 5,        0, 1
+    +levelStrip 25, 6, 2,       0, 1
+    +levelRect 25, 8, 2, 13,    0, 1
 
     +levelIncrementType
 
     ; walls
-    +levelStrip 18, 0, 12
-    +levelRect 24, 6, 1, 13
-    +levelRect 27, 5, 1, 13
+    +levelStrip 18, 0, 12,      1, 3
+    +levelRect 24, 6, 1, 13,    1, 3
+    +levelRect 27, 5, 1, 13,    1, 3
 
     +levelIncrementType
 
     ; conveyor
-    +levelStrip 2, 11, 4
+    +levelStrip 2, 11, 4,       0, 3
 
     ; ***********************************************************************************
     ; level 3 - The Menagerie
     !byte $ff, $ff
 
     ; floors
-    +levelStrip  4, 12,  6
-    +levelStrip 20, 13, 10
-    +levelStrip 13, 11,  5
-    +levelStrip 24, 10,  6
-    +levelStrip 26,  7,  4
-    +levelStrip  0,  7,  6
-    +levelStrip  0,  5,  4
+    +levelStrip  4, 12,  6,     0, 1
+    +levelStrip 20, 13, 10,     0, 1
+    +levelStrip 13, 11,  5,     0, 1
+    +levelStrip 24, 10,  6,     0, 1
+    +levelStrip 26,  7,  4,     0, 1
+    +levelStrip  0,  7,  6,     0, 1
+    +levelStrip  0,  5,  4,     0, 1
 
     +levelIncrementType
 
     ; crumble floors
-    +levelStrip  4,  5, 26
+    +levelStrip  4,  5, 26,     0, 1
 
     +levelIncrementType
 
     ; walls
-    +levelStrip 30, 0, 1
+    +levelStrip 30, 0, 1,       1, 3
 
     +levelIncrementType
 
     ; conveyor
-    +levelStrip 5, 9, 6
+    +levelStrip 5, 9, 6,        0, 2
 
     ; ***********************************************************************************
     ; level 4 - Abandoned Uranium Workings
     !byte $ff, $ff
 
     ; floors
-    +levelStrip  5, 12,  2
-    +levelStrip  6,  8,  2
-    +levelStrip  0,  5,  1
-    +levelStrip  6,  5,  1
-    +levelStrip 11, 11,  3
-    +levelStrip 11,  6,  2
-    +levelStrip 16,  5,  1
-    +levelStrip 17, 13,  2
-    +levelStrip 17,  9,  3
-    +levelStrip 18,  3,  6
-    +levelStrip 20,  6,  3
-    +levelStrip 21, 11,  3
-    +levelStrip 25,  8,  3
-    +levelStrip 27, 12,  3
-    +levelStrip 29, 10,  1
-    +levelStrip 26,  4,  4
+    +levelStrip  5, 12,  2,     0, 3
+    +levelStrip  6,  8,  2,     0, 3
+    +levelStrip  0,  5,  1,     0, 3
+    +levelStrip  6,  5,  1,     0, 3
+    +levelStrip 11, 11,  3,     0, 3
+    +levelStrip 11,  6,  2,     0, 3
+    +levelStrip 16,  5,  1,     0, 3
+    +levelStrip 17, 13,  2,     0, 3
+    +levelStrip 17,  9,  3,     0, 3
+    +levelStrip 18,  3,  6,     0, 3
+    +levelStrip 20,  6,  3,     0, 3
+    +levelStrip 21, 11,  3,     0, 3
+    +levelStrip 25,  8,  3,     0, 3
+    +levelStrip 27, 12,  3,     0, 3
+    +levelStrip 29, 10,  1,     0, 3
+    +levelStrip 26,  4,  4,     0, 3
 
     +levelIncrementType
 
     ; crumble floors
-    +levelStrip 0, 7, 3
+    +levelStrip 0, 7, 3,        0, 1
 
     +levelIncrementType
 
     ; walls
-    +levelStrip 14, 0, 16
+    +levelStrip 14, 0, 16,      1, 2
 
     +levelIncrementType
 
     ; conveyor
-    +levelStrip 0, 10, 3
+    +levelStrip 0, 10, 3,       0, 2
 
     ; ***********************************************************************************
     ; level 5 - Eugene's Lair
     !byte $ff, $ff
 
     ; floors
-    +levelStrip 0, 13, 2
-    +levelStrip 2, 11, 11
-    +levelStrip 3, 9, 10
-    +levelStrip 0, 5, 13
-    +levelStrip 17, 11, 7
-    +levelStrip 29, 11, 1
-    +levelStrip 21, 5, 6
-    +levelStrip 28, 6, 2
+    +levelStrip 0, 13, 2,       0, 1
+    +levelStrip 2, 11, 11,      0, 1
+    +levelStrip 3, 9, 10,       0, 1
+    +levelStrip 0, 5, 13,       0, 1
+    +levelStrip 17, 11, 7,      0, 1
+    +levelStrip 29, 11, 1,      0, 1
+    +levelStrip 21, 5, 6,       0, 1
+    +levelStrip 28, 6, 2,       0, 1
 
     +levelIncrementType
 
     ; crumble floors
-    +levelStrip 0, 11, 2
-    +levelStrip 17, 5, 4
+    +levelStrip 0, 11, 2,       0, 1
+    +levelStrip 17, 5, 4,       0, 1
 
     +levelIncrementType
 
     ; walls
-    +levelStrip 7, 15, 16
-    +levelStrip 13, 14, 10
-    +levelStrip 13, 13, 4
-    +levelRect 7, 12, 1, 16
+    +levelStrip 7, 15, 16,      1, 3
+    +levelStrip 13, 14, 10,     1, 3
+    +levelStrip 13, 13, 4,      1, 3
+    +levelRect 7, 12, 1, 16,    1, 3
 
     +levelIncrementType
 
     ; conveyor
-    +levelStrip 17, 8, 10
+    +levelStrip 17, 8, 10,      0, 3
 
     ; ***********************************************************************************
     ; level 6 - Processing Plant
     !byte $ff, $ff
 
     ; floors
-    +levelStrip 0, 9, 2
-    +levelStrip 2, 6, 2
-    +levelStrip 7, 5, 3
-    +levelStrip 14, 5, 2
-    +levelStrip 6, 10, 19
-    +levelStrip 20, 5, 5
-    +levelStrip 27, 12, 3
-    +levelStrip 21, 13, 2
-    +levelStrip 27, 6, 3
-    +levelStrip 22, 8, 5
+    +levelStrip 0, 9, 2,        0, 1
+    +levelStrip 2, 6, 2,        0, 1
+    +levelStrip 7, 5, 3,        0, 1
+    +levelStrip 14, 5, 2,       0, 1
+    +levelStrip 6, 10, 19,      0, 1
+    +levelStrip 20, 5, 5,       0, 1
+    +levelStrip 27, 12, 3,      0, 1
+    +levelStrip 21, 13, 2,      0, 1
+    +levelStrip 27, 6, 3,       0, 1
+    +levelStrip 22, 8, 5,       0, 1
 
     +levelIncrementType
 
     ; crumble floors
-    +levelStrip 29, 0, 1
+    +levelStrip 29, 0, 1,       0, 1
 
     +levelIncrementType
 
     ; walls
-    +levelRect 15, 6, 1, 8
-    +levelRect 15, 10, 1, 13
+    +levelRect 15, 6, 1, 8,     1, 3
+    +levelRect 15, 10, 1, 13,   1, 3
 
     +levelIncrementType
 
     ; conveyor
-    +levelStrip 2, 13, 4
+    +levelStrip 2, 13, 4,       0, 2
 
     ; ***********************************************************************************
     ; level 7 - The Vat
     !byte $ff, $ff
 
     ; floors
-    +levelStrip 8, 13, 3
-    +levelStrip 0, 10, 11
-    +levelStrip 13, 9, 3
-    +levelStrip 0, 8, 1
-    +levelStrip 0, 6, 3
-    +levelStrip 13, 5, 3
-    +levelStrip 14, 3, 2
+    +levelStrip 8, 13, 3,       0, 3
+    +levelStrip 0, 10, 11,      0, 3
+    +levelStrip 13, 9, 3,       0, 3
+    +levelStrip 0, 8, 1,        0, 3
+    +levelStrip 0, 6, 3,        0, 3
+    +levelStrip 13, 5, 3,       0, 3
+    +levelStrip 14, 3, 2,       0, 3
 
     +levelIncrementType
 
     ; crumble floors
-    +levelRect 17, 3, 13, 13
+    +levelRect 17, 3, 13, 13,   0, 2
 
     +levelIncrementType
 
     ; walls
-    +levelRect 16, 3, 1, 13
-    +levelStrip 13, 12, 4
-    +levelRect 13, 13, 1, 16
-    +levelStrip 13, 15, 17
-    +levelStrip 13, 0, 17
+    +levelRect 16, 3, 1, 13,    3, 2
+    +levelStrip 13, 12, 4,      3, 2
+    +levelRect 13, 13, 1, 16,   3, 2
+    +levelStrip 13, 15, 17,     3, 2
+    +levelStrip 13, 0, 17,      3, 2
 
     +levelIncrementType
 
     ; conveyor
-    +levelStrip 6, 5, 5
+    +levelStrip 6, 5, 5,        0, 1
 
     ; ***********************************************************************************
     ; level 8 - Miner Willy meets the Kong Beast
     !byte $ff, $ff
 
     ; floors
-    +levelStrip 3, 12, 2
-    +levelStrip 3, 12, 2            ; required - to not screw up the next level?
-    +levelStrip 0, 10, 1
-    +levelStrip 1, 7, 3
-    +levelStrip 0, 5, 3
-    +levelStrip 8, 5, 6
-    +levelStrip 14, 2, 2
-    +levelStrip 8, 11, 2
-    +levelStrip 11, 10, 3
-    +levelStrip 7, 8, 3
-    +levelStrip 17, 5, 2
-    +levelStrip 20, 6, 4
-    +levelStrip 17, 9, 5
-    +levelStrip 17, 13, 2
-    +levelStrip 21, 12, 5
-    +levelStrip 26, 10, 4
-    +levelStrip 26, 7, 1
-    +levelStrip 29, 6, 1
-    +levelStrip 28, 2, 2
+    +levelStrip 3, 12, 2,       0, 1
+    +levelStrip 3, 12, 2,       0, 1            ; required - to not screw up the next level?
+    +levelStrip 0, 10, 1,       0, 1
+    +levelStrip 1, 7, 3,        0, 1
+    +levelStrip 0, 5, 3,        0, 1
+    +levelStrip 8, 5, 6,        0, 1
+    +levelStrip 14, 2, 2,       0, 1
+    +levelStrip 8, 11, 2,       0, 1
+    +levelStrip 11, 10, 3,      0, 1
+    +levelStrip 7, 8, 3,        0, 1
+    +levelStrip 17, 5, 2,       0, 1
+    +levelStrip 20, 6, 4,       0, 1
+    +levelStrip 17, 9, 5,       0, 1
+    +levelStrip 17, 13, 2,      0, 1
+    +levelStrip 21, 12, 5,      0, 1
+    +levelStrip 26, 10, 4,      0, 1
+    +levelStrip 26, 7, 1,       0, 1
+    +levelStrip 29, 6, 1,       0, 1
+    +levelStrip 28, 2, 2,       0, 1
 
     +levelIncrementType
 
     ; crumble floors
-    +levelStrip 16, 14, 1
+    +levelStrip 16, 14, 1,      0, 1
 
     +levelIncrementType
 
     ; walls
-    +levelRect 16, 0, 1, 15
-    +levelRect 19, 0, 1, 2
-    +levelRect 13, 13, 1, 15
+    +levelRect 16, 0, 1, 15,    1, 3
+    +levelRect 19, 0, 1, 2,     1, 3
+    +levelRect 13, 13, 1, 15,   1, 3
 
     +levelIncrementType
 
     ; conveyor
-    +levelStrip 10, 13, 3
+    +levelStrip 10, 13, 3,      0, 2
 
     ; ***********************************************************************************
     ; level 9 - Wacky Amoebatrons
     !byte $ff, $ff
 
     ; floors
-    +levelStrip 2, 12, 26
-    +levelStrip 2, 8, 8
-    +levelStrip 0, 5, 28
-    +levelStrip 0, 10, 2
-    +levelStrip 28, 13, 2
-    +levelStrip 28, 7, 2
-    +levelStrip 21, 9, 7
+    +levelStrip 2, 12, 26,      0, 1
+    +levelStrip 2, 8, 8,        0, 1
+    +levelStrip 0, 5, 28,       0, 1
+    +levelStrip 0, 10, 2,       0, 1
+    +levelStrip 28, 13, 2,      0, 1
+    +levelStrip 28, 7, 2,       0, 1
+    +levelStrip 21, 9, 7,       0, 1
 
     +levelIncrementType
 
     ; crumble floors
-    +levelStrip 2, 0, 1
+    +levelStrip 2, 0, 1,        0, 1
 
     +levelIncrementType
 
     ; walls
-    +levelRect 2, 0, 1, 1
+    +levelRect 2, 0, 1, 1,      1, 3
 
     +levelIncrementType
 
     ; conveyor
-    +levelStrip 12, 8, 7
+    +levelStrip 12, 8, 7,       0, 2
 
     +levelSetType 4
 
     ; empty
-    +levelRect 4, 4, 2, 14
-    +levelRect 10, 4, 2, 14
-    +levelRect 19, 4, 2, 14
-    +levelRect 24, 4, 2, 14
+    +levelRect 4, 4, 2, 14,     0, 3
+    +levelRect 10, 4, 2, 14,    0, 3
+    +levelRect 19, 4, 2, 14,    0, 3
+    +levelRect 24, 4, 2, 14,    0, 3
 
-    +levelSetType 3                 ; back to conveyor [needed to terminate properly?]
+    +levelSetType 3                 ; back to conveyor [TODO: needed to terminate properly??]
 
     ; ***********************************************************************************
     ; level 10 - The Endorian Forest
     !byte $ff, $ff
 
     ; floors
-    +levelStrip 0, 13, 3
-    +levelStrip 0, 10, 4
-    +levelStrip 0, 8, 5
-    +levelStrip 0, 6, 4
-    +levelStrip 0, 2, 6
-    +levelStrip 12, 0, 3
-    +levelStrip 7, 5, 1
-    +levelStrip 8, 9, 7
-    +levelStrip 16, 10, 7
-    +levelStrip 16, 7, 7
-    +levelStrip 16, 4, 4
-    +levelStrip 20, 0, 10
-    +levelStrip 26, 2, 4
-    +levelStrip 22, 5, 8
-    +levelStrip 28, 9, 2
-    +levelStrip 27, 13, 3
+    +levelStrip 0, 13, 3,       0, 1
+    +levelStrip 0, 10, 4,       0, 1
+    +levelStrip 0, 8, 5,        0, 1
+    +levelStrip 0, 6, 4,        0, 1
+    +levelStrip 0, 2, 6,        0, 1
+    +levelStrip 12, 0, 3,       0, 1
+    +levelStrip 7, 5, 1,        0, 1
+    +levelStrip 8, 9, 7,        0, 1
+    +levelStrip 16, 10, 7,      0, 1
+    +levelStrip 16, 7, 7,       0, 1
+    +levelStrip 16, 4, 4,       0, 1
+    +levelStrip 20, 0, 10,      0, 1
+    +levelStrip 26, 2, 4,       0, 1
+    +levelStrip 22, 5, 8,       0, 1
+    +levelStrip 28, 9, 2,       0, 1
+    +levelStrip 27, 13, 3,      0, 1
 
     +levelIncrementType
 
     ; crumble floors
-    +levelStrip 4, 10, 2
-    +levelStrip 8, 5, 7
-    +levelStrip 23, 7, 3
-    +levelStrip 23, 11, 3
+    +levelStrip 4, 10, 2,       0, 2
+    +levelStrip 8, 5, 7,        0, 2
+    +levelStrip 23, 7, 3,       0, 2
+    +levelStrip 23, 11, 3,      0, 2
 
     +levelIncrementType
 
     ; walls
-    +levelRect 15, 0, 1, 12
+    +levelRect 15, 0, 1, 12,    1, 2
 
     +levelIncrementType
 
     ; conveyor
-    +levelStrip 0, 15, 30
-    +levelStrip 7, 12, 10
+    +levelStrip 0, 15, 30,      0, 3
+    +levelStrip 7, 12, 10,      0, 3
 
     ; ***********************************************************************************
     ; level 11 - Attack of the Mutant Telephones
     !byte $ff, $ff
 
     ; floors
-    +levelStrip 0, 3, 4
-    +levelStrip 4, 5, 6
-    +levelStrip 0, 8, 2
-    +levelStrip 0, 13, 2
-    +levelStrip 27, 12, 3
-    +levelStrip 22, 13, 3
-    +levelStrip 27, 10, 1
-    +levelStrip 28, 8, 2
-    +levelStrip 28, 6, 2
-    +levelStrip 10, 9, 9
-    +levelStrip 14, 5, 10
-    +levelStrip 8, 11, 1
+    +levelStrip 0, 3, 4,        0, 1
+    +levelStrip 4, 5, 6,        0, 1
+    +levelStrip 0, 8, 2,        0, 1
+    +levelStrip 0, 13, 2,       0, 1
+    +levelStrip 27, 12, 3,      0, 1
+    +levelStrip 22, 13, 3,      0, 1
+    +levelStrip 27, 10, 1,      0, 1
+    +levelStrip 28, 8, 2,       0, 1
+    +levelStrip 28, 6, 2,       0, 1
+    +levelStrip 10, 9, 9,       0, 1
+    +levelStrip 14, 5, 10,      0, 1
+    +levelStrip 8, 11, 1,       0, 1
 
     +levelIncrementType
 
     ; crumble floors
-    +levelStrip 5, 11, 3
+    +levelStrip 5, 11, 3,       0, 1
 
     +levelIncrementType
 
     ; walls
-    +levelStrip 0, 0, 5
+    +levelStrip 0, 0, 5,        1, 3
 
     +levelIncrementType
 
     ; conveyor
-    +levelStrip 4, 8, 2
+    +levelStrip 4, 8, 2,        0, 3
 
     ; ***********************************************************************************
     ; level 12 - Return of the Alien Kong Beast
     !byte $ff, $ff
 
     ; floors
-    +levelStrip 10, 13, 3
-    +levelStrip 0, 12, 6
-    +levelStrip 5, 10, 1
-    +levelStrip 5, 7, 2
-    +levelStrip 2, 8, 1
-    +levelStrip 0, 5, 3
-    +levelStrip 9, 9, 4
-    +levelStrip 17, 10, 3
-    +levelStrip 24, 11, 2
-    +levelStrip 24, 8, 6
-    +levelStrip 29, 6, 1
-    +levelStrip 23, 5, 2
+    +levelStrip 10, 13, 3,      0, 1
+    +levelStrip 0, 12, 6,       0, 1
+    +levelStrip 5, 10, 1,       0, 1
+    +levelStrip 5, 7, 2,        0, 1
+    +levelStrip 2, 8, 1,        0, 1
+    +levelStrip 0, 5, 3,        0, 1
+    +levelStrip 9, 9, 4,        0, 1
+    +levelStrip 17, 10, 3,      0, 1
+    +levelStrip 24, 11, 2,      0, 1
+    +levelStrip 24, 8, 6,       0, 1
+    +levelStrip 29, 6, 1,       0, 1
+    +levelStrip 23, 5, 2,       0, 1
 
     +levelIncrementType
 
     ; crumble floors
-    +levelStrip 17, 5, 6
-    +levelStrip 8, 5, 5
-    +levelStrip 14, 2, 2
+    +levelStrip 17, 5, 6,       0, 1
+    +levelStrip 8, 5, 5,        0, 1
+    +levelStrip 14, 2, 2,       0, 1
 
     +levelIncrementType
 
     ; walls
-    +levelStrip 16, 0, 1
-    +levelStrip 20, 0, 1
-    +levelRect 16, 5, 1, 15
-    +levelRect 13, 5, 1, 10
-    +levelRect 13, 13, 1, 15
-    +levelStrip 13, 15, 4
+    +levelStrip 16, 0, 1,       1, 2
+    +levelStrip 20, 0, 1,       1, 2
+    +levelRect 16, 5, 1, 15,    1, 2
+    +levelRect 13, 5, 1, 10,    1, 2
+    +levelRect 13, 13, 1, 15,   1, 2
+    +levelStrip 13, 15, 4,      1, 2
 
     +levelIncrementType
 
     ; conveyor
-    +levelStrip 17, 13, 11
+    +levelStrip 17, 13, 11,     0, 3
 
     ; ***********************************************************************************
     ; level 13 - Ore Refinery
     !byte $ff, $ff
 
     ; floors
-    +levelStrip 0, 15, 30
-    +levelStrip 6, 3, 24
-    +levelStrip 6, 6, 24
-    +levelStrip 6, 12, 24
-    +levelStrip 6, 9, 24
+    +levelStrip 0, 15, 30,      0, 1
+    +levelStrip 6, 3, 24,       0, 1
+    +levelStrip 6, 6, 24,       0, 1
+    +levelStrip 6, 12, 24,      0, 1
+    +levelStrip 6, 9, 24,       0, 1
 
     +levelIncrementType
 
     ; crumble floors
-    +levelRect 2, 1, 1, 15
+    +levelRect 2, 1, 1, 15,     0, 3
 
     +levelIncrementType
 
     ; walls
-    +levelStrip 0, 0, 30
+    +levelStrip 0, 0, 30,       1, 3
 
     +levelIncrementType
 
     ; conveyor
-    +levelStrip 2, 15, 26
+    +levelStrip 2, 15, 26,      0, 2
 
     +levelSetType 4
 
     ; empty
-    +levelStrip 8, 6, 2
-    +levelStrip 9, 12, 2
-    +levelStrip 21, 6, 2
-    +levelStrip 20, 12, 2
-    +levelStrip 14, 6, 2
-    +levelStrip 14, 12, 2
-    +levelStrip 16, 9, 2
-    +levelStrip 27, 6, 2
-    +levelStrip 26, 12, 2
-    +levelStrip 11, 9, 2
-    +levelStrip 24, 9, 2
-    +levelStrip 24, 3, 2
+    +levelStrip 8, 6, 2,        0, 3
+    +levelStrip 9, 12, 2,       0, 3
+    +levelStrip 21, 6, 2,       0, 3
+    +levelStrip 20, 12, 2,      0, 3
+    +levelStrip 14, 6, 2,       0, 3
+    +levelStrip 14, 12, 2,      0, 3
+    +levelStrip 16, 9, 2,       0, 3
+    +levelStrip 27, 6, 2,       0, 3
+    +levelStrip 26, 12, 2,      0, 3
+    +levelStrip 11, 9, 2,       0, 3
+    +levelStrip 24, 9, 2,       0, 3
+    +levelStrip 24, 3, 2,       0, 3
 
     +levelSetType 4
 
@@ -9426,202 +9457,202 @@ levelDefinitions
     !byte $ff, $ff
 
     ; floors
-    +levelStrip 0, 11, 0
-    +levelStrip 2, 6, 0
-    +levelStrip 4, 9, 0
-    +levelStrip 6, 13, 0
-    +levelStrip 6, 7, 0
-    +levelStrip 8, 11, 0
-    +levelStrip 12, 9, 0
-    +levelStrip 10, 6, 0
-    +levelStrip 14, 5, 0
-    +levelStrip 18, 6, 0
-    +levelStrip 22, 7, 0
-    +levelStrip 20, 9, 0
-    +levelStrip 26, 6, 0
-    +levelStrip 28, 9, 0
-    +levelStrip 24, 11, 0
+    +levelStrip 0, 11, 0,       0, 1
+    +levelStrip 2, 6, 0,        0, 1
+    +levelStrip 4, 9, 0,        0, 1
+    +levelStrip 6, 13, 0,       0, 1
+    +levelStrip 6, 7, 0,        0, 1
+    +levelStrip 8, 11, 0,       0, 1
+    +levelStrip 12, 9, 0,       0, 1
+    +levelStrip 10, 6, 0,       0, 1
+    +levelStrip 14, 5, 0,       0, 1
+    +levelStrip 18, 6, 0,       0, 1
+    +levelStrip 22, 7, 0,       0, 1
+    +levelStrip 20, 9, 0,       0, 1
+    +levelStrip 26, 6, 0,       0, 1
+    +levelStrip 28, 9, 0,       0, 1
+    +levelStrip 24, 11, 0,      0, 1
 
     +levelSetType 2
 
     ; wall
-    +levelStrip 0, 15, 30
+    +levelStrip 0, 15, 30,      0, 2
 
     +levelIncrementType
 
     ; conveyor
-    +levelStrip 14, 11, 6
+    +levelStrip 14, 11, 6,      0, 2
 
     ; ***********************************************************************************
     ; level 15 - The Bank
     !byte $ff, $ff
 
     ; floors
-    +levelStrip 0, 10, 2
-    +levelStrip 2, 8, 2
-    +levelStrip 0, 5, 5
-    +levelStrip 4, 12, 3
-    +levelStrip 11, 13, 2
-    +levelStrip 11, 10, 2
-    +levelStrip 11, 7, 2
-    +levelStrip 17, 11, 2
-    +levelStrip 17, 8, 2
-    +levelStrip 23, 6, 2
-    +levelStrip 24, 9, 2
-    +levelStrip 22, 12, 2
-    +levelStrip 23, 3, 5
+    +levelStrip 0, 10, 2,       0, 1
+    +levelStrip 2, 8, 2,        0, 1
+    +levelStrip 0, 5, 5,        0, 1
+    +levelStrip 4, 12, 3,       0, 1
+    +levelStrip 11, 13, 2,      0, 1
+    +levelStrip 11, 10, 2,      0, 1
+    +levelStrip 11, 7, 2,       0, 1
+    +levelStrip 17, 11, 2,      0, 1
+    +levelStrip 17, 8, 2,       0, 1
+    +levelStrip 23, 6, 2,       0, 1
+    +levelStrip 24, 9, 2,       0, 1
+    +levelStrip 22, 12, 2,      0, 1
+    +levelStrip 23, 3, 5,       0, 1
 
     +levelIncrementType
 
     ; crumble floors
-    +levelStrip 6, 7, 1
+    +levelStrip 6, 7, 1,        0, 1
 
     +levelIncrementType
 
     ; wall
-    +levelStrip 5, 0, 25
+    +levelStrip 5, 0, 25,       1, 3
 
     +levelIncrementType
 
     ; conveyor
-    +levelStrip 7, 3, 16
+    +levelStrip 7, 3, 16,       0, 2
 
-    +levelRect 28, 1, 2, 15
-    +levelStrip 7, 3, 16
+    +levelRect 28, 1, 2, 15,    0, 3
+    +levelStrip 7, 3, 16,       0, 2
 
     ; ***********************************************************************************
     ; level 16 - The Sixteenth Cavern
     !byte $ff, $ff
 
     ; floors
-    +levelStrip  0, 12, 9
-    +levelStrip 11, 11, 2
-    +levelStrip 0, 5, 1
-    +levelStrip 5, 5, 1
-    +levelStrip 3, 7, 1
-    +levelStrip 20, 13, 1
-    +levelStrip 26, 13, 1
-    +levelStrip 26, 11, 1
-    +levelStrip 25, 7, 5
-    +levelStrip 22, 5, 3
+    +levelStrip  0, 12, 9,      0, 1
+    +levelStrip 11, 11, 2,      0, 1
+    +levelStrip 0, 5, 1,        0, 1
+    +levelStrip 5, 5, 1,        0, 1
+    +levelStrip 3, 7, 1,        0, 1
+    +levelStrip 20, 13, 1,      0, 1
+    +levelStrip 26, 13, 1,      0, 1
+    +levelStrip 26, 11, 1,      0, 1
+    +levelStrip 25, 7, 5,       0, 1
+    +levelStrip 22, 5, 3,       0, 1
 
     +levelIncrementType
 
     ; crumble floors
-    +levelStrip 0, 9, 2
+    +levelStrip 0, 9, 2,        0, 1
 
     +levelIncrementType
 
     ; wall
-    +levelStrip 9, 11, 2
-    +levelRect 10, 5, 1, 9
-    +levelStrip 13, 5, 1
-    +levelStrip 13, 6, 2
-    +levelStrip 13, 7, 3
-    +levelStrip 13, 8, 4
+    +levelStrip 9, 11, 2,       2, 3
+    +levelRect 10, 5, 1, 9,     2, 3
+    +levelStrip 13, 5, 1,       2, 3
+    +levelStrip 13, 6, 2,       2, 3
+    +levelStrip 13, 7, 3,       2, 3
+    +levelStrip 13, 8, 4,       2, 3
 
     +levelIncrementType
 
     ; conveyor
-    +levelStrip 2, 9, 25
+    +levelStrip 2, 9, 25,       0, 3
 
     ; ***********************************************************************************
     ; level 17 - The Warehouse
     !byte $ff, $ff
 
     ; floors
-    +levelStrip 26, 14, 4
-    +levelStrip 28, 5, 2
-    +levelStrip 0, 5, 2
-    +levelStrip 0, 15, 30
+    +levelStrip 26, 14, 4,      0, 1
+    +levelStrip 28, 5, 2,       0, 1
+    +levelStrip 0, 5, 2,        0, 1
+    +levelStrip 0, 15, 30,      0, 1
 
     +levelIncrementType
 
     ; crumble floors
-    +levelStrip 2, 5, 26
-    +levelRect 0, 6, 30, 13
+    +levelStrip 2, 5, 26,       0, 1
+    +levelRect 0, 6, 30, 13,    0, 1
 
     +levelIncrementType
 
     ; wall
-    +levelStrip 28, 0, 2
+    +levelStrip 28, 0, 2,       1, 3
 
     +levelIncrementType
 
     ; conveyor
-    !byte 13, 8, 5
+    +levelStrip 13, 8, 5,       0, 1
 
     +levelSetType 4
 
     ; empty
-    +levelRect 2, 8, 2, 13
-    +levelRect 9, 5, 2, 13
-    +levelRect 18, 5, 2, 10
-    +levelRect 26, 5, 2, 13
+    +levelRect 2, 8, 2, 13,     0, 3
+    +levelRect 9, 5, 2, 13,     0, 3
+    +levelRect 18, 5, 2, 10,    0, 3
+    +levelRect 26, 5, 2, 13,    0, 3
 
-    +levelSetType 4
+    +levelSetType 4                     ; [TODO: redundant?]
 
     ; ***********************************************************************************
     ; level 18 - Amoebatrons' Revenge
     !byte $ff, $ff
 
     ;  floors
-    +levelStrip 0, 15, 30
-    +levelStrip 0, 13, 2
-    +levelStrip 2, 12, 26
-    +levelStrip 2, 9, 7
-    +levelStrip 0, 7, 2
-    +levelStrip 2, 5, 28
-    +levelStrip 10, 8, 18
-    +levelStrip 28, 10, 2
+    +levelStrip 0, 15, 30,      0, 1
+    +levelStrip 0, 13, 2,       0, 1
+    +levelStrip 2, 12, 26,      0, 1
+    +levelStrip 2, 9, 7,        0, 1
+    +levelStrip 0, 7, 2,        0, 1
+    +levelStrip 2, 5, 28,       0, 1
+    +levelStrip 10, 8, 18,      0, 1
+    +levelStrip 28, 10, 2,      0, 1
 
     +levelSetType 2
 
     ; wall
-    +levelStrip 27, 0, 1
+    +levelStrip 27, 0, 1,       1, 3
 
     +levelSetType 4
 
     ; empty
-    +levelRect 4, 5, 2, 13
-    +levelRect 9, 5, 2, 13
-    +levelRect 19, 5, 2, 13
-    +levelRect 24, 5, 2, 13
+    +levelRect 4, 5, 2, 13,     0, 3
+    +levelRect 9, 5, 2, 13,     0, 3
+    +levelRect 19, 5, 2, 13,    0, 3
+    +levelRect 24, 5, 2, 13,    0, 3
 
-    +levelSetType 4
+    +levelSetType 4                     ; [TODO: redundant?]
 
     ; ***********************************************************************************
     ; level 19 - The Meteor Storm
     !byte $ff, $ff
 
     ; floors
-    +levelStrip 0, 5, 2
-    +levelStrip 2, 8, 3
-    +levelStrip 8, 13, 14
-    +levelStrip 5, 6, 3
-    +levelStrip 7, 10, 4
-    +levelStrip 23, 11, 2
-    +levelStrip 22, 7, 2
-    +levelStrip 26, 5, 4
-    +levelStrip 27, 9, 3
+    +levelStrip 0, 5, 2,        0, 1
+    +levelStrip 2, 8, 3,        0, 1
+    +levelStrip 8, 13, 14,      0, 1
+    +levelStrip 5, 6, 3,        0, 1
+    +levelStrip 7, 10, 4,       0, 1
+    +levelStrip 23, 11, 2,      0, 1
+    +levelStrip 22, 7, 2,       0, 1
+    +levelStrip 26, 5, 4,       0, 1
+    +levelStrip 27, 9, 3,       0, 1
 
     +levelIncrementType ; [redundant]
 
     +levelSetType 2
 
     ; wall
-    +levelRect 10, 3, 10, 11
+    +levelRect 10, 3, 10, 11,   0, 3
 
     +levelIncrementType
 
     ; conveyor
-    +levelStrip 2, 12, 3
+    +levelStrip 2, 12, 3,       0, 2
 
     +levelIncrementType
 
     ; empty
-    +levelRect 10, 4, 10, 6
-    +levelRect 10, 8, 10, 10
+    +levelRect 10, 4, 10, 6,    0, 3
+    +levelRect 10, 8, 10, 10,   0, 3
 
     +levelSetType 3
 
@@ -9630,45 +9661,45 @@ levelDefinitions
     !byte $ff, $ff
 
     ; floors
-    +levelStrip 7, 5, 7
-    +levelStrip 13, 3, 7
-    +levelStrip 0, 8, 2
-    +levelStrip 8, 7, 7
-    +levelStrip 27, 7, 3
-    +levelStrip 16, 7, 4
-    +levelStrip 19, 13, 1
-    +levelStrip 16, 12, 1
-    +levelStrip 22, 13, 1
-    +levelStrip 24, 9, 1
+    +levelStrip 7, 5, 7,        0, 1
+    +levelStrip 13, 3, 7,       0, 1
+    +levelStrip 0, 8, 2,        0, 1
+    +levelStrip 8, 7, 7,        0, 1
+    +levelStrip 27, 7, 3,       0, 1
+    +levelStrip 16, 7, 4,       0, 1
+    +levelStrip 19, 13, 1,      0, 1
+    +levelStrip 16, 12, 1,      0, 1
+    +levelStrip 22, 13, 1,      0, 1
+    +levelStrip 24, 9, 1,       0, 1
 
     +levelIncrementType
 
     ; crumble floors
-    +levelStrip 0, 9, 1
-    +levelStrip 20, 3, 3
-    +levelStrip 20, 10, 1
-    +levelStrip 23, 13, 2
+    +levelStrip 0, 9, 1,        0, 1
+    +levelStrip 20, 3, 3,       0, 1
+    +levelStrip 20, 10, 1,      0, 1
+    +levelStrip 23, 13, 2,      0, 1
 
     +levelIncrementType
 
     ; wall
-    +levelStrip 12, 0, 18
-    +levelStrip 23, 3, 5
-    +levelStrip 3, 7, 5
-    +levelStrip 0, 11, 2
-    +levelStrip 0, 12, 11
-    +levelStrip 13, 14, 3
-    +levelStrip 14, 13, 2
-    +levelStrip 15, 12, 1
-    +levelRect 15, 7, 1, 10
-    +levelStrip 10, 11, 1
+    +levelStrip 12, 0, 18,      0, 3
+    +levelStrip 23, 3, 5,       0, 3
+    +levelStrip 3, 7, 5,        0, 3
+    +levelStrip 0, 11, 2,       0, 3
+    +levelStrip 0, 12, 11,      0, 3
+    +levelStrip 13, 14, 3,      0, 3
+    +levelStrip 14, 13, 2,      0, 3
+    +levelStrip 15, 12, 1,      0, 3
+    +levelRect 15, 7, 1, 10,    0, 3
+    +levelStrip 10, 11, 1,      0, 3
 
     +levelIncrementType
 
     ; conveyor
-    +levelStrip 2, 11, 8
-    +levelRect 28, 3, 2, 7
-    +levelStrip 2, 11, 8
+    +levelStrip 2, 11, 8,       0, 2
+    +levelRect 28, 3, 2, 7,     0, 2
+    +levelStrip 2, 11, 8,       0, 2
 
     ; ***********************************************************************************
     ; terminator
@@ -10420,6 +10451,15 @@ swapEnergyFieldSpritesWith0C00
             !if (.y = 13) {
                 !error "Cannot encode position at 15, 13 as that code is reserved"
             }
+            !if (.y = 12) {
+                !error "Cannot encode position at 15, 12 as that code is reserved"
+            }
+            !if (.y = 11) {
+                !error "Cannot encode position at 15, 11 as that code is reserved"
+            }
+            !if (.y = 10) {
+                !error "Cannot encode position at 15, 10 as that code is reserved"
+            }
         }
         !byte (.x * 16) + .y
     }
@@ -10430,6 +10470,18 @@ swapEnergyFieldSpritesWith0C00
 
     !macro singleNextType {
         !byte $fd
+    }
+
+    !macro singleColour1 {
+        !byte $fa
+    }
+
+    !macro singleColour2 {
+        !byte $fb
+    }
+
+    !macro singleColour3 {
+        !byte $fc
     }
 
     !macro singleSpider .x, .y, .threadLength {
@@ -10444,7 +10496,7 @@ levelSingleItemDefinitions
     ; level 1 - Central Cavern
     !byte $ff
 
-    +singleType 5, 2        ; 5 keys, sprite offset 2
+    +singleType 5, 2        ; 5 keys, spike sprite 2
     +singlePos 8, 0         ; key
     +singlePos 15, 1        ; key
     +singleOffsetX15
@@ -10467,7 +10519,7 @@ levelSingleItemDefinitions
     ; level 2 - The Cold Room
     !byte $ff
 
-    +singleType 5, 2        ; 5 keys, sprite offset 2
+    +singleType 5, 2        ; 5 keys, spike sprite 2
     +singlePos 2, 9         ; key
     +singlePos 6, 1         ; key
     +singleOffsetX15
@@ -10477,13 +10529,14 @@ levelSingleItemDefinitions
 
     +singleNextType
     +singleOffsetX15
+    +singleColour2
     +singlePos 13, 1        ; spike
 
     ; ***********************************************************************************
     ; level 3 - The Menagerie
     !byte $ff
 
-    +singleType 5, 3        ; 5 keys, sprite offset 3
+    +singleType 5, 3        ; 5 keys, spike sprite 3
     +singlePos 5, 0         ; key
     +singlePos 14, 0        ; key
 
@@ -10504,7 +10557,7 @@ levelSingleItemDefinitions
     ; level 4 - Abandoned Uranium Workings
     !byte $ff
 
-    +singleType 5, 3        ; 5 keys, sprite offset 3
+    +singleType 5, 3        ; 5 keys, spike sprite 3
     +singlePos 0, 0         ; key
     +singlePos 11, 1        ; key
     +singlePos 15, 6        ; key
@@ -10522,7 +10575,7 @@ levelSingleItemDefinitions
     ; level 5 - Eugene's Lair
     !byte $ff
 
-    +singleType 5, 1        ; 5 keys, sprite offset 1
+    +singleType 5, 1        ; 5 keys, spike sprite 1
     +singlePos 6, 12        ; key
     +singlePos 8, 12        ; key
     +singlePos 9, 6         ; key
@@ -10545,7 +10598,7 @@ levelSingleItemDefinitions
     ; level 6 - Processing Plant
     !byte $ff
 
-    +singleType 5, 5        ; 5 keys, sprite offset 5
+    +singleType 5, 5        ; 5 keys, spike sprite 5
     +singlePos 0, 10        ; key
     +singlePos 12, 11       ; key
     +singlePos 14, 6        ; key
@@ -10564,7 +10617,7 @@ levelSingleItemDefinitions
     ; level 7 - The Vat
     !byte $ff
 
-    +singleType 5, 6        ; 5 keys, sprite offset 6
+    +singleType 5, 6        ; 5 keys, spike sprite 6
     +singleOffsetX15
     +singlePos 2, 10        ; key
     +singlePos 3, 6         ; key
@@ -10583,7 +10636,7 @@ levelSingleItemDefinitions
     ; level 8 - Miner Willy meets the Kong Beast
     !byte $ff
 
-    +singleType 4, 1        ; 4 keys, sprite offset 1
+    +singleType 4, 1        ; 4 keys, spike sprite 1
     +singlePos 1, 8         ; key
     +singlePos 13, 6        ; key
     +singlePos 11, 2        ; key
@@ -10607,7 +10660,7 @@ levelSingleItemDefinitions
     ; level 10 - The Endorian Forest
     !byte $ff
 
-    +singleType 5, 7        ; 5 keys, sprite offset 7
+    +singleType 5, 7        ; 5 keys, spike sprite 7
     +singlePos 13, 1        ; key
     +singlePos 11, 6        ; key
     +singleOffsetX15
@@ -10629,7 +10682,7 @@ levelSingleItemDefinitions
     ; ***********************************************************************************
     ; level 11 - Attack of the Mutant Telephones
     !byte $ff
-    +singleType 5, 3        ; 5 keys, sprite offset 3
+    +singleType 5, 3        ; 5 keys, spike sprite 3
     +singlePos 0, 4         ; key
     +singleOffsetX15
     +singlePos 2, 6         ; key
@@ -10638,6 +10691,7 @@ levelSingleItemDefinitions
     +singlePos 13, 13       ; key
 
     +singleNextType
+    +singleColour3
     +singleSpider 11, 10, 2 ; spider, thread length 2
     +singleOffsetX15
     +singleSpider 2, 0, 1   ; spider, thread length 1
@@ -10648,7 +10702,7 @@ levelSingleItemDefinitions
     ; level 12 - Return of the Alien Kong Beast
     !byte $ff
 
-    +singleType 5, 1        ; 5 keys, sprite offset 1
+    +singleType 5, 1        ; 5 keys, spike sprite 1
     +singlePos 1, 6         ; key
     +singlePos 14, 3        ; key
     +singlePos 15, 7        ; key
@@ -10657,6 +10711,7 @@ levelSingleItemDefinitions
     +singlePos 9, 5         ; key
     +singlePos 12, 13       ; key
 
+    +singleColour2
     +singleOffsetX15
     +singlePos 6, 12        ; thorn
     +singlePos 11, 12       ; thorn
@@ -10665,7 +10720,7 @@ levelSingleItemDefinitions
     ; level 13 - Ore Refinery
     !byte $ff
 
-    +singleType 5, 1        ; 5 keys, sprite offset 1
+    +singleType 5, 1        ; 5 keys, spike sprite 1
     +singlePos 10, 12       ; keys
     +singlePos 9, 6         ; keys
     +singleOffsetX15
@@ -10677,7 +10732,7 @@ levelSingleItemDefinitions
     ; ***********************************************************************************
     ; level 14 - Skylab Landing Bay
     !byte $ff
-    +singleType 4, 1        ; 4 keys, sprite offset 1
+    +singleType 4, 1        ; 4 keys, spike sprite 1
 
     +singlePos 2, 8         ; key
     +singlePos 15, 7        ; key
@@ -10689,7 +10744,7 @@ levelSingleItemDefinitions
     ; ***********************************************************************************
     ; level 15 - The Bank
     !byte $ff
-    +singleType 3, 3        ; 3 keys, sprite offset 3
+    +singleType 3, 3        ; 3 keys, spike sprite 3
 
     +singlePos 11, 6        ; key
     +singleOffsetX15        ;
@@ -10704,7 +10759,7 @@ levelSingleItemDefinitions
     ; ***********************************************************************************
     ; level 16 - The Sixteenth Cavern
     !byte $ff
-    +singleType 4, 8        ; 4 keys, sprite offset 8
+    +singleType 4, 8        ; 4 keys, spike sprite 8
 
     +singlePos 0, 0         ; key
     +singlePos 12, 7        ; key
@@ -10714,6 +10769,7 @@ levelSingleItemDefinitions
 
     +singleNextType
     +singleOffsetX15        ;
+    +singleColour2
     +singlePos 6, 14        ; floor spike
     +singlePos 7, 14        ; floor spike
     +singlePos 8, 14        ; floor spike
@@ -10721,7 +10777,7 @@ levelSingleItemDefinitions
     ; ***********************************************************************************
     ; level 17 - The Warehouse
     !byte $ff
-    +singleType 5, 9        ; 5 keys, sprite offset 9
+    +singleType 5, 9        ; 5 keys, spike sprite 9
 
     +singlePos 0, 9         ; key
     +singlePos 14, 7        ; key
@@ -10738,6 +10794,7 @@ levelSingleItemDefinitions
     +singlePos 5, 4         ; thorn
     +singlePos 7, 4         ; thorn
 
+    +singleColour2
     +singleNextType
     +singlePos 2, 6         ; X spike
     +singlePos 8, 11        ; X spike
@@ -10756,7 +10813,7 @@ levelSingleItemDefinitions
     ; ***********************************************************************************
     ; level 19 - The Meteor Storm
     !byte $ff
-    +singleType 5, 2        ; 5 keys, sprite offset 2
+    +singleType 5, 2        ; 5 keys, spike sprite 2
     +singlePos 0, 2         ; key
     +singlePos 12, 8        ; key
     +singleOffsetX15
@@ -10768,7 +10825,7 @@ levelSingleItemDefinitions
     ; ***********************************************************************************
     ; level 20 - The Final Barrier
     !byte $ff
-    +singleType 5, 3        ; 5 keys, sprite offset 3
+    +singleType 5, 3        ; 5 keys, spike sprite 3
     +singlePos 8, 8         ; key
     +singleOffsetX15
     +singlePos 0, 13        ; key

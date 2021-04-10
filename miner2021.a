@@ -2302,7 +2302,7 @@ handleNotJumping
     and #7                                  ;
     bne handleInAirMovement                 ; if (not on the ground) then branch
 
-    ; Update crumble bars next
+    ; Update crumbles next
     lda plotScreenAddressLow                ; }
     clc                                     ; }
     adc #$78                                ; }
@@ -2312,10 +2312,10 @@ handleNotJumping
     sta plotScreenAddressHigh               ; }
 
     lda screenCharacterA                    ;
-    jsr isCrumbleBar                        ;
+    jsr isCrumble                           ;
     cmp #1                                  ;
-    beq updateLeftCrumbleBar                ;
-afterUpdateCrumberBar
+    beq updateLeftCrumble                   ;
+afterUpdateCrumble
     lda plotScreenAddressLow                ;
     clc                                     ;
     adc #16                                 ; add 16 to the address on screen
@@ -2325,11 +2325,11 @@ afterUpdateCrumberBar
     adc #0                              ;
     sta plotScreenAddressHigh           ;
     lda screenCharacterB                ;
-    jsr isCrumbleBar                    ;
+    jsr isCrumble                       ;
     cmp #1                              ;
     bne checkForConveyors               ;
 
-    ; crumble the right hand crumble bar (in the background cache)
+    ; crumble the right hand crumble (in the background cache)
     ldx #7                              ; loop counter
 -
     ; +$50 is to get to the characters underneath the players feet
@@ -2341,13 +2341,13 @@ afterUpdateCrumberBar
     bne -                               ;
 
     lda #0                              ;
-    sta backgroundCache + $50 + 0       ; zero the top row of crumble bar
+    sta backgroundCache + $50 + 0       ; zero the top row of crumble
     sta backgroundCache + $50 + 8       ;
     jsr showCrumble                     ;
     jmp checkForConveyors               ;
 
 ; ***************************************************************************************
-updateLeftCrumbleBar
+updateLeftCrumble
     ldx #7                              ;
 -
     ; $40 is to get to the characters underneath the players feet
@@ -2359,10 +2359,10 @@ updateLeftCrumbleBar
     bne -                               ;
 
     lda #0                              ;
-    sta backgroundCache + $40 + 0       ; zero the top row of crumble bar
+    sta backgroundCache + $40 + 0       ; zero the top row of crumble
     sta backgroundCache + $40 + 8       ;
     jsr showCrumble                     ;
-    jmp afterUpdateCrumberBar           ;
+    jmp afterUpdateCrumble              ;
 
 ; ***************************************************************************************
 checkForConveyors
@@ -2980,7 +2980,7 @@ switchCollisionFound
     ldx #0                          ; loop counter
 -
     lda switchMessage,x                     ;
-    jsr OSWRCH                              ;
+    jsr OSWRCH                              ; [replace with cellPlot?]
     inx                                     ;
     cpx #switchMessageEnd - switchMessage   ;
     bne -                                   ;
@@ -2995,7 +2995,7 @@ switchCollisionFound
     ldx #0                                  ; loop counter
 -
     lda switchMessage2,x                    ;
-    jsr OSWRCH                              ;
+    jsr OSWRCH                              ; [replace with cellPlot?]
     inx                                     ;
     cpx #switchMessage2End - switchMessage2 ;
     bne -                                   ;
@@ -3006,7 +3006,7 @@ twiceLoop
     ldx #0                                                          ; loop counter
 -
     lda switchClearCentreMessage,x                                  ;
-    jsr OSWRCH                                                      ;
+    jsr OSWRCH                                                      ; [replace with cellPlot?]
     inx                                                             ;
     cpx #switchClearCentreMessageEnd - switchClearCentreMessage     ;
     bne -                                                           ;
@@ -3044,19 +3044,19 @@ notSupporting
     rts                             ;
 
 ; ***************************************************************************************
-isCrumbleBar
+isCrumble
     cmp #$5f                        ;
     beq +                           ;
     cmp #$82                        ;
-    bcc notCrumbleBar               ;
+    bcc notCrumble                  ;
     cmp #$8a                        ;
-    bcs notCrumbleBar               ;
+    bcs notCrumble                  ;
 +
     lda #1                          ;
     rts                             ;
 
 ; ***************************************************************************************
-notCrumbleBar
+notCrumble
     lda #0                          ;
     rts                             ;
 
@@ -4745,9 +4745,9 @@ updateLevel19Special
     jsr setTextColour                   ;
 
     lda #31                             ;
-    jsr OSWRCH                          ;
+    jsr OSWRCH                          ; [replace with cellPlot?]
     lda meteorXCoordinate               ; TAB(meteorXCoordinate, meteorYCoordinate + 1)
-    jsr OSWRCH                          ; x coordinate
+    jsr OSWRCH                          ; x coordinate [replace with cellPlot?]
 
     lda meteorYCoordinate               ;
     and #1                              ;
@@ -4758,13 +4758,13 @@ updateLevel19Special
 
     clc                                 ;
     adc #1                              ;
-    jsr OSWRCH                          ; y coordinate 1
+    jsr OSWRCH                          ; y coordinate 1 [replace with cellPlot?]
     jmp checkForMeteorLanding           ;
 
 
 ; ***************************************************************************************
 gotoYPosition
-    jsr OSWRCH                      ; y coordinate
+    jsr OSWRCH                      ; y coordinate [replace with cellPlot?]
     lda #charSPACE                  ;
     jsr printCharacterAndMoveBelow  ;
 
@@ -4783,7 +4783,7 @@ meteorAnimationState1
     tya                             ;
     clc                             ;
     adc #2                          ;
-    jsr OSWRCH                      ; draw meteor
+    jsr OSWRCH                      ; draw meteor [replace with cellPlot?]
     jmp swapMeteorSpritesWith0C00   ;
 
 ; ***************************************************************************************
@@ -4799,10 +4799,10 @@ meteorLanded
     beq meteorAnimationState2       ;
 
     ; animation state 3
-    lda #$e5                        ;
+    lda #$85                        ;
     jsr printCharacterAndMoveBelow  ;
-    lda #$e7                        ;
-    jsr OSWRCH                      ;
+    lda #$87                        ;
+    jsr OSWRCH                      ; [replace with cellPlot?]
     jmp swapMeteorSpritesWith0C00   ;
 
 ; ***************************************************************************************
@@ -4814,7 +4814,7 @@ eraseLandedMeteors
     lda #charSPACE                  ;
     jsr printCharacterAndMoveBelow  ;
     lda #charSPACE                  ;
-    jsr OSWRCH                      ;
+    jsr OSWRCH                      ; [replace with cellPlot?]
 
     ; show next meteor
     inc meteorIndex                 ;
@@ -4852,10 +4852,10 @@ landingPoint11
 
 ; ***************************************************************************************
 meteorAnimationState2
-    lda #$e4                        ;
+    lda #$84                        ;
     jsr printCharacterAndMoveBelow  ;
-    lda #$e6                        ;
-    jsr OSWRCH                      ;
+    lda #$86                        ;
+    jsr OSWRCH                      ; [replace with cellPlot?]
     jmp swapMeteorSpritesWith0C00   ;
 
 ; ***************************************************************************************
@@ -4875,11 +4875,11 @@ swapMeteorSpritesWith0C00
 
 ; ***************************************************************************************
 printCharacterAndMoveBelow
-    jsr OSWRCH                      ;
+    jsr OSWRCH                      ; [replace with cellPlot?]
     lda #$0a                        ;
-    jsr OSWRCH                      ;
+    jsr OSWRCH                      ; [replace with cellPlot?]
     lda #8                          ;
-    jmp OSWRCH                      ;
+    jmp OSWRCH                      ; [replace with cellPlot?]
 
 ; ***************************************************************************************
 updateLevel19EnergyFields
@@ -5338,7 +5338,7 @@ injectAddressHigh = * + 2
 
 ; ***************************************************************************************
 level10Init
-    lda #$e1                            ; } use alternative floor as conveyor (not used?)
+    lda #$81                            ; } use alternative floor as conveyor (not used?)
     sta levelFeatureConveyorOrLadder    ; }
     jmp levelInitContinued              ;
 
@@ -5354,8 +5354,8 @@ drawSwitches
     lda #1                          ; }
     jsr OSWRCH                      ; }
 
-    lda #$f8                        ; VDU $f8
-    jsr OSWRCH                      ;
+    lda #$98                        ; VDU $f8
+    jsr OSWRCH                      ; [replace with cellPlot?]
 
     ; print 11 spaces
     ldx #0                          ;
@@ -5366,12 +5366,12 @@ drawSwitches
     cpx #11                         ;
     bne -                           ;
 
-    lda #$f8                        ; VDU $f8
-    jsr OSWRCH                      ;
+    lda #$98                        ; VDU $f8
+    jsr OSWRCH                      ; [replace with cellPlot?]
     jmp nonLevel10Init              ;
 
 level13Init
-    lda #$f5                        ; ladder
+    lda #$95                        ; ladder
     sta levelFeatureCrumble         ;
     jmp levelInitContinued          ;
 
@@ -5423,13 +5423,13 @@ initLevel
     beq drawSwitches                ; }
 
 nonLevel10Init
-    lda #$eb                         ; } alternative conveyor (thin)
+    lda #$8b                         ; } alternative conveyor (thin)
     sta levelFeatureConveyorOrLadder ; }
 
     lda currentLevel                ;
     cmp #13                         ;
     beq level13Init                 ;
-    lda #$e2                        ; crumble floor
+    lda #$82                        ; crumble floor
     sta levelFeatureCrumble         ;
 
 levelInitContinued
@@ -5525,7 +5525,7 @@ foundLevelData
     rol                             ;
     tax                             ;
 
-    ; copy crumble bar sprite from crumbleSprites+X to currentCrumbleSprites for 8 bytes
+    ; copy crumble sprite from crumbleSprites+X to currentCrumbleSprites for 8 bytes
     ldy #0                          ;
 -
     lda crumbleSprites,x            ;
@@ -5536,7 +5536,7 @@ foundLevelData
     bne -                           ;
 
     ;
-    ; copy crumble bar seven times into the different crumbled states:
+    ; copy crumble seven times into the different crumbled states:
     ;
     ;       $0c19-$0c28
     ;       $0c22-$0c30
@@ -5653,8 +5653,35 @@ storeAddressLow = * + 1
     bne -                           ;
 
     jsr getExitSprite               ;
+
+    ; For the Master, define the graphics manually
+    jsr defineMasterCharacters      ;
+
     jsr setBlackPalette             ;
     jmp drawLevel                   ;
+
+; ***************************************************************************************
+defineMasterCharacters
+    ldy #0                          ;
+-
+    tya                             ;
+    and #7                          ;
+    bne +                           ;
+    lda #23                         ;
+    jsr OSWRCH                      ;
+    tya                             ;
+    lsr                             ;
+    lsr                             ;
+    lsr                             ;
+    clc                             ;
+    adc #$80                        ;
+    jsr OSWRCH                      ;
++
+    lda $0c00,y                     ;
+    jsr OSWRCH                      ;
+    iny                             ;
+    bne -                           ;
+    rts                             ;
 
 ; ***************************************************************************************
 getExitSprite
@@ -5819,9 +5846,10 @@ drawExit
 
     jmp flashExit                   ;
 
+; ***************************************************************************************
 setRoomColours
     lda #0                          ;
-    jsr OSWRCH                      ;
+    jsr OSWRCH                      ; [replace with cellPlot?]
     jsr drawInitialAirMeter         ;
 
     jsr updateAirAndCheckExit       ;
@@ -5971,10 +5999,10 @@ setColourAndDrawLevel14Platform
     adc #1                              ;
     jsr OSWRCH                          ;
 
-    lda #$e0                            ;
-    jsr OSWRCH                          ;
-    lda #$e1                            ;
-    jsr OSWRCH                          ;
+    lda #$80                            ;
+    jsr OSWRCH                          ; [replace with cellPlot?]
+    lda #$81                            ;
+    jsr OSWRCH                          ; [replace with cellPlot?]
 
     rts                                 ;
 
@@ -6022,7 +6050,7 @@ drawPlatform
     ldx currentLevelFeatureIndex        ;
     lda levelFeatureArray,x             ;
 -
-    jsr OSWRCH                          ;
+    jsr OSWRCH                          ; [replace with cellPlot?]
     dey                                 ;
     bne -                               ;
     lda currentLevelFeatureIndex        ;
@@ -6038,7 +6066,7 @@ restoreBackgroundColour
     lda currentLevel                    ;
     cmp #10                             ; level 10 specific feature
     beq +                               ;
-    lda #$f6                            ; Set to ladder sprite ('T')
+    lda #$96                            ; Set to ladder sprite ('T')
     sta levelFeatureConveyorOrLadder    ;
 
 +
@@ -6474,6 +6502,7 @@ showTitleScreen
 
     ; swap in the flowery logo
     jsr swapLogoWithC00             ;
+    jsr defineMasterCharacters      ;
 
     ; draw the flowery logo
     ldx #$80                        ; loop counter (and character to print)
@@ -6621,7 +6650,7 @@ skipToTerminator
     rol                                 ;
     sta singleItemType                  ;
     inc singleItemType                  ; singleItemType = (top two bits / 64) + 1
-    lda #$f0                            ;
+    lda #$90                            ;
     sta singleItemSprite                ; singleItemSprite = $f0
     jsr setSingleOffsetX5               ; singleItemOffsetX = 5, type++
 
@@ -6652,7 +6681,7 @@ drawSpecialSpikes
     lda #1                              ; }
     jsr OSWRCH                          ; }
 
-    lda #$ec                            ; }
+    lda #$8c                            ; } [replace with cellPlot?]
     jsr OSWRCH                          ; } VDU &EC (spike)
 
     lda #9                              ;
@@ -6663,7 +6692,7 @@ drawSpecialSpikes
     cpx #7                              ;
     bne -                               ;
 
-    lda #$ec                            ; }
+    lda #$8c                            ; }
     jsr OSWRCH                          ; } VDU &EC (second spike)
 
     ldx #0                              ; swap characters back
@@ -6696,7 +6725,7 @@ toggleAlternativeSingleItemSprite
     jsr setSingleOffsetX5               ; X offset 5, type++
     ldx #0                              ;
     jsr swapPagesC00andSingleItemPage   ; swap pages
-    lda #$eb                            ; regular single item character code
+    lda #$8b                            ; regular single item character code
     sta singleItemSprite                ;
     jmp decodeNextSingleItem            ;
 
@@ -6744,15 +6773,15 @@ decodeNextSingleItem
     jsr OSWRCH                          ; Y pos
 
     lda singleItemSprite                ;
-    cmp #$ee                            ;
+    cmp #$8e                            ;
     beq drawSpiderAndThread             ; if (spider) then branch
-    cmp #$f0                            ;
+    cmp #$90                            ;
     beq handleKey                       ; if (key) then branch
-    cmp #$eb                            ;
+    cmp #$8b                            ;
     bne handleSpike                     ; if (spike) then branch
 drawSingleItem
     lda singleItemSprite                    ;
-    jsr OSWRCH                              ;
+    jsr OSWRCH                              ; [replace with cellPlot?]
     lda singleItemType                      ;
     cmp #$ff                                ;
     beq toggleAlternativeSingleItemSprite   ;
@@ -6797,6 +6826,7 @@ swapPagesC00andSingleItemPage
     inx                                 ;
     cpx #$ff                            ;
     bne swapPagesC00andSingleItemPage   ;
+    jsr defineMasterCharacters          ;
     rts                                 ;
 
 ; ***************************************************************************************
@@ -6825,19 +6855,19 @@ threadLoop
     cpx decodeLevelByte             ;
     beq drawSpider                  ; if (length of thread reached) then branch
 
-    lda #$f5                        ; draw vertical thread
-    jsr OSWRCH                      ;
+    lda #$95                        ; draw vertical thread
+    jsr OSWRCH                      ; [replace with cellPlot?]
     lda #$0a                        ; move down one character
-    jsr OSWRCH                      ;
+    jsr OSWRCH                      ; [replace with cellPlot?]
     lda #$08                        ;
-    jsr OSWRCH                      ; and back one character
+    jsr OSWRCH                      ; and back one character [replace with cellPlot?]
     inx                             ;
     jmp threadLoop                  ;
 
 ; ***************************************************************************************
 drawSpider
-    lda #$ee                        ; spider at end of thread
-    jsr OSWRCH                      ;
+    lda #$8e                        ; spider at end of thread
+    jsr OSWRCH                      ; [replace with cellPlot?]
     jmp decodeNextSingleItem        ;
 
 ; ***************************************************************************************
@@ -8675,7 +8705,7 @@ levelFeatureWall
     !byte $8f                           ; wall
 levelFeatureConveyorOrLadder
     !byte $8b                           ; conveyor
-levelFeaturEmpty
+levelFeatureEmpty
     !byte $8a                           ; empty
 levelFeature5
     !byte $00                           ; [accessed in error, set to zero to avoid side-effects]
@@ -9772,7 +9802,7 @@ clearScreenLoop
     ldx #0                          ; loop counter
 -
     lda pedestalMessage,x           ;
-    jsr OSWRCH                      ;
+    jsr OSWRCH                      ; [replace with cellPlot?]
     inx                             ;
     cpx #pedestalMessageEnd - pedestalMessage ; loop 12 times
     bne -                           ;
@@ -10199,23 +10229,23 @@ setEnergyFieldColour
     cmp #$2a                            ;
     beq drawEnergyField                 ;
 continueEnergyFieldString
-    jsr OSWRCH                          ;
+    jsr OSWRCH                          ; [replace with cellPlot?]
     inx                                 ;
     cpx #16                             ;
     bne -                               ; loop for length of message
     jmp swapEnergyFieldSpritesWith0C00  ;
 
 drawEnergyField
-    lda #$e0                            ;
+    lda #$80                            ;
     clc                                 ;
     adc energyFieldSpriteOffset         ;
     tay                                 ;
     iny                                 ;
-    jsr OSWRCH                          ;
+    jsr OSWRCH                          ; [replace with cellPlot?]
     lda #$0a                            ;
-    jsr OSWRCH                          ;
+    jsr OSWRCH                          ; [replace with cellPlot?]
     lda #8                              ;
-    jsr OSWRCH                          ;
+    jsr OSWRCH                          ; [replace with cellPlot?]
     tya                                 ;
     jmp continueEnergyFieldString       ;
 
@@ -10372,7 +10402,7 @@ drawLevel20EnergyFieldString
     ldx #0                              ;
 -
     lda level20EnergyFieldsString,x     ;
-    jsr OSWRCH                          ;
+    jsr OSWRCH                          ; [replace with cellPlot?]
     inx                                 ;
     cpx #5                              ;
     beq +                               ;
@@ -10388,18 +10418,18 @@ backToLevel20EnergyFieldString
 
 ; ***************************************************************************************
 drawLevel20EnergyField
-    lda #$e0                            ;
+    lda #$80                            ;
     clc                                 ;
     adc energyFieldSpriteOffset         ;
-    jsr OSWRCH                          ; draw first character of energy field
+    jsr OSWRCH                          ; draw first character of energy field [replace with cellPlot?]
     tay                                 ;
     iny                                 ;
     lda #$0a                            ; move down
-    jsr OSWRCH                          ;
+    jsr OSWRCH                          ; [replace with cellPlot?]
     lda #8                              ; move left
-    jsr OSWRCH                          ;
+    jsr OSWRCH                          ; [replace with cellPlot?]
     tya                                 ;
-    jmp OSWRCH                          ; draw second character of energy field
+    jmp OSWRCH                          ; draw second character of energy field [replace with cellPlot?]
 
 ; ***************************************************************************************
 level20SwitchEnergyFieldSprite

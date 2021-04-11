@@ -2968,7 +2968,6 @@ keyCollisionFound
 
     lda #99                     ;
     jmp addToScore              ;
-;    jmp tabToOldCursorPositionAndReturn ;
 
 switchCollisionFound
     ldx cursorX                     ; }
@@ -2989,31 +2988,20 @@ switchCollisionFound
     cmp #80                                 ;
     bcc tabToOldCursorPositionAndReturn     ;
 
+    ; start kong falling
     lda #1                                  ;
     sta kongBeastSwitchTriggered            ; mark switch as triggered
 
+    ; clear regular Kong and ground under Kong
     ldx #0                                  ; loop counter
 -
-    lda switchMessage2,x                    ;
+    lda clearKongAndGroundUnderKong,x       ;
     jsr OSWRCH                              ; [replace with cellPlot?]
     inx                                     ;
-    cpx #switchMessage2End - switchMessage2 ;
+    cpx #clearKongAndGroundUnderKongEnd - clearKongAndGroundUnderKong ;
     bne -                                   ;
 
-    ; [inefficient]
-    ldy #2                                                          ; loop twice
-twiceLoop
-    ldx #0                                                          ; loop counter
--
-    lda switchClearCentreMessage,x                                  ;
-    jsr OSWRCH                                                      ; [replace with cellPlot?]
-    inx                                                             ;
-    cpx #switchClearCentreMessageEnd - switchClearCentreMessage     ;
-    bne -                                                           ;
-    dey                                                             ;
-    bne twiceLoop                                                   ;
-
-    ; don't draw regular kong any more
+    ; don't draw regular Kong any more
     lda #$60                        ; store opcode $60 'RTS'
     sta drawRegularKong             ;
 
@@ -7606,7 +7594,16 @@ return14
     rts                                 ;
 
 ; ***************************************************************************************
+lowerKong
+    lda kongYCoordinate             ;
+    clc                             ;
+    adc #4                          ; lower kong
+    sta kongYCoordinate             ;
+    rts                             ;
+
+; ***************************************************************************************
 updateKongFalling
+    jsr getKongVisibleStateIntoX    ; X= 0 (visible) or 1 (invisible)
     lda kongYCoordinate             ;
     cmp #112                        ;
     bcs resetKongTriggered          ; if (kongY >= 112) then branch (reset trigger)
@@ -7614,91 +7611,92 @@ updateKongFalling
     beq startLoweringKong           ; if (kongY == 16) then branch
     and #4                          ;
     cmp #4                          ;
-    beq YIsAMultipleOfFour          ;
-    jsr isKongStillFalling          ;
-    jsr checkKongHeight2            ;
+    beq fourFramesInEveryEight      ;
+    jsr drawKongState1              ; draw or erase Kong
 
-    lda kongYCoordinate             ;
-    clc                             ;
-    adc #4                          ; lower kong
-    sta kongYCoordinate             ;
+    jsr lowerKong                   ;
 
     ldx #0                          ;
-    jsr checkKongHeight             ;
+    jsr drawKongState2              ;
     jmp setColour2AndShowExit       ;
 
-YIsAMultipleOfFour
-    jsr isKongStillFalling          ;
-    jsr checkKongHeight             ;
+; ***************************************************************************************
+fourFramesInEveryEight
+    jsr drawKongState2              ; draw or erase Kong
 
-    lda kongYCoordinate             ;
-    clc                             ; lower kong
-    adc #4                          ;
-    sta kongYCoordinate             ;
+    jsr lowerKong                   ; move to new position
 
     ldx #0                          ;
-    jsr checkKongHeight2            ;
+    jsr drawKongState1              ; draw Kong in new position
     jmp setColour2AndShowExit       ;
 
+; ***************************************************************************************
 resetKongTriggered
     lda #0                          ;
     sta kongBeastSwitchTriggered    ;
     jmp setColour2AndShowExit       ;
 
+; ***************************************************************************************
 startLoweringKong
-    lda kongYCoordinate             ;
-    clc                             ;
-    adc #4                          ;
-    sta kongYCoordinate             ;
-    jmp checkKongHeight             ;
+    jsr lowerKong                   ;
+    jmp drawKongState2              ;
 
-checkKongHeight2
+; ***************************************************************************************
+drawKongState1
     cpx #1                              ;
-    beq kongIsLow                       ;
+    beq addToScoreAndEraseKong          ;
     lda #<verticalGuardianMODE1Address2 ; }
-    sta plotSourceSpriteAddressLow      ; } $0480
+    sta plotSourceSpriteAddressLow      ; } set first animation state
     lda #>verticalGuardianMODE1Address2 ; }
     sta plotSourceSpriteAddressHigh     ; }
-    jmp kongIsNotLow                    ;
+    jmp addToScoreAndDrawKong           ;
 
-checkKongHeight
+; ***************************************************************************************
+drawKongState2
     cpx #1                              ;
-    beq kongIsLow                       ;
+    beq addToScoreAndEraseKong          ;
 
     lda #<verticalGuardianMODE1Address3 ; }
-    sta plotSourceSpriteAddressLow      ; } $04c0
+    sta plotSourceSpriteAddressLow      ; } set second animation state
     lda #>verticalGuardianMODE1Address3 ; }
     sta plotSourceSpriteAddressHigh     ; }
-    jmp kongIsNotLow                    ; [redundant]
+    jmp addToScoreAndDrawKong           ; [redundant]
 
-kongIsNotLow
+; ***************************************************************************************
+addToScoreAndDrawKong
     lda #$39                        ;
     jsr addToScore                  ; add 40 to score
     ldx #78                         ;
     ldy kongYCoordinate             ;
+    lda #$f0                        ;
+    sta plotColourMask              ;
     lda #6                          ;
-    jmp plot                        ; draw Kong falling (mode 6)
+    jmp plot                        ; draw Kong falling (plot mode 6)
 
-kongIsLow
+; ***************************************************************************************
+addToScoreAndEraseKong
     lda #$69                        ;
     jsr addToScore                  ; add 70 to score
     ldx #78                         ;
     ldy kongYCoordinate             ;
     lda #2                          ;
-    jmp plot                        ; erase Kong falling (mode 2)
+    jmp plot                        ; erase Kong falling (plot mode 2)
 
+; ***************************************************************************************
 setColour2AndShowExit
     lda #2                          ; COLOUR 2
-    jmp setTextColour               ;
+    jsr setTextColour               ;
+    jmp drawExit                    ;
 
-isKongStillFalling
+; ***************************************************************************************
+getKongVisibleStateIntoX
     lda kongYCoordinate             ;
     cmp #96                         ;
     bcs +                           ; if (kong low enough) then return 1
-    ldx #0                          ;
+    ldx #0                          ; draw Kong
     rts                             ;
 +
-    ldx #1                          ;
+    ldx #1                          ; erase Kong
     rts                             ;
 
 ; ***************************************************************************************
@@ -14410,12 +14408,12 @@ fixedText
 fixedTextEnd
 
 ; ***************************************************************************************
-switchMessage2
+clearKongAndGroundUnderKong
     !byte $1f, $13, $01             ; TAB(19, 1)
-switchClearCentreMessage
     !byte $20, $20, $0a, $08, $08   ; two spaces and move down and back
-switchClearCentreMessageEnd
-switchMessage2End
+    !byte $20, $20, $0a, $08, $08   ; two spaces and move down and back
+    !byte $20, $20, $0a, $08, $08   ; two spaces and move down and back
+clearKongAndGroundUnderKongEnd
 
 switchMessage
     !byte $99                       ; the switched switch sprite

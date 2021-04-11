@@ -37,7 +37,7 @@ keyCodeColon                        = $b7
 keyCodeForwardSlash                 = $97
 
 ; OS memory locations
-interruptAccumulator                = $FC       ; RESERVED for INTERRUPTS
+interruptAccumulator                = $fc       ; RESERVED for INTERRUPTS
 irqv1                               = $204      ;
 irqv2                               = $206      ;
 
@@ -83,8 +83,8 @@ cursorX                         = $04       ;
 cursorY                         = $05       ;
 readCharScreenAddressLow        = $06       ;
 readCharScreenAddressHigh       = $07       ;
-clock                           = $08       ;
-oldClock                        = $09       ;
+metronome                       = $08       ; 0, 1, 2, 3
+unused09                        = $09       ;
 cellScreenAddressLow            = $0a       ;
 cellScreenAddressHigh           = $0b       ;
 airScreenAddressLow             = $0c       ;
@@ -1061,7 +1061,7 @@ exitSprites1x2
 startOfSingleItemPage = * - 11 * 8
 
 spikePlant
-    !byte %.#...#..    ; single item character $eb
+    !byte %.#...#..    ; single item character $8b
     !byte %..#.#...
     !byte %#..#.#..
     !byte %.#.#...#
@@ -1071,7 +1071,7 @@ spikePlant
     !byte %...#....
 
 allOtherSpikes
-    !byte %.######.    ; single item character $ec
+    !byte %.######.    ; single item character $8c
     !byte %..####..
     !byte %...###..
     !byte %...##...
@@ -1080,7 +1080,7 @@ allOtherSpikes
     !byte %....#...
     !byte %....#...
 
-    !byte %########    ; single item character $ed
+    !byte %########    ; single item character $8d
     !byte %#######.
     !byte %.######.
     !byte %.#..##..
@@ -1089,7 +1089,7 @@ allOtherSpikes
     !byte %....#...
     !byte %....#...
 
-    !byte %...#....    ; single item character $ee
+    !byte %...#....    ; single item character $8e
     !byte %##.#.##.
     !byte %..###...
     !byte %##.#.##.
@@ -1098,7 +1098,7 @@ allOtherSpikes
     !byte %##...##.
     !byte %..#.#...
 
-    !byte %.##...##    ; single item character $ef
+    !byte %.##...##    ; single item character $8f
     !byte %...#.#..
     !byte %...###..
     !byte %.##.#.##
@@ -1107,7 +1107,7 @@ allOtherSpikes
     !byte %.##...##
     !byte %...#.#..
 
-    !byte %..####..    ; single item character $f0
+    !byte %..####..    ; single item character $90
     !byte %...##...
     !byte %#.####.#
     !byte %###..###
@@ -1116,7 +1116,7 @@ allOtherSpikes
     !byte %...##...
     !byte %..####..
 
-    !byte %#.#..#.#    ; single item character $f1
+    !byte %#.#..#.#    ; single item character $91
     !byte %.#....#.
     !byte %..####..
     !byte %##.##.##
@@ -1125,7 +1125,7 @@ allOtherSpikes
     !byte %#.#..#.#
     !byte %..#..#..
 
-    !byte %.#..#...    ; single item character $f2
+    !byte %.#..#...    ; single item character $92
     !byte %#.##..#.
     !byte %.#.###.#
     !byte %...#..#.
@@ -1134,7 +1134,7 @@ allOtherSpikes
     !byte %#.#.#..#
     !byte %.#...###
 
-    !byte %.#...#..    ; single item character $f3
+    !byte %.#...#..    ; single item character $93
     !byte %.#...#..
     !byte %.#...#..
     !byte %.#...#..
@@ -1143,7 +1143,7 @@ allOtherSpikes
     !byte %###.###.
     !byte %########
 
-    !byte %#.####.#    ; single item character $f4
+    !byte %#.####.#    ; single item character $94
     !byte %..#.#...
     !byte %.......#
     !byte %#..##.#.
@@ -1153,7 +1153,7 @@ allOtherSpikes
     !byte %..#.#...
 
     ; thread
-    !byte %...#....    ; single item character $f5
+    !byte %...#....    ; single item character $95
     !byte %...#....
     !byte %...#....
     !byte %...#....
@@ -1164,7 +1164,7 @@ allOtherSpikes
 
 keySprites
     ; key 0
-    !byte %..##....    ; single item character $f6
+    !byte %..##....    ; single item character $96
     !byte %.#..#...
     !byte %#...#...
     !byte %#..#....
@@ -1175,7 +1175,7 @@ keySprites
 
     ; key 1
     ; ice lolly
-    !byte %.#.#....    ; single item character $f7
+    !byte %.#.#....    ; single item character $97
     !byte %#.#.#...
     !byte %.#.#.#..
     !byte %#.#.#...
@@ -1186,7 +1186,7 @@ keySprites
 
     ; key 2
     ; cube
-    !byte %...#####    ; single item character $f8
+    !byte %...#####    ; single item character $98
     !byte %..#...##
     !byte %.#...###
     !byte %########
@@ -1197,7 +1197,7 @@ keySprites
 
     ; key 3
     ; banana
-    !byte %#.......    ; single item character $f9
+    !byte %#.......    ; single item character $99
     !byte %##......
     !byte %###.##..
     !byte %.###..#.
@@ -1208,7 +1208,7 @@ keySprites
 
     ; key 4
     ; apple
-    !byte %....#...    ; single item character $fa
+    !byte %....#...    ; single item character $9a
     !byte %....#...
     !byte %..#####.
     !byte %.#.#####
@@ -1218,7 +1218,7 @@ keySprites
     !byte %..#####.
 
     ; key 5
-    !byte %...##...    ; single item character $fb
+    !byte %...##...    ; single item character $9b
     !byte %.##..##.
     !byte %.#....#.
     !byte %##.##..#
@@ -1228,7 +1228,7 @@ keySprites
     !byte %...##...
 
     ; key 6
-    !byte %..####..    ; single item character $fc
+    !byte %..####..    ; single item character $9c
     !byte %.#.##.#.
     !byte %#..#.#.#
     !byte %##.#.#.#
@@ -1238,7 +1238,7 @@ keySprites
     !byte %..####..
 
     ; key 7
-    !byte %#.#.#.#.    ; single item character $fd
+    !byte %#.#.#.#.    ; single item character $9d
     !byte %#.#.#.#.
     !byte %#######.
     !byte %#######.
@@ -1248,7 +1248,7 @@ keySprites
     !byte %#.#.#.#.
 
     ; key 8
-    !byte %.#####..    ; single item character $fe
+    !byte %.#####..    ; single item character $9e
     !byte %..###...
     !byte %.##..#..
     !byte %##.####.
@@ -1258,7 +1258,7 @@ keySprites
     !byte %.#####..
 
     ; key 9
-    !byte %....####    ; single item character $ff
+    !byte %....####    ; single item character $9f
     !byte %....#..#
     !byte %..######
     !byte %..#..#..
@@ -1636,7 +1636,7 @@ softCharacterDefinitions
 }
 currentFloorSprites
     ; $0c00
-    !byte %########                 ; char 128 ($80, $A0, $C0, $E0)
+    !byte %########                 ; char 128 ($80)
     !byte %########
     !byte %##.##.##
     !byte %..#.###.
@@ -1646,7 +1646,7 @@ currentFloorSprites
     !byte %........
 
     ; $0c08
-    !byte %########                 ; char 129 ($81, $A1, $C1, $E1)
+    !byte %########                 ; char 129 ($81)
     !byte %########
     !byte %.##..##.
     !byte %#..##..#
@@ -1657,7 +1657,7 @@ currentFloorSprites
 
 currentCrumbleSprites
     ; $0c10
-    !byte %########                 ; char 130 ($82, $A2, $C2, $E2)
+    !byte %########                 ; char 130 ($82)
     !byte %#...#...
     !byte %..#...#.
     !byte %#...#...
@@ -1667,7 +1667,7 @@ currentCrumbleSprites
     !byte %#...#...
 
     ; $0c18
-    !byte %........                 ; char 131 ($83, $A3, $C3, $E3)
+    !byte %........                 ; char 131 ($83)
     !byte %########
     !byte %#...#...
     !byte %..#...#.
@@ -1677,7 +1677,7 @@ currentCrumbleSprites
     !byte %..#...#.
 
     ; $0c20
-    !byte %........                 ; char 132 ($84, $A4, $C4, $E4)
+    !byte %........                 ; char 132 ($84)
     !byte %........
     !byte %########
     !byte %#...#...
@@ -1687,7 +1687,7 @@ currentCrumbleSprites
     !byte %#...#...
 
     ; $0c28
-    !byte %........                 ; char 133 ($85, $A5, $C5, $E5)
+    !byte %........                 ; char 133 ($85)
     !byte %........
     !byte %........
     !byte %########
@@ -1697,7 +1697,7 @@ currentCrumbleSprites
     !byte %..#...#.
 
     ; $0c30
-    !byte %........                 ; char 134 ($86, $A6, $C6, $E6)
+    !byte %........                 ; char 134 ($86)
     !byte %........
     !byte %........
     !byte %........
@@ -1707,7 +1707,7 @@ currentCrumbleSprites
     !byte %#...#...
 
     ; $0c38
-    !byte %........                 ; char 135 ($87, $A7, $C7, $E7)
+    !byte %........                 ; char 135 ($87)
     !byte %........
     !byte %........
     !byte %........
@@ -1717,7 +1717,7 @@ currentCrumbleSprites
     !byte %..#...#.
 
     ; $0c40
-    !byte %........                 ; char 136 ($88, $A8, $C8, $E8)
+    !byte %........                 ; char 136 ($88)
     !byte %........
     !byte %........
     !byte %........
@@ -1727,7 +1727,7 @@ currentCrumbleSprites
     !byte %#...#...
 
     ; $0c48
-    !byte %........                 ; char 137 ($89, $A9, $C9, $E9)
+    !byte %........                 ; char 137 ($89)
     !byte %........
     !byte %........
     !byte %........
@@ -1738,7 +1738,7 @@ currentCrumbleSprites
 
     ; empty - used for erasing areas of the level
     ; $0c50
-    !byte %........                 ; char 138 ($8A, $AA, $CA, $EA)
+    !byte %........                 ; char 138 ($8A)
     !byte %........
     !byte %........
     !byte %........
@@ -1749,7 +1749,7 @@ currentCrumbleSprites
 
 currentConveyorSprites
     ; $0c58
-    !byte %##....##                 ; char 139 ($8B, $AB, $CB, $EB)
+    !byte %##....##                 ; char 139 ($8B)
     !byte %.##..##.
     !byte %...##...
     !byte %.##..##.
@@ -1759,7 +1759,7 @@ currentConveyorSprites
     !byte %........
 
     ; $0c60
-    !byte %....####                 ; char 140 ($8C, $AC, $CC, $EC)
+    !byte %....####                 ; char 140 ($8C)
     !byte %.##..##.
     !byte %....####
     !byte %.##..##.
@@ -1769,7 +1769,7 @@ currentConveyorSprites
     !byte %........
 
     ; $0c68
-    !byte %..####..                 ; char 141 ($8D, $AD, $CD, $ED)
+    !byte %..####..                 ; char 141 ($8D)
     !byte %.##..##.
     !byte %#......#
     !byte %.##..##.
@@ -1779,7 +1779,7 @@ currentConveyorSprites
     !byte %........
 
     ; $0c70
-    !byte %####....                 ; char 142 ($8E, $AE, $CE, $EE)
+    !byte %####....                 ; char 142 ($8E)
     !byte %.##..##.
     !byte %####....
     !byte %.##..##.
@@ -1790,7 +1790,7 @@ currentConveyorSprites
 
     ; $0c78
 currentWallSprite
-    !byte %..#...#.                 ; char 143 ($8F, $AF, $CF, $EF)
+    !byte %..#...#.                 ; char 143 ($8F)
     !byte %########
     !byte %#...#...
     !byte %########
@@ -1801,7 +1801,7 @@ currentWallSprite
 
 currentKeySprite
     ; $0c80
-    !byte %..##....                 ; char 144 ($90, $B0, $D0, $F0)
+    !byte %..##....                 ; char 144 ($90)
     !byte %.#..#...
     !byte %#...#...
     !byte %#..#....
@@ -1813,7 +1813,7 @@ currentKeySprite
 currentExitSprite
     ; $0c88
     ; exit0
-    !byte %########                 ; char 145 ($91, $B1, $D1, $F1)
+    !byte %########                 ; char 145 ($91)
     !byte %#......#
     !byte %#......#
     !byte %#......#
@@ -1824,7 +1824,7 @@ currentExitSprite
 
     ; $0c90
     ; exit1
-    !byte %########                 ; char 146 ($92, $B2, $D2, $F2)
+    !byte %########                 ; char 146 ($92)
     !byte %#......#
     !byte %#......#
     !byte %#......#
@@ -1835,7 +1835,7 @@ currentExitSprite
 
     ; $0c98
     ; exit2
-    !byte %########                 ; char 147 ($93, $B3, $D3, $F3)
+    !byte %########                 ; char 147 ($93)
     !byte %#......#
     !byte %#......#
     !byte %#......#
@@ -1846,7 +1846,7 @@ currentExitSprite
 
     ; $0ca0
     ; exit3
-    !byte %########                 ; char 148 ($94, $B4, $D4, $F4)
+    !byte %########                 ; char 148 ($94)
     !byte %#......#
     !byte %#......#
     !byte %#......#
@@ -1856,7 +1856,7 @@ currentExitSprite
     !byte %########
 
     ; $0ca8
-    !byte %########                 ; char 149 ($95, $B5, $D5, $F5)
+    !byte %########                 ; char 149 ($95)
     !byte %#......#
     !byte %#......#
     !byte %#......#
@@ -1866,7 +1866,7 @@ currentExitSprite
     !byte %#......#
 
     ; $0cb0
-    !byte %########                 ; char 150 ($96, $B6, $D6, $F6)
+    !byte %########                 ; char 150 ($96)
     !byte %########
     !byte %...##...
     !byte %...##...
@@ -1877,7 +1877,7 @@ currentExitSprite
 
 currentWallSpriteCopy
     ; $0cb8
-    !byte %........                 ; char 151 ($97, $B7, $D7, $F7)
+    !byte %........                 ; char 151 ($97)
     !byte %........
     !byte %........
     !byte %........
@@ -1887,7 +1887,7 @@ currentWallSpriteCopy
     !byte %........
 
     ; $0cc0
-    !byte %########                 ; char 152 ($98, $B8, $D8, $F8)
+    !byte %########                 ; char 152 ($98)
     !byte %#......#
     !byte %#......#
     !byte %.#....#.
@@ -1897,7 +1897,7 @@ currentWallSpriteCopy
     !byte %.##.....
 
     ; $0cc8
-    !byte %########                 ; char 153 ($99, $B9, $D9, $F9)
+    !byte %########                 ; char 153 ($99)
     !byte %#......#
     !byte %#......#
     !byte %.#....#.
@@ -1908,7 +1908,7 @@ currentWallSpriteCopy
 
 currentFloorSpriteCopy
     ; $0cd0
-    !byte %........                 ; char 154 ($9A, $BA, $DA, $FA)
+    !byte %........                 ; char 154 ($9A)
     !byte %........
     !byte %........
     !byte %........
@@ -1919,7 +1919,7 @@ currentFloorSpriteCopy
 
     ; $0cd8
 currentSpikeSprite
-    !byte %........                 ; char 155 ($9B, $BB, $DB, $FB)
+    !byte %........                 ; char 155 ($9B)
     !byte %........
     !byte %........
     !byte %........
@@ -1930,7 +1930,7 @@ currentSpikeSprite
 
 currentSpikeSprite2
     ; $0ce0
-    !byte %........                 ; char 156 ($9C, $BC, $DC, $FC)
+    !byte %........                 ; char 156 ($9C)
     !byte %........
     !byte %........
     !byte %........
@@ -1941,7 +1941,7 @@ currentSpikeSprite2
 
 currentSecondFloorSpriteCopy
     ; $0ce8
-    !byte %........                 ; char 157 ($9D, $BD, $DD, $FD)
+    !byte %........                 ; char 157 ($9D)
     !byte %........
     !byte %........
     !byte %........
@@ -1951,7 +1951,7 @@ currentSecondFloorSpriteCopy
     !byte %........
 
     ; $0cf0
-    !byte %....#...                 ; char 158 ($9E, $BE, $DE, $FE)
+    !byte %....#...                 ; char 158 ($9E)
     !byte %....#...
     !byte %....#...
     !byte %....#...
@@ -1961,7 +1961,7 @@ currentSecondFloorSpriteCopy
     !byte %....#...
 
     ; $0cf8
-    !byte %........                 ; char 159 ($9F, $BF, $DF, $FF)
+    !byte %........                 ; char 159 ($9F)
     !byte %........
     !byte %........
     !byte %........
@@ -4224,11 +4224,8 @@ readByteFromVerticalGuardians
 ; ***************************************************************************************
 writeByteToVerticalGuardians
     sta currentVerticalGuardians,x      ;
+return15
     rts                                 ;
-
-; ***************************************************************************************
-swapBackPages
-    RTS                                 ;
 
 ; ***************************************************************************************
 readGuardianByte
@@ -4236,19 +4233,14 @@ readGuardianByte
     rts                             ;
 
 ; ***************************************************************************************
-updateLevel19Guardians
-    jsr updateHorizontalGuardians   ;
-    jmp updateLevel19Special        ;
-
-; ***************************************************************************************
 animateKeysUpdateHorizontalGuardiansAndLevel19EnergyFields
     jsr colourCycleKeys             ;
+    jsr updateHorizontalGuardians   ;
 
     lda currentLevel                ;
     cmp #19                         ;
-    beq updateLevel19Guardians      ; if (level 19 - The Meteor Storm) then branch (update guardians and energy fields)
-    jmp updateHorizontalGuardians   ; [redundant]
-
+    bne return15                    ; if (level 19 - The Meteor Storm) then branch (update guardians and energy fields)
+    jmp updateLevel19Special        ;
 
 ; ***************************************************************************************
 updateHorizontalGuardians
@@ -4267,7 +4259,7 @@ drawGuardiansLoop
 
     lda zpGuardianPositionX         ;
     cmp #$ff                        ;
-    beq swapBackPages               ; if (end of guardian array) then branch (finish up)
+    beq return15                    ; if (end of guardian array) then branch (finish up)
 
     jsr updateAndDrawGuardian       ; update and draw guardian
 
@@ -4484,11 +4476,6 @@ testForBounceHorizontal
 
 ; ***************************************************************************************
 copyGuardianSprites
-    lda #<guardianGraphics              ;
-    sta readGuardianByte + 1            ; set address to read guardian graphics
-    lda #>guardianGraphics              ;
-    sta readGuardianByte + 2            ;
-
     ldx currentLevel                    ;
     lda guardianSetForEachLevel - 1,x   ;
     sta zpGuardianPositionX             ;
@@ -4521,6 +4508,11 @@ copyGuardianSprites
     sbc guardianToleranceBR - 1, x      ;
     sta horizontalToleranceBR           ;
     sta horizontalToleranceReversedBL   ;
+
+    lda #<guardianGraphics              ;
+    sta readGuardianByte + 1            ; set address to read guardian graphics
+    lda #>guardianGraphics              ;
+    sta readGuardianByte + 2            ;
 
     ldx #1                              ;
 -
@@ -4701,17 +4693,24 @@ moveForward2
     rts                                 ;
 
 ; ***************************************************************************************
-updateLevel19Special
-    jsr updateLevel19EnergyFields       ;
-
-    ; copy guardian info away
+swapGuardianInfoWithCopy
     ldx #0                              ; loop counter
 -
+    lda guardianPositionsCopy,x         ;
+    tay                                 ;
     lda guardianPositions,x             ;
     sta guardianPositionsCopy,x         ;
+    tya                                 ;
+    sta guardianPositions,x             ;
     inx                                 ;
     cpx #5                              ;
     bne -                               ;
+    rts                                 ;
+
+; ***************************************************************************************
+checkForMeteorCollision
+    ; copy guardian info away
+    jsr swapGuardianInfoWithCopy        ;
 
     lda meteorXCoordinate               ; x coordinate
     sec                                 ;
@@ -4730,209 +4729,174 @@ updateLevel19Special
     jsr collideWithHorizontalGuardians  ; check for collision
 
     ; copy guardian info back
-    ldx #0                              ;
--
-    lda guardianPositionsCopy,x         ;
-    sta guardianPositions,x             ;
-    inx                                 ;
-    cpx #5                              ;
-    bne -                               ;
-
-    jsr swapMeteorSpritesWith0C00       ;
-    inc meteorYCoordinate               ; meteor moves down
-
-    lda #3                              ; COLOUR 3
-    jsr setTextColour                   ;
-
-    lda #31                             ;
-    jsr OSWRCH                          ; [replace with cellPlot?]
-    lda meteorXCoordinate               ; TAB(meteorXCoordinate, meteorYCoordinate + 1)
-    jsr OSWRCH                          ; x coordinate [replace with cellPlot?]
-
-    lda meteorYCoordinate               ;
-    and #1                              ;
-    sta meteorTailAnimationOffset       ;
-    lda meteorYCoordinate               ;
-    cmp #0                              ;
-    bne gotoYPosition                   ;
-
-    clc                                 ;
-    adc #1                              ;
-    jsr OSWRCH                          ; y coordinate 1 [replace with cellPlot?]
-    jmp checkForMeteorLanding           ;
-
+    jmp swapGuardianInfoWithCopy        ;
 
 ; ***************************************************************************************
-gotoYPosition
-    jsr OSWRCH                      ; y coordinate [replace with cellPlot?]
-    lda #charSPACE                  ;
-    jsr printCharacterAndMoveBelow  ;
+eraseTail
+    jsr eraseCell                       ;
+    jmp afterEraseTail                  ;
 
-checkForMeteorLanding
-    lda meteorYCoordinate           ;
-    cmp meteorLandingY              ;
-    beq meteorLanded                ;
+drawMeteorPart
+    clc                                 ;
+    adc #<meteorAndTailSprites          ;
+    sta cellPlotSourceSpriteAddressLow  ;
+    lda #>meteorAndTailSprites          ;
+    adc #0                              ;
+    sta cellPlotSourceSpriteAddressHigh ;
+    jmp cellPlot                        ;
+
+; ***************************************************************************************
+updateLevel19Special
+    jsr updateLevel19EnergyFields       ;
+
+    ; update meteors...
+    jsr checkForMeteorCollision         ;
+
+    inc meteorYCoordinate               ; meteor moves down
+    lda meteorYCoordinate               ;
+    and #1                              ;
+    asl                                 ;
+    asl                                 ;
+    asl                                 ;
+    sta meteorTailAnimationOffset       ;
+
+    lda #$ff                            ;
+    sta plotColourMask                  ; COLOUR 3
+
+    lda meteorXCoordinate               ;
+    sta cursorX                         ;
+    lda meteorYCoordinate               ;
+    sta cursorY                         ;
+    bne eraseTail                       ;
+afterEraseTail
+    inc cursorY                         ;
+    jsr setCursorScreenAddress          ;
+
+    ; check for meteor landing
+    lda meteorYCoordinate               ;
+    cmp meteorLandingY                  ;
+    beq meteorLanded                    ;
 
     ; meteor still falling
-meteorAnimationState1
-    lda #$e0                        ;
-    clc                             ;
-    adc meteorTailAnimationOffset   ;
-    tay                             ;
-    jsr printCharacterAndMoveBelow  ; draw meteor tail
-    tya                             ;
-    clc                             ;
-    adc #2                          ;
-    jsr OSWRCH                      ; draw meteor [replace with cellPlot?]
-    jmp swapMeteorSpritesWith0C00   ;
+meteorStillFalling
+drawMeteor
+    lda meteorTailAnimationOffset       ;
+    jsr drawMeteorPart                  ;
+    inc cursorY                         ;
+    jsr setCursorScreenAddress          ;
+    lda meteorTailAnimationOffset       ;
+    clc                                 ;
+    adc #16                             ;
+    jmp drawMeteorPart                  ;
+
+meteorLandState1
+    lda #32                             ;
+-
+    sta meteorTailAnimationOffset       ;
+    jmp drawMeteor                      ;
 
 ; ***************************************************************************************
 meteorLanded
-    inc meteorAnimationState        ;
-    dec meteorYCoordinate           ;
-    lda meteorAnimationState        ;
-    cmp #4                          ;
-    beq eraseLandedMeteors          ;
-    cmp #1                          ;
-    beq meteorAnimationState1       ;
-    cmp #2                          ;
-    beq meteorAnimationState2       ;
+    inc meteorAnimationState            ;
+    dec meteorYCoordinate               ;
+    lda meteorAnimationState            ;
+    cmp #4                              ;
+    beq eraseLandedMeteors              ;
+    cmp #1                              ;
+    beq meteorStillFalling              ;
+    cmp #2                              ;
+    beq meteorLandState1                ;
 
-    ; animation state 3
-    lda #$85                        ;
-    jsr printCharacterAndMoveBelow  ;
-    lda #$87                        ;
-    jsr OSWRCH                      ; [replace with cellPlot?]
-    jmp swapMeteorSpritesWith0C00   ;
+    ; animation state 3 (second landed state)
+    lda #40                             ;
+    jmp -                               ;
 
 ; ***************************************************************************************
 eraseLandedMeteors
-    lda #0                          ;
-    sta meteorAnimationState        ;
-    lda #$ff                        ;
-    sta meteorYCoordinate           ;
-    lda #charSPACE                  ;
-    jsr printCharacterAndMoveBelow  ;
-    lda #charSPACE                  ;
-    jsr OSWRCH                      ; [replace with cellPlot?]
+    jsr eraseCell                       ;
+    inc cursorY                         ;
+    jsr setCursorScreenAddress          ;
+    jsr eraseCell                       ;
+
+    lda #0                              ;
+    sta meteorAnimationState            ;
+    lda #$ff                            ;
+    sta meteorYCoordinate               ;
 
     ; show next meteor
-    inc meteorIndex                 ;
-    lda meteorIndex                 ;
-    and #$0f                        ;
-    tax                             ;
-    lda meteorPositions,x           ;
-    tay                             ;
-    and #$1f                        ;
-    clc                             ;
-    adc #4                          ;
-    sta meteorXCoordinate           ;
-    tya                             ;
-    and #$e0                        ;
-    lsr                             ;
-    lsr                             ;
-    lsr                             ;
-    lsr                             ;
-    lsr                             ;
-    clc                             ;
-    adc #3                          ;
-    sta meteorLandingY              ;
-    lda meteorXCoordinate           ;
-    cmp #$19                        ;
-    beq landingPoint11              ;
-    cmp #$1a                        ;
-    beq landingPoint11              ;
-    jmp swapMeteorSpritesWith0C00   ;
-
-; ***************************************************************************************
-landingPoint11
-    lda #$0b                        ;
-    sta meteorLandingY              ;
-    jmp swapMeteorSpritesWith0C00   ;
-
-; ***************************************************************************************
-meteorAnimationState2
-    lda #$84                        ;
-    jsr printCharacterAndMoveBelow  ;
-    lda #$86                        ;
-    jsr OSWRCH                      ; [replace with cellPlot?]
-    jmp swapMeteorSpritesWith0C00   ;
-
-; ***************************************************************************************
-swapMeteorSpritesWith0C00
-    ldx #0                          ; loop counter
--
-    lda meteorAndTailSprites,x      ;
-    tay                             ;
-    lda softCharacterDefinitions,x  ;
-    sta meteorAndTailSprites,x      ;
-    tya                             ;
-    sta softCharacterDefinitions,x  ;
-    inx                             ;
-    cpx #$40                        ;
-    bne -                           ;
-    rts                             ;
-
-; ***************************************************************************************
-printCharacterAndMoveBelow
-    jsr OSWRCH                      ; [replace with cellPlot?]
-    lda #$0a                        ;
-    jsr OSWRCH                      ; [replace with cellPlot?]
-    lda #8                          ;
-    jmp OSWRCH                      ; [replace with cellPlot?]
+    inc meteorIndex                     ;
+    lda meteorIndex                     ;
+    and #$0f                            ;
+    tax                                 ;
+    lda meteorXCellPositions,x          ;
+    sta meteorXCoordinate               ;
+    lda meteorLandingYCell,x            ;
+    sta meteorLandingY                  ;
+    rts                                 ;
 
 ; ***************************************************************************************
 updateLevel19EnergyFields
-    lda energyFieldTimer            ;
-    and #$10                        ;
-    cmp #0                          ;
-    beq +                           ;
-
-    ldx #$3f                        ;
-    ldy #$f2                        ;
-    jsr checkForCollisionLevel19    ;
-
-    ldx #$49                        ;
-    ldy #$f2                        ;
-    jsr checkForCollisionLevel19    ;
-
+    lda energyFieldTimer                ;
+    and #$10                            ;
+    cmp #0                              ;
+    beq +                               ;
+    ldx #3                              ;
+    ldy #$ff                            ;
+    jsr checkForEnergyFieldCollisions   ;
 +
-    jmp animateLevel19EnergyFields  ;
+    ldx #3                              ;
+    jmp updateEnergyFields              ;
 
 ; ***************************************************************************************
-checkForCollisionLevel19
-    stx readScreenByte + 2          ;
-    sty readScreenByte + 1          ;
-    ldx #0                          ;
-    jsr readScreenByte              ;
+level19EnergyFieldAddress0 = $3ff2
+level19EnergyFieldAddress1 = $3ff2 + $90
+level19EnergyFieldAddress2 = $49f2
+level19EnergyFieldAddress3 = $49f2 + $90
+
+level20EnergyFieldAddress0 = $3942
+level20EnergyFieldAddress1 = $4f42
+
+energyFieldAddressesLow
+    !byte <level19EnergyFieldAddress0
+    !byte <level19EnergyFieldAddress1
+    !byte <level19EnergyFieldAddress2
+    !byte <level19EnergyFieldAddress3
+    !byte <level20EnergyFieldAddress0
+    !byte <level20EnergyFieldAddress1
+energyFieldAddressesHigh
+    !byte >level19EnergyFieldAddress0
+    !byte >level19EnergyFieldAddress1
+    !byte >level19EnergyFieldAddress2
+    !byte >level19EnergyFieldAddress3
+    !byte >level20EnergyFieldAddress0
+    !byte >level20EnergyFieldAddress1
+
+; ***************************************************************************************
+checkForEnergyFieldCollisions
+    sty minIndex                    ;
+-
+    lda energyFieldAddressesLow,x   ;
+    sta altScreenAddressLow         ;
+    lda energyFieldAddressesHigh,x  ;
+    sta altScreenAddressHigh        ;
+    ldy #0                          ;
+    lda (altScreenAddressLow), y    ;
     and #$80                        ; top bit set indicates collision
-    cmp #0                          ;
     bne deathJumper2                ;
-    ldx #7                          ;
-    jsr readScreenByte              ;
+    ldy #7                          ;
+    lda (altScreenAddressLow), y    ;
     and #1                          ; bottom bit set indicates collision
-    cmp #0                          ;
     bne deathJumper2                ;
-    ldx #$90                        ;
-    jsr readScreenByte              ;
-    and #$80                        ; top bit set indicates collision
-    cmp #0                          ;
-    bne deathJumper2                ;
-    ldx #$97                        ;
-    jsr readScreenByte              ;
-    and #1                          ; bottom bit set indicates collision
-    cmp #0                          ;
-    bne deathJumper2                ;
+    dex                             ;
+minIndex = * + 1
+    cpx #0                          ;
+    bne -                           ;
+
     rts                             ;
 
 ; ***************************************************************************************
 deathJumper2
     jmp death                       ;
-
-; ***************************************************************************************
-readScreenByte
-    lda $ffff,x                     ;
-    rts                             ;
 
 ; ***************************************************************************************
 drawFooterText
@@ -5078,42 +5042,42 @@ drawFixedString
 ; On Entry:
 ;       A = colour (add 128 to set background colour)
 setTextColour
-    pha                                                 ;
-    lda #17                                             ;
-    jsr OSWRCH                                          ;
-    pla                                                 ;
-    jmp OSWRCH                                          ;
+    pha                             ;
+    lda #17                         ;
+    jsr OSWRCH                      ;
+    pla                             ;
+    jmp OSWRCH                      ;
 
 ; ***************************************************************************************
 setTextPosFromPixelPos
-    txa                                     ; }
-    lsr                                     ; }
-    lsr                                     ; }
-    sta cursorX                             ; } TAB(X/4, Y/8+2)
-    tya                                     ; }
-    lsr                                     ; }
-    lsr                                     ; }
-    lsr                                     ; }
-    clc                                     ; }
-    adc #2                                  ; }
-    sta cursorY                             ; }
-    rts                                     ;
+    txa                             ; }
+    lsr                             ; }
+    lsr                             ; }
+    sta cursorX                     ; } TAB(X/4, Y/8+2)
+    tya                             ; }
+    lsr                             ; }
+    lsr                             ; }
+    lsr                             ; }
+    clc                             ; }
+    adc #2                          ; }
+    sta cursorY                     ; }
+    rts                             ;
 
 ; ***************************************************************************************
 setTextPos
-    lda #31                                             ;
-    jsr OSWRCH                                          ;
-    txa                                                 ;
-    jsr OSWRCH                                          ;
-    tya                                                 ;
-    jmp OSWRCH                                          ;
+    lda #31                         ;
+    jsr OSWRCH                      ;
+    txa                             ;
+    jsr OSWRCH                      ;
+    tya                             ;
+    jmp OSWRCH                      ;
 
 ; ***************************************************************************************
 ;
 ; On Entry:
 ;   cellPlotSourceSpriteAddress is address of sprite
-;   plotScreenAddressLow    is screen address (use plotGetScreenAddress to get address)
-;   plotColourMask          is $00 for colour 0, $0f for colour 1, $f0 for colour 2, and $ff for colour 3
+;   cellScreenAddress           is screen address (use plotGetScreenAddress to get address)
+;   plotColourMask              is $00 for colour 0, $0f for colour 1, $f0 for colour 2, and $ff for colour 3
 ;
 ; ***************************************************************************************
 cellPlot
@@ -5654,7 +5618,7 @@ storeAddressLow = * + 1
 
     jsr getExitSprite               ;
 
-    ; For the Master, define the graphics manually
+    ; For the Master, define the graphics officially
     jsr defineMasterCharacters      ;
 
     jsr setBlackPalette             ;
@@ -6187,7 +6151,7 @@ oldIrq1RoutineHigh = * + 2
 changePalette
     LDX #footerPalette - startOfPalettes + 3    ; }
     JSR definePaletteAX                         ; } Set palette for header
-    inc clock                                   ;
+    inc metronome                               ;
     jmp handledInterrupt                        ;
 
 ; ***************************************************************************************
@@ -6371,11 +6335,11 @@ showALevelLoop
 
     ; wait for tick
 -
-    lda clock                       ;
+    lda metronome                   ;
     cmp #3                          ;
     bcc -                           ;
     lda #0                          ;
-    sta clock                       ;
+    sta metronome                   ;
 
     inc attractModeTimer            ;
     lda attractModeTimer            ;
@@ -6502,7 +6466,6 @@ showTitleScreen
 
     ; swap in the flowery logo
     jsr swapLogoWithC00             ;
-    jsr defineMasterCharacters      ;
 
     ; draw the flowery logo
     ldx #$80                        ; loop counter (and character to print)
@@ -6586,6 +6549,10 @@ swapLogoWithC00
     sta softCharacterDefinitions,x  ;
     inx                             ;
     bne -                           ;
+
+    ; For the Master, define the graphics officially
+    jsr defineMasterCharacters      ;
+
     rts                             ;
 
 ; ***************************************************************************************
@@ -7076,7 +7043,7 @@ startGame
     jsr showLevel                           ;
     jsr updateMusicState                    ; pause / resume music
     lda #0                                  ;
-    sta clock                               ;
+    sta metronome                           ;
 
 playCurrentLevel
     lda #0                                  ;
@@ -7101,11 +7068,11 @@ playCurrentLevel
 
     ; wait for tick
 -
-    lda clock                               ;
-    cmp #3
+    lda metronome                           ;
+    cmp #3                                  ;
     bcc -                                   ;
     lda #0                                  ;
-    sta clock                               ;
+    sta metronome                           ;
 
     ; read special keys (for sound on/off, pause, quit)
     ldx #keyCodeDELETE                      ;
@@ -8099,23 +8066,6 @@ energyFieldSprites
     !byte %........
     !byte %........
 
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-
 meteorAndTailSprites
     !byte %........
     !byte %........
@@ -8656,16 +8606,6 @@ debugEndX
 debugLineDataEnd
 }
 
-energyFieldString
-    !byte $1f, 15, 5                    ; TAB(15, 5)
-    !byte $2a                           ;
-    !byte $1f, 15, 9                    ; TAB(15, 9)
-    !byte $2a                           ;
-    !byte $1f, 24, 5                    ;
-    !byte $2a                           ;
-    !byte $1f, 24, 9                    ; TAB(24, 9)
-    !byte $2a                           ;
-
 guardianPositionsCopy
     !byte $00, $00, $00, $00, $00
 
@@ -8869,7 +8809,7 @@ levelSideWallColoursConveyorArray
     ;                            conveyor, wall colour, wall colour
     +levelSideWallColoursConveyor       1,           3,           1    ; level 1 - Central Cavern
     +levelSideWallColoursConveyor       1,           3,           1    ; level 2 - The Cold Room
-    +levelSideWallColoursConveyor       2,           1,           3    ; level 3 - The Menagerie
+    +levelSideWallColoursConveyor       2,           1,           2    ; level 3 - The Menagerie
     +levelSideWallColoursConveyor       1,           2,           1    ; level 4 - Abandoned Uranium Workings
     +levelSideWallColoursConveyor       2,           3,           1    ; level 5 - Eugene's Lair
     +levelSideWallColoursConveyor       1,           3,           0    ; level 6 - Processing Plant
@@ -9100,12 +9040,7 @@ levelDefinitions
     ; crumble floors
     +levelStrip  4,  5, 26,     0, 1
 
-    +levelIncrementType
-
-    ; walls
-    +levelStrip 30, 0, 1,       1, 3
-
-    +levelIncrementType
+    +levelSetType 3
 
     ; conveyor
     +levelStrip 5, 9, 6,        0, 2
@@ -9736,8 +9671,12 @@ levelDefinitions
     !byte $ff, $ff, $ff
 
 ; ***************************************************************************************
-meteorPositions
-    !byte $64, $1b, $28, $a9, $16, $1d, $02, $58, $65, $57, $27, $d9, $aa, $1c, $15, $63
+meteorXCellPositions
+    !byte 8, 31, 12, 13, 26, 33, 6, 28, 9, 27, 11, 29, 14, 32, 25, 7
+meteorLandingYCell
+    !byte 6,  3,  4,  8, 11,  3, 3,  5, 6,  5,  4,  9,  8,  3, 11, 6
+;meteorPositions
+;    !byte $64, $1b, $28, $a9, $16, $1d, $02, $58, $65, $57, $27, $d9, $aa, $1c, $15, $63
 
 ; ***************************************************************************************
     ; vertical movements at each stage of a jump
@@ -9797,6 +9736,9 @@ clearScreenLoop
     inx                             ;
     cpx #$40                        ;
     bne -                           ;
+
+    ; For the Master, define the graphics officially
+    jsr defineMasterCharacters      ;
 
     ; draw pedestal
     ldx #0                          ; loop counter
@@ -10199,64 +10141,105 @@ verticalCheckPixelCollision
     rts                                 ;
 
 ; ***************************************************************************************
-animateLevel19EnergyFields
-    lda currentLevel                    ;
-    cmp #19                             ;
-    beq level19EnergyFields             ;
-    rts                                 ;
+level19EnergyFieldScreenAddress0 = screenStartAddress + 16 * 15 + $0280 * 4
+level19EnergyFieldScreenAddress1 = screenStartAddress + 16 * 15 + $0280 * 8
+level19EnergyFieldScreenAddress2 = screenStartAddress + 16 * 24 + $0280 * 4
+level19EnergyFieldScreenAddress3 = screenStartAddress + 16 * 24 + $0280 * 8
 
-level19EnergyFields
+level20EnergyFieldScreenAddress0 = screenStartAddress + 16 * 20 + $0280 * 10
+level20EnergyFieldScreenAddress1 = screenStartAddress + 16 * 28 + $0280 * 1
+
+energyFieldScreenAddressLow
+    ; level 19
+    !byte <level19EnergyFieldScreenAddress0
+    !byte <level19EnergyFieldScreenAddress1
+    !byte <level19EnergyFieldScreenAddress2
+    !byte <level19EnergyFieldScreenAddress3
+
+    ; level 20
+    !byte <level20EnergyFieldScreenAddress0
+    !byte <level20EnergyFieldScreenAddress1
+
+energyFieldScreenAddressHigh
+    ; level 19
+    !byte >level19EnergyFieldScreenAddress0
+    !byte >level19EnergyFieldScreenAddress1
+    !byte >level19EnergyFieldScreenAddress2
+    !byte >level19EnergyFieldScreenAddress3
+
+    ; level 20
+    !byte >level20EnergyFieldScreenAddress0
+    !byte >level20EnergyFieldScreenAddress1
+
+energyFieldLoopIndex
+    !byte 0                             ;
+
+; ***************************************************************************************
+updateEnergyFields
     inc energyFieldTimer                ;
-    jsr swapEnergyFieldSpritesWith0C00  ;
     lda energyFieldTimer                ;
     and #$10                            ;
-    cmp #0                              ;
-    beq toggleEnergyField               ;
-    lda #0                              ;
-    sta energyFieldSpriteOffset         ;
+    beq switchEnergyFieldOff            ;
     lda energyFieldTimer                ;
     and #1                              ;
-    cmp #0                              ;
-    beq setEnergyFieldColour            ;
-    lda #2                              ;
-    sta energyFieldSpriteOffset         ;
-setEnergyFieldColour
-    lda #2                              ; COLOUR 2
-    jsr setTextColour                   ;
-    ldx #0                              ;
--
-    lda energyFieldString,x             ;
-    cmp #$2a                            ;
-    beq drawEnergyField                 ;
-continueEnergyFieldString
-    jsr OSWRCH                          ; [replace with cellPlot?]
-    inx                                 ;
-    cpx #16                             ;
-    bne -                               ; loop for length of message
-    jmp swapEnergyFieldSpritesWith0C00  ;
+    asl                                 ;
+    asl                                 ;
+    asl                                 ;
+    asl                                 ;
+    sta energyFieldSpriteOffset         ; set first sprite or second sprite (0 or 16)
 
 drawEnergyField
-    lda #$80                            ;
+    stx energyFieldLoopIndex            ; set to 3 or 5 for level 19 or 20
+    lda #$f0                            ;
+    sta plotColourMask                  ;
+-
+    lda energyFieldSpriteOffset         ;
     clc                                 ;
-    adc energyFieldSpriteOffset         ;
-    tay                                 ;
-    iny                                 ;
-    jsr OSWRCH                          ; [replace with cellPlot?]
-    lda #$0a                            ;
-    jsr OSWRCH                          ; [replace with cellPlot?]
-    lda #8                              ;
-    jsr OSWRCH                          ; [replace with cellPlot?]
-    tya                                 ;
-    jmp continueEnergyFieldString       ;
+    adc #<energyFieldSprites            ;
+    sta cellPlotSourceSpriteAddressLow  ;
+    lda #>energyFieldSprites            ;
+    adc #0                              ;
+    sta cellPlotSourceSpriteAddressHigh ;
 
-toggleEnergyField
-    lda #4                              ;
-    sta energyFieldSpriteOffset         ;
+    ldx energyFieldLoopIndex            ;
+    lda energyFieldScreenAddressLow, x  ;
+    sta cellScreenAddressLow            ;
+    lda energyFieldScreenAddressHigh, x ;
+    sta cellScreenAddressHigh           ;
+
+    jsr cellPlot                        ;
+
+    lda cellScreenAddressLow            ;
+    clc                                 ;
+    adc #$80                            ;
+    sta cellScreenAddressLow            ;
+    lda cellScreenAddressHigh           ;
+    adc #2                              ;
+    sta cellScreenAddressHigh           ;
+
+    lda cellPlotSourceSpriteAddressLow  ;
+    clc                                 ;
+    adc #16                             ;
+    sta cellPlotSourceSpriteAddressLow  ;
+    bcc +                               ;
+    inc cellPlotSourceSpriteAddressHigh ;
++
+    jsr cellPlot                        ;
+    dec energyFieldLoopIndex            ;
+    lda energyFieldLoopIndex            ;
+    bmi +                               ;
+    cmp #3                              ;
+    beq +                               ;
+    jmp -                               ;
+    rts                                 ;
+
+switchEnergyFieldOff
+    lda #32                             ;
+    sta energyFieldSpriteOffset         ; switch to empty sprites
     lda energyFieldTimer                ;
     and #$0f                            ;
-    cmp #0                              ;
-    beq setEnergyFieldColour            ;
-    jmp swapEnergyFieldSpritesWith0C00  ;
+    beq drawEnergyField                 ; if it's the first frame off, erase them
+    rts                                 ;
 
 ; ***************************************************************************************
 toggleEugeneColour
@@ -10354,7 +10337,6 @@ setOffsetYWithinCell
 
 ; ***************************************************************************************
 hitLevel20EnergyField
-    jsr swapEnergyFieldSpritesWith0C00  ;
 deathJumper5
     jmp death                           ;
 
@@ -10364,103 +10346,19 @@ checkForDeath
     lda currentLevel                    ;
     cmp #20                             ;
     bne return6                         ;
-    inc level20EnergyFieldsTimer        ;
-    jsr swapEnergyFieldSpritesWith0C00  ;
-    lda level20EnergyFieldsTimer        ;
+
+    lda energyFieldTimer                ;
     and #$10                            ;
     cmp #0                              ;
-    beq toggleLevel20EnergyFields       ;
+    beq +                               ;
 
     ; check for collision
-    lda $4f42                           ; read screen byte directly
-    and #$80                            ;
-    cmp #0                              ; top bit set indicates a collision
-    bne hitLevel20EnergyField           ;
-
-    lda $3942                           ; read screen byte directly
-    and #$80                            ;
-    cmp #0                              ; top bit set indicates a collision
-    bne hitLevel20EnergyField           ;
-
-    lda $394a                           ; read screen byte directly
-    and #1                              ;
-    cmp #0                              ; bottom bit set indicates a collision
-    bne hitLevel20EnergyField           ;
-
-    lda $4f4a                           ; read screen byte directly
-    and #1                              ;
-    cmp #0                              ; bottom bit set indicates a collision
-    bne hitLevel20EnergyField           ;
-
-    lda level20EnergyFieldsTimer        ;
-    and #1                              ;
-    cmp #0                              ;
-    beq level20SwitchEnergyFieldSprite  ;
-    lda #0                              ;
-    sta energyFieldSpriteOffset         ;
-drawLevel20EnergyFieldString
-    ldx #0                              ;
--
-    lda level20EnergyFieldsString,x     ;
-    jsr OSWRCH                          ; [replace with cellPlot?]
-    inx                                 ;
-    cpx #5                              ;
-    beq +                               ;
-backToLevel20EnergyFieldString
-    cpx #8                              ;
-    bne -                               ;
-    jsr drawLevel20EnergyField          ;
-    jmp swapEnergyFieldSpritesWith0C00  ;
-
+    ldx #5                              ;
+    ldy #3                              ;
+    jsr checkForEnergyFieldCollisions   ;
 +
-    jsr drawLevel20EnergyField          ;
-    jmp backToLevel20EnergyFieldString  ;
-
-; ***************************************************************************************
-drawLevel20EnergyField
-    lda #$80                            ;
-    clc                                 ;
-    adc energyFieldSpriteOffset         ;
-    jsr OSWRCH                          ; draw first character of energy field [replace with cellPlot?]
-    tay                                 ;
-    iny                                 ;
-    lda #$0a                            ; move down
-    jsr OSWRCH                          ; [replace with cellPlot?]
-    lda #8                              ; move left
-    jsr OSWRCH                          ; [replace with cellPlot?]
-    tya                                 ;
-    jmp OSWRCH                          ; draw second character of energy field [replace with cellPlot?]
-
-; ***************************************************************************************
-level20SwitchEnergyFieldSprite
-    lda #2                              ;
-    sta energyFieldSpriteOffset         ;
-    jmp drawLevel20EnergyFieldString    ;
-
-; ***************************************************************************************
-toggleLevel20EnergyFields
-    lda #4                              ;
-    sta energyFieldSpriteOffset         ;
-    lda level20EnergyFieldsTimer        ;
-    and #$0f                            ;
-    cmp #0                              ;
-    bne swapEnergyFieldSpritesWith0C00  ;
-    jmp drawLevel20EnergyFieldString    ;
-
-; ***************************************************************************************
-swapEnergyFieldSpritesWith0C00
-    ldx #$40                            ;
--
-    lda softCharacterDefinitions,x      ;
-    tay                                 ;
-    lda energyFieldSprites,x            ;
-    sta softCharacterDefinitions,x      ;
-    tya                                 ;
-    sta energyFieldSprites,x            ;
-    dex                                 ;
-    bne -                               ;
-    rts                                 ;
-
+    ldx #5                              ;
+    jmp updateEnergyFields              ;
 
     ; ***********************************************************************************
     !macro singleType .count, .spriteOffset {
@@ -14429,9 +14327,9 @@ horizontalGuardianPositionData
     ; level 1 - Central Cavern
     !byte $ff, $1c, $87, $3b
     ; level 2 - The Cold Room
-    !byte $ff, $47, $03, $01,  $73, $0d, $2d
+    !byte $ff, $47, $03, $00,  $73, $0d, $2c
     ; level 3 - The Menagerie
-    !byte $ff, $3f, $03, $01,  $4a, $0d, $01,  $45, $83, $72
+    !byte $ff, $3f, $03, $00,  $4b, $0d, $00,  $44, $83, $73
     ; level 4 - Abandoned Uranium Workings
     !byte $ff, $01, $8d, $26,  $15, $8d, $3a
     ; level 5 - Eugene's Lair
@@ -14533,12 +14431,6 @@ pedestalMessage
     !byte $0a, $08, $08             ; down and back
     !byte $82, $83                  ; draw foot
 pedestalMessageEnd
-
-; ***************************************************************************************
-level20EnergyFieldsString
-    !byte $11, $02                                  ; COLOUR 2
-    !byte $1f, $14, $0b                             ; TAB(20,11)
-    !byte $1f, $1c, $02                             ; TAB(28, 2)
 
 ; ***************************************************************************************
 keysToRead

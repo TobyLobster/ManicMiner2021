@@ -3532,7 +3532,7 @@ checkForEndOfLoop
 updateVerticalGuardians
     lda currentLevel                    ;
     cmp #5                              ;
-    beq drawEugene                      ;
+    beq updateAndDrawEugene             ;
     cmp #8                              ;
     beq drawRegularKong                 ;
     cmp #12                             ;
@@ -3540,10 +3540,10 @@ updateVerticalGuardians
     cmp #9                              ;
     beq drawVerticalGuardiansJumper     ;
     cmp #16                             ;
-    beq +                               ; if (level 16 - The Sixteenth Cavern) then branch (return)
+    beq return16                        ; if (level 16 - The Sixteenth Cavern) then branch (return)
     cmp #11                             ;
     bcs drawVerticalGuardiansJumper     ;
-+
+return16
     rts                                 ;
 
 ; ***************************************************************************************
@@ -3551,7 +3551,7 @@ drawVerticalGuardiansJumper
     jmp drawVerticalGuardians
 
 ; ***************************************************************************************
-drawEugene
+updateAndDrawEugene
 eugeneColourMask = * + 1
     lda #$f0                            ;
     sta spriteColourMask                ; colour 2
@@ -3564,17 +3564,16 @@ eugeneColourMask = * + 1
 moveEugene
     lda eugenePositionY                 ;
     and #$80                            ;
-    cmp #$80                            ;
-    bne moveEugeneDown                  ;
+    beq moveEugeneDown                  ;
 
     ; move Eugene up
     inc eugenePositionY                 ;
-    jmp +                               ;
+    jmp drawEugene                      ;
 
 ; ***************************************************************************************
 moveEugeneDown
     dec eugenePositionY                 ;
-+
+drawEugene
     ldx #$4c                            ;
     lda eugenePositionY                 ;
     and #$7f                            ;
@@ -3596,8 +3595,8 @@ toggleEugeneDirection
     lda eugenePositionY                 ;
     eor #$80                            ;
     sta eugenePositionY                 ;
-doWeMoveEugene
-    jmp moveEugene                      ;
+doWeMoveEugeneOpcode = *
+    jmp moveEugene                      ; [this must be a 'JMP abs' as the opcode is overwritten]
 
 ; ***************************************************************************************
 drawRegularKong
@@ -7239,7 +7238,7 @@ initializeLevelSprites
     sta currentSecondFloorSpriteCopy + 7    ;
 
     lda #$4c                        ; }
-    sta doWeMoveEugene              ; } store opcode for 'JMP abs'
+    sta doWeMoveEugeneOpcode        ; } store opcode for 'JMP abs'
 
     lda #$f0                        ;
     sta eugeneColourMask            ;
@@ -7348,10 +7347,9 @@ checkExit
     sta eugenePositionY             ;
 
     lda #$60                        ; store opcode for 'RTS'
-    sta doWeMoveEugene              ;
+    sta doWeMoveEugeneOpcode        ;
 
-    jsr toggleEugeneColour          ;
-
+    jsr updateEugeneFalling         ;
 +
     lda newPlayerPixelX             ;
     lsr                             ;
@@ -10240,13 +10238,15 @@ switchEnergyFieldOff
     rts                                 ;
 
 ; ***************************************************************************************
-toggleEugeneColour
+updateEugeneFalling
     lda eugeneColourMask                ;
-    eor #$0f                            ;
+    eor #$0f                            ; swap colours
     sta eugeneColourMask                ;
 
+    cmp #$ff
+    beq +
     jsr updateVerticalGuardians         ;
-
++
     lda #$ff                            ;
     sta spriteColourMask                ;
     rts                                 ;

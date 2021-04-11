@@ -6189,17 +6189,16 @@ updateSound
     lda channel2Frequency               ;
     cmp #$ff                            ;
     beq silenceChannel2                 ;
-    lda currentNoteTimePlayed           ;
-    cmp #$ff                            ;
-    beq silenceChannel2                 ;
+
     lda #$b0                            ;
     jsr soundDirect                     ; Set channel 2 maximum volume
     lda #$a0                            ;
     jsr soundDirect                     ; Set channel 2 frequency first byte
     lda channel2Frequency               ;
     jsr soundDirect                     ; Set channel 2 frequency second byte
+
     lda #$ff                            ;
-    sta channel2Frequency               ;
+    sta channel2Frequency               ; silence for next time
 
 handledInterrupt
     pla                                 ; Restore X and Y registers
@@ -7461,9 +7460,9 @@ reachedExit
 drainAirRemaining
     lda airRemaining                ;
     lsr                             ;
-    clc                             ;
-    adc #1                          ;
-    eor #$3f                        ;
+    lsr                             ;
+    eor #$ff                        ;
+    and #$3f                        ;
     sta channel2Frequency           ;
     jsr updateAir                   ;
     jsr updateAir                   ;

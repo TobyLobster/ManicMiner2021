@@ -274,6 +274,7 @@ verticalGuardianMODE1Address3   = $04c0     ;
 
 screenStartAddress              = $3280     ; start of visible screen
 blankAreaOfScreen               = $34d0     ; empty screen area to the right of the play area
+playAreaEndAddress              = $5a80     ;
 screenEndAddress                = $6480     ; end of visible screen
 backgroundCache                 = $7fa0     ; six character cells copied from the screen before the player is drawn
 
@@ -5259,16 +5260,15 @@ setVerticalDisplayedCharacters
 
 ; ***************************************************************************************
 clearScreen
-    jsr setBlackPalette             ;
-
+    ldy #>(screenEndAddress - screenStartAddress)   ;
+    ldx #<(screenEndAddress - screenStartAddress)   ; XY = length of area to clear
+clearScreenXY
     ; clear memory from screenStartAddress to screenEndAddress
     lda #<screenStartAddress        ;
     sta injectAddressLow            ;
     lda #>screenStartAddress        ;
     sta injectAddressHigh           ;
     lda #0                          ;
-    ldy #>(screenEndAddress - screenStartAddress)   ;
-    ldx #<(screenEndAddress - screenStartAddress)   ; XY = length of area to clear
     beq +                           ;
 -
     dex                             ;
@@ -5278,7 +5278,7 @@ injectAddressHigh = * + 2
     bne -                           ;
     lda #<screenEndAddress          ;
     sta injectAddressLow            ;
-    txa                             ;
+    txa                             ; A = 0
     inc injectAddressHigh           ;
 +
     dey                             ;
@@ -5356,6 +5356,7 @@ readByteOffsetX
 
 ; ***************************************************************************************
 initLevel
+    jsr setBlackPalette             ;
     jsr clearScreen                 ;
     lda #<levelDefinitions          ; }
     sta readByteOffsetX + 1         ; }
@@ -6433,6 +6434,7 @@ return5
 
 ; ***************************************************************************************
 showTitleScreen
+    jsr setBlackPalette             ;
     jsr clearScreen                 ;
     jsr zeroScore                   ;
 
@@ -9704,25 +9706,20 @@ roomTitleBackgroundEnd
 
 ; ***************************************************************************************
 gameOver
-    ; clear screen
-    lda #>screenStartAddress        ;
-    sta $71                         ;
-    lda #<screenStartAddress        ; ($70,$71) = $3280
-    sta $70                         ;
+    ; clear play area of the screen
+    ldy #>(playAreaEndAddress - screenStartAddress)   ;
+    ldx #<(playAreaEndAddress - screenStartAddress)   ; XY = length of area to clear
+    jsr clearScreenXY               ;
 
-    ldx #41                         ;
-    ldy #0                          ;
-    tya                             ;
-clearScreenLoop
-    sta ($70),y                     ;
-    iny                             ;
-    bne clearScreenLoop             ;
-
-    inc $71                         ;
-    dex                             ;
-    bne clearScreenLoop             ;
-
-    jsr drawRoomName                ;
+    lda #black                      ;
+    sta playAreaPalette             ;
+    sta footerPalette               ;
+    lda #white                      ;
+    sta playAreaPalette + 1         ;
+    lda #cyan                       ; [not used]
+    sta playAreaPalette + 2         ;
+    lda #yellow                     ;
+    sta playAreaPalette + 3         ;
 
     ; copy 32 bytes (4 characters worth) into drawable region at softCharacterDefinitions
     ldx #0                          ; loop counter
@@ -9745,6 +9742,9 @@ clearScreenLoop
     cpx #pedestalMessageEnd - pedestalMessage ; loop 12 times
     bne -                           ;
 
+    ; draw willy
+    lda #$ff                        ;
+    sta spriteColourMask            ;
     lda #<willyRight2               ; }
     sta plotSourceSpriteAddressLow  ; }
     lda #>willyRight2               ; } sprite address = $0580 (address of willy)
@@ -9755,6 +9755,9 @@ clearScreenLoop
     lda #3                          ;
     jsr plot                        ; plot willy (on the pedestal) (mode 3)
 
+    ; draw foot
+    lda #$0f                        ;
+    sta spriteColourMask            ;
     lda #8                          ;
     sta footPositionY               ;
 footDescendingLoop
@@ -9767,7 +9770,8 @@ footDescendingLoop
     lda #3                          ;
     jsr plot                        ; draw foot (mode 3)
 
-    ldx #$ff                        ;
+    ; delay and play rising sound
+    ldx #$00                        ;
     ldy #$40                        ; loop counter
 -
     dex                             ;
@@ -10272,12 +10276,12 @@ switchFlipped
 
     ; level 12 switch flipped - Return of the Alien Kong Beast
     lda #$47                            ;
-    sta guardianPositions + 3           ;
+    sta guardianPositions + 3           ; change guardian extent
 +
     rts                                 ;
 
 level8SwitchFlipped
-    lda #$47                            ;
+    lda #$47                            ; change guardian extent
     sta guardianPositions + 7           ;
 return6
     rts                                 ;
@@ -14423,11 +14427,11 @@ switchMessageEnd
 
 ; ***************************************************************************************
 pedestalMessage
-    !byte $11, $03                  ; COLOUR 3
+    !byte $11, $01                  ; COLOUR 1
     !byte $1f, $13, $0f             ; TAB(19,15)
-    !byte $80, $81                  ; draw leg
+    !byte $80, $81                  ; draw pedestal
     !byte $0a, $08, $08             ; down and back
-    !byte $82, $83                  ; draw foot
+    !byte $82, $83                  ; draw pedestal
 pedestalMessageEnd
 
 ; ***************************************************************************************

@@ -266,6 +266,8 @@ sideWallColour2                 = $a1       ;
 newSingleItemColour             = $a2       ;
 conveyorColour                  = $a3       ;
 volumeIndex                     = $a4       ;
+saveY                           = $a5       ;
+
 
 ; ***************************************************************************************
 verticalGuardianMODE1Address    = $0400     ;
@@ -297,11 +299,12 @@ ShortTimerValue = 24*62 + 46
 initialize
     lda #$ff                                ;
     sta musicCounter                        ;
-    sta currentNoteTimePlayed               ;
     sta rasterArea                          ;
     sta channel2Frequency                   ;
     sta previousNoteByte                    ;
     sta musicEnabled                        ;
+    lda #200                                ;
+    sta currentNoteTimePlayed               ;
     lda #0
 !ifdef optionMusicOff {
     sta musicEnabled                        ;
@@ -2968,8 +2971,7 @@ keyCollisionFound
     cpx keyPositionCounter      ;
     bcc -                       ;
 
-    lda #99                     ;
-    jmp addToScore              ;
+    jmp keyTaken                ;
 
 switchCollisionFound
     ldx cursorX                     ; }
@@ -4948,9 +4950,10 @@ showTitleScreenMessageAndWaitForRETURN
     inc $70                         ;
     bne -                           ;
 
-    lda #$ff                        ;
-    sta previousNoteByte            ;
+    lda #$ff                        ; }
+    sta previousNoteByte            ; }
     sta musicCounter                ; }
+    lda #200                        ; }
     sta currentNoteTimePlayed       ; }
     jsr resumeMusic                 ; } demo mode
     jmp playAttractLoop             ; }
@@ -6123,7 +6126,7 @@ oldIrq1RoutineHigh = * + 2
     lda rasterArea                      ;
 
     cmp #2                              ;
-    beq updateSound                     ;
+    beq updateAudio                     ;
 
     cmp #5                              ;
     beq changePalette                   ;
@@ -6182,12 +6185,15 @@ definePaletteAX
     rts                                     ;
 
 ; ***************************************************************************************
-updateSound
-    ; update music
-    jsr updateMusic                     ;
-
-    ; update sound effects
+updateSpotSound
+    ; update sound effects. Used for:
+    ;
+    ; (1) draining air at the end of the level and
+    ; (2) when lowering the foot on game over
+    ;
     lda channel2Frequency               ;
+    cmp #$fe                            ;
+    beq return17                        ;
     cmp #$ff                            ;
     beq silenceChannel2                 ;
 
@@ -6200,6 +6206,20 @@ updateSound
 
     lda #$ff                            ;
     sta channel2Frequency               ; silence for next time
+return17
+    rts
+
+silenceChannel2
+    lda #$bf                            ;
+    jsr soundDirect                     ; set zero volume on channel 2
+    lda #$fe                            ;
+    sta channel2Frequency               ;
+    rts                                 ;
+
+; ***************************************************************************************
+updateAudio
+    jsr updateMusic                     ;
+    jsr updateSpotSound                 ;
 
 handledInterrupt
     pla                                 ; Restore X and Y registers
@@ -6209,18 +6229,13 @@ handledInterrupt
     lda interruptAccumulator            ;
     rti                                 ;
 
-silenceChannel2
-    lda #$bf                        ;
-    jsr soundDirect                 ; set zero volume on channel 2
-    jmp handledInterrupt            ;
-
 ; ***************************************************************************************
 updateMusic
 updateMusicOpcode = *
     inc currentNoteTimePlayed       ; This first instruction MUST be an INC (this byte is modified elsewhere)
     lda currentNoteTimePlayed       ;
-    and #7                          ;
-    beq updateChannel3              ; update channel 3
+    cmp #10                         ;
+    bcs updateChannel3              ; update channel 3
 updateMusicVolume
     cmp #6                          ; }
     bcc +                           ; } decrease the volume more slowly after 6 ticks
@@ -6240,6 +6255,8 @@ updateMusicVolume
     jmp soundDirect                 ; set channel 3 volume
 
 updateChannel3
+    lda #0                          ;
+    sta currentNoteTimePlayed       ;
     inc musicCounter                ;
     lda musicCounter                ;
     tax                             ;
@@ -6257,8 +6274,6 @@ updateChannel3
 +
     stx volumeIndex                 ;
     tax                             ;
-    lda #0                          ;
-    sta currentNoteTimePlayed       ;
     lda soundFrequenciesFirst,x     ;
     jsr soundDirect                 ; Channel 3 frequency
     lda soundFrequenciesSecond,x    ;
@@ -6268,9 +6283,10 @@ updateChannel3
 finishChannel3Notes
     lda #$ff                        ;
     sta musicCounter                ; end channel 3 notes
-    sta currentNoteTimePlayed       ;
     sta volumeIndex                 ;
     sta previousNoteByte            ;
+    lda #200                        ;
+    sta currentNoteTimePlayed       ;
 +
     rts                             ;
 
@@ -6288,6 +6304,7 @@ soundDirect
     pha                             ; remember A
 
     stx saveX                       ;
+    sty saveY                       ;
 
     lda #151                        ;
     ldx #$43                        ; Data direction register A
@@ -6308,6 +6325,7 @@ soundDirect
     jsr OSBYTE                      ;
 
     ldx saveX                       ;
+    ldy saveY                       ;
 
     plp                             ; Restore interrupt enabled as needed
     rts                             ;
@@ -7173,8 +7191,9 @@ pauseMusic
 updateMusicState
     lda #$ff                                ;
     sta musicCounter                        ;
-    sta currentNoteTimePlayed               ;
     sta previousNoteByte                    ;
+    lda #200                                ;
+    sta currentNoteTimePlayed               ;
     lda musicEnabled                        ;
     beq pauseMusic                          ;
     jmp resumeMusic                         ;
@@ -7479,7 +7498,7 @@ drainAirRemaining
     lsr                             ;
     eor #$ff                        ;
     and #$3f                        ;
-    sta channel2Frequency           ;
+    sta channel2Frequency           ; update sound
     jsr updateAir                   ;
     jsr updateAir                   ;
     inc keyCounter                  ;
@@ -7491,6 +7510,8 @@ continueDrainingAir
     lda airRemaining                ;
     cmp #0                          ;
     bne drainAirRemaining           ;
+    lda #255                        ;
+    sta channel2Frequency           ; stop sound
     jsr updateMusicState            ;
     jmp gotoNextLevel               ;
 
@@ -7721,10 +7742,6 @@ getKongVisibleStateIntoX
 ;
 ; ***************************************************************************************
 addToScore
-    cmp #$63                        ; if score to add is 99 (BCD) then it's a key taken
-    beq keyTaken                    ;
-
-incrementScore
     clc                             ; }
     adc #1                          ; }
     sed                             ; }
@@ -7738,7 +7755,7 @@ incrementScore
     bcs extraLife                   ; if (score passes each 10000 boundary) then branch (extra life)
 
 printScoreAndLives
-    cld
+    cld                             ;
     lda #31                         ; }
     jsr OSWRCH                      ; }
     lda #10                         ; } TAB(10,20)
@@ -7805,15 +7822,19 @@ printBCDNumber
 
 ; ***************************************************************************************
 keyTaken
-    lda #$02                        ; }
-    ldx #$c8                        ; }
-    ldy #$01                        ; } SOUND
-    jsr playSoundAXY                ; }
+    lda #7                          ; }
+    ldx #<oswordSoundBlock3         ; } Stop playing sound. This allows the OS to realise that the pitch needs to change.
+    ldy #>oswordSoundBlock3         ; } We use updateSpotSound to poke the chip directly behind the OS's back.
+    jsr OSWORD                      ; } So otherwise the OS doesn't realise the pitch needs to change.
+    lda #7                          ;
+    ldx #<oswordSoundBlock2         ; Play key taken SOUND
+    ldy #>oswordSoundBlock2         ;
+    jsr OSWORD                      ;
 
     lda #$49                        ;
-    jsr incrementScore              ; add 50 to score
+    jsr addToScore                  ; add 50 to score
     lda #$49                        ;
-    jmp incrementScore              ; add 50 to score
+    jmp addToScore                  ; add 50 to score
 
 ; ***************************************************************************************
 ;
@@ -8674,6 +8695,10 @@ willySpriteAddressHigh
 ; ***************************************************************************************
 oswordSoundBlock
     !byte $01, $00, $00, $00, $00, $00, $00, $00    ;
+oswordSoundBlock2
+    !byte $02, $00, $02, $00, $c8, $00, $01, $00    ;
+oswordSoundBlock3
+    !byte $02, $00, $00, $00, $00, $00, $01, $00    ;
 
 ; ***************************************************************************************
 debugChangePalette
@@ -9835,7 +9860,7 @@ footDescendingLoop
     lda footPositionY               ;
     lsr                             ;
     eor #$3f                        ;
-    sta channel2Frequency           ; increase pitch
+    sta channel2Frequency           ;
     dey                             ;
     bne -                           ; if (not zero) then branch (loop back)
 
@@ -9845,8 +9870,10 @@ footDescendingLoop
     cmp #106                        ;
     bne footDescendingLoop          ;
 
+    lda #255                        ;
+    sta channel2Frequency           ; stop sound
     lda #$9f                        ;
-    jsr soundDirect                 ; silence sound
+    jsr soundDirect                 ; silence channel 3 sound
 
     lda #$10                        ; delay amount
     jsr delayAndClearPedestalSprite ;

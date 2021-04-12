@@ -883,8 +883,7 @@ exitSprites2x2
     !byte %########
 
 exitSprites1x1
-    ; exit 0
-    !byte %########
+    !byte %########    ; exit 0
     !byte %#..##..#
     !byte %#.###.##
     !byte %########
@@ -893,8 +892,7 @@ exitSprites1x1
     !byte %#.###.##
     !byte %########
 
-    ; exit 1
-    !byte %#...#...
+    !byte %#...#...    ; exit 1
     !byte %.#...#..
     !byte %..#...#.
     !byte %...#...#
@@ -903,8 +901,7 @@ exitSprites1x1
     !byte %..#...#.
     !byte %...#...#
 
-    ; exit 2
-    !byte %########
+    !byte %########    ; exit 2
     !byte %#......#
     !byte %#......#
     !byte %#......#
@@ -914,8 +911,7 @@ exitSprites1x1
     !byte %########
 
 exitSprites1x1Reflected
-    ; exit 0
-    !byte %########
+    !byte %########    ; exit 0
     !byte %#..#..#.
     !byte %#..#..#.
     !byte %#..#..#.
@@ -924,8 +920,7 @@ exitSprites1x1Reflected
     !byte %#..#..#.
     !byte %#..#..#.
 
-    ; exit 1
-    !byte %########
+    !byte %########    ; exit 1
     !byte %#......#
     !byte %#.######
     !byte %#.######
@@ -934,8 +929,7 @@ exitSprites1x1Reflected
     !byte %#.##....
     !byte %####....
 
-    ; exit 2
-    !byte %########
+    !byte %########    ; exit 2
     !byte %#.......
     !byte %#......#
     !byte %#.....#.
@@ -944,8 +938,7 @@ exitSprites1x1Reflected
     !byte %#..#....
     !byte %#.#....#
 
-    ; exit 3
-    !byte %########
+    !byte %########    ; exit 3
     !byte %#.......
     !byte %#...####
     !byte %#...####
@@ -954,8 +947,7 @@ exitSprites1x1Reflected
     !byte %#...####
     !byte %#...##..
 
-    ; exit 4
-    !byte %########
+    !byte %########    ; exit 4
     !byte %########
     !byte %######..
     !byte %#####...
@@ -964,8 +956,7 @@ exitSprites1x1Reflected
     !byte %##.....#
     !byte %##....#.
 
-    ; exit 5
-    !byte %########
+    !byte %########    ; exit 5
     !byte %#.......
     !byte %#.......
     !byte %########
@@ -974,8 +965,7 @@ exitSprites1x1Reflected
     !byte %#.......
     !byte %########
 
-    ; exit 6
-    !byte %########
+    !byte %########    ; exit 6
     !byte %#.......
     !byte %#.##....
     !byte %#.#.....
@@ -984,8 +974,7 @@ exitSprites1x1Reflected
     !byte %#.#.#.#.
     !byte %#.#.#.#.
 
-    ; exit 7
-    !byte %########
+    !byte %########    ; exit 7
     !byte %#.......
     !byte %#.######
     !byte %#.#.....
@@ -994,8 +983,7 @@ exitSprites1x1Reflected
     !byte %#.#.#.##
     !byte %#.#.#.#.
 
-    ; exit 8
-    !byte %########
+    !byte %########    ; exit 8
     !byte %#......#
     !byte %#......#
     !byte %########
@@ -1005,8 +993,7 @@ exitSprites1x1Reflected
     !byte %#......#
 
 exitSprites1x2
-    ; exit 0
-    !byte %########
+    !byte %########    ; exit 0
     !byte %#.......
     !byte %##......
     !byte %#.#.....
@@ -1024,8 +1011,7 @@ exitSprites1x2
     !byte %#..#..#.
     !byte %########
 
-    ; exit 1
-    !byte %########
+    !byte %########    ; exit 1
     !byte %#.......
     !byte %#.######
     !byte %#.#.....
@@ -1043,8 +1029,7 @@ exitSprites1x2
     !byte %#.#.#.#.
     !byte %########
 
-    ; exit 2
-    !byte %........
+    !byte %........    ; exit 2
     !byte %.....###
     !byte %...##...
     !byte %..#...##
@@ -1066,7 +1051,7 @@ exitSprites1x2
 startOfSingleItemPage = * - 11 * 8
 
 spikePlant
-    !byte %.#...#..    ; single item character $8b
+    !byte %.#...#..    ; spike 0
     !byte %..#.#...
     !byte %#..#.#..
     !byte %.#.#...#
@@ -1076,7 +1061,7 @@ spikePlant
     !byte %...#....
 
 allOtherSpikes
-    !byte %.######.    ; single item character $8c
+    !byte %.######.    ; spike 1
     !byte %..####..
     !byte %...###..
     !byte %...##...
@@ -1085,7 +1070,7 @@ allOtherSpikes
     !byte %....#...
     !byte %....#...
 
-    !byte %########    ; single item character $8d
+    !byte %########    ; spike 2
     !byte %#######.
     !byte %.######.
     !byte %.#..##..
@@ -1094,7 +1079,7 @@ allOtherSpikes
     !byte %....#...
     !byte %....#...
 
-    !byte %...#....    ; single item character $8e
+    !byte %...#....    ; spike 3
     !byte %##.#.##.
     !byte %..###...
     !byte %##.#.##.
@@ -1103,7 +1088,7 @@ allOtherSpikes
     !byte %##...##.
     !byte %..#.#...
 
-    !byte %.##...##    ; single item character $8f
+    !byte %.##...##    ; spike 4
     !byte %...#.#..
     !byte %...###..
     !byte %.##.#.##
@@ -1112,7 +1097,7 @@ allOtherSpikes
     !byte %.##...##
     !byte %...#.#..
 
-    !byte %..####..    ; single item character $90
+    !byte %..####..    ; spike 5
     !byte %...##...
     !byte %#.####.#
     !byte %###..###
@@ -1121,7 +1106,7 @@ allOtherSpikes
     !byte %...##...
     !byte %..####..
 
-    !byte %#.#..#.#    ; single item character $91
+    !byte %#.#..#.#    ; spike 6
     !byte %.#....#.
     !byte %..####..
     !byte %##.##.##
@@ -1130,7 +1115,7 @@ allOtherSpikes
     !byte %#.#..#.#
     !byte %..#..#..
 
-    !byte %.#..#...    ; single item character $92
+    !byte %.#..#...    ; spike 7
     !byte %#.##..#.
     !byte %.#.###.#
     !byte %...#..#.
@@ -1139,7 +1124,7 @@ allOtherSpikes
     !byte %#.#.#..#
     !byte %.#...###
 
-    !byte %.#...#..    ; single item character $93
+    !byte %.#...#..    ; spike 8
     !byte %.#...#..
     !byte %.#...#..
     !byte %.#...#..
@@ -1148,7 +1133,7 @@ allOtherSpikes
     !byte %###.###.
     !byte %########
 
-    !byte %#.####.#    ; single item character $94
+    !byte %#.####.#    ; spike 9
     !byte %..#.#...
     !byte %.......#
     !byte %#..##.#.
@@ -1158,7 +1143,7 @@ allOtherSpikes
     !byte %..#.#...
 
     ; thread
-    !byte %...#....    ; single item character $95
+    !byte %...#....    ; spike 10
     !byte %...#....
     !byte %...#....
     !byte %...#....
@@ -1167,9 +1152,35 @@ allOtherSpikes
     !byte %...#....
     !byte %...#....
 
+    !byte %########    ; spike 11
+    !byte %#######.
+    !byte %.#.####.
+    !byte %.##.##..
+    !byte %.#..##..
+    !byte %.#..##..
+    !byte %....#...
+    !byte %....#...
+
+    !byte %...#....    ; spike 12
+    !byte %...#....
+    !byte %...#....
+    !byte %.#.#.#..
+    !byte %..###...
+    !byte %##.#.##.
+    !byte %..###...
+    !byte %.#.#.#..
+
+    !byte %...#....    ; spike 13
+    !byte %...#....
+    !byte %##.#.##.
+    !byte %..###...
+    !byte %##.#.##.
+    !byte %..###...
+    !byte %.#.#.#..
+    !byte %#..#..#.
+
 keySprites
-    ; key 0
-    !byte %..##....    ; single item character $96
+    !byte %..##....    ; key 0
     !byte %.#..#...
     !byte %#...#...
     !byte %#..#....
@@ -1178,9 +1189,8 @@ keySprites
     !byte %....#.#.
     !byte %.....#..
 
-    ; key 1
     ; ice lolly
-    !byte %.#.#....    ; single item character $97
+    !byte %.#.#....    ; key 1
     !byte %#.#.#...
     !byte %.#.#.#..
     !byte %#.#.#...
@@ -1189,9 +1199,8 @@ keySprites
     !byte %......#.
     !byte %.......#
 
-    ; key 2
     ; cube
-    !byte %...#####    ; single item character $98
+    !byte %...#####    ; key 2
     !byte %..#...##
     !byte %.#...###
     !byte %########
@@ -1200,9 +1209,8 @@ keySprites
     !byte %#...##..
     !byte %#####...
 
-    ; key 3
     ; banana
-    !byte %#.......    ; single item character $99
+    !byte %#.......    ; key 3
     !byte %##......
     !byte %###.##..
     !byte %.###..#.
@@ -1211,9 +1219,8 @@ keySprites
     !byte %#...#.#.
     !byte %#....###
 
-    ; key 4
     ; apple
-    !byte %....#...    ; single item character $9a
+    !byte %....#...    ; key 4
     !byte %....#...
     !byte %..#####.
     !byte %.#.#####
@@ -1222,8 +1229,7 @@ keySprites
     !byte %.#.....#
     !byte %..#####.
 
-    ; key 5
-    !byte %...##...    ; single item character $9b
+    !byte %...##...    ; key 5
     !byte %.##..##.
     !byte %.#....#.
     !byte %##.##..#
@@ -1232,8 +1238,7 @@ keySprites
     !byte %.######.
     !byte %...##...
 
-    ; key 6
-    !byte %..####..    ; single item character $9c
+    !byte %..####..    ; key 6
     !byte %.#.##.#.
     !byte %#..#.#.#
     !byte %##.#.#.#
@@ -1242,8 +1247,7 @@ keySprites
     !byte %.#.##.#.
     !byte %..####..
 
-    ; key 7
-    !byte %#.#.#.#.    ; single item character $9d
+    !byte %#.#.#.#.    ; key 7
     !byte %#.#.#.#.
     !byte %#######.
     !byte %#######.
@@ -1252,8 +1256,7 @@ keySprites
     !byte %#.#.#.#.
     !byte %#.#.#.#.
 
-    ; key 8
-    !byte %.#####..    ; single item character $9e
+    !byte %.#####..    ; key 8
     !byte %..###...
     !byte %.##..#..
     !byte %##.####.
@@ -1262,8 +1265,7 @@ keySprites
     !byte %#.....#.
     !byte %.#####..
 
-    ; key 9
-    !byte %....####    ; single item character $9f
+    !byte %....####    ; key 9
     !byte %....#..#
     !byte %..######
     !byte %..#..#..
@@ -1273,8 +1275,7 @@ keySprites
     !byte %........
 
 floorSprites
-    ; floor 0
-    !byte %########
+    !byte %########    ; floor 0
     !byte %########
     !byte %##.##.##
     !byte %.##.###.
@@ -1283,8 +1284,7 @@ floorSprites
     !byte %........
     !byte %........
 
-    ; floor 1
-    !byte %########
+    !byte %########    ; floor 1
     !byte %########
     !byte %.##..##.
     !byte %#..##..#
@@ -1293,8 +1293,7 @@ floorSprites
     !byte %########
     !byte %........
 
-    ; floor 2
-    !byte %########
+    !byte %########    ; floor 2
     !byte %########
     !byte %#..##..#
     !byte %#..##..#
@@ -1303,8 +1302,7 @@ floorSprites
     !byte %.##..##.
     !byte %........
 
-    ; floor 3
-    !byte %.#####..
+    !byte %.#####..    ; floor 3
     !byte %########
     !byte %###.####
     !byte %...####.
@@ -1313,8 +1311,7 @@ floorSprites
     !byte %....#...
     !byte %....#...
 
-    ; floor 4
-    !byte %########
+    !byte %########    ; floor 4
     !byte %########
     !byte %##..#.#.
     !byte %.##..#.#
@@ -1323,8 +1320,7 @@ floorSprites
     !byte %#.....#.
     !byte %........
 
-    ; floor 5
-    !byte %########
+    !byte %########    ; floor 5
     !byte %########
     !byte %...#...#
     !byte %..#...#.
@@ -1333,8 +1329,7 @@ floorSprites
     !byte %########
     !byte %########
 
-    ; floor 6
-    !byte %########
+    !byte %########    ; floor 6
     !byte %########
     !byte %.##...#.
     !byte %.##..#..
@@ -1343,8 +1338,7 @@ floorSprites
     !byte %.##.....
     !byte %.##.....
 
-    ; floor 7
-    !byte %########
+    !byte %########    ; floor 7
     !byte %########
     !byte %.#...##.
     !byte %..#..##.
@@ -1354,8 +1348,7 @@ floorSprites
     !byte %.....##.
 
 wallSprites
-    ; wall 0
-    !byte %..#...#.
+    !byte %..#...#.    ; wall 0
     !byte %########
     !byte %#...#...
     !byte %########
@@ -1364,8 +1357,7 @@ wallSprites
     !byte %#...#...
     !byte %########
 
-    ; wall 1
-    !byte %#......#
+    !byte %#......#    ; wall 1
     !byte %##....##
     !byte %#.#..#.#
     !byte %#..##..#
@@ -1374,8 +1366,7 @@ wallSprites
     !byte %##....##
     !byte %#......#
 
-    ; wall 2
-    !byte %#######.
+    !byte %#######.    ; wall 2
     !byte %.#####.#
     !byte %..###.##
     !byte %...#.###
@@ -1384,8 +1375,7 @@ wallSprites
     !byte %.#....##
     !byte %#......#
 
-    ; wall 3
-    !byte %#.##.#.#
+    !byte %#.##.#.#    ; wall 3
     !byte %#.##.#.#
     !byte %#.##.#.#
     !byte %#.#.##.#
@@ -1394,8 +1384,7 @@ wallSprites
     !byte %##.#.#.#
     !byte %##.#.#.#
 
-    ; wall 4
-    !byte %########
+    !byte %########    ; wall 4
     !byte %#......#
     !byte %#......#
     !byte %########
@@ -1404,8 +1393,7 @@ wallSprites
     !byte %#......#
     !byte %########
 
-    ; wall 5
-    !byte %########
+    !byte %########    ; wall 5
     !byte %#..##..#
     !byte %#.###.##
     !byte %########
@@ -1414,8 +1402,7 @@ wallSprites
     !byte %#.###.##
     !byte %########
 
-    ; wall 6
-    !byte %########
+    !byte %########    ; wall 6
     !byte %#.#..#.#
     !byte %#.#..#.#
     !byte %#.#..#.#
@@ -1424,8 +1411,7 @@ wallSprites
     !byte %#.#..#.#
     !byte %########
 
-    ; wall 7
-    !byte %#.#.#.#.
+    !byte %#.#.#.#.    ; wall 7
     !byte %.#.#.#.#
     !byte %#.#.#.#.
     !byte %.#.#.#.#
@@ -1434,7 +1420,7 @@ wallSprites
     !byte %#.#.#.#.
     !byte %.#.#.#.#
 
-    ; wall 8
+    !byte %.#.##.#.    ; wall 8
     !byte %.#.##.#.
     !byte %.#.##.#.
     !byte %.#.##.#.
@@ -1442,22 +1428,9 @@ wallSprites
     !byte %.#.##.#.
     !byte %.#.##.#.
     !byte %.#.##.#.
-    !byte %.#.##.#.
-
-    ; wall 9 [unused]
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-
 
 crumbleSprites
-    ; crumble 0
-    !byte %########
+    !byte %########    ; crumble 0
     !byte %##.##.##
     !byte %#.#..#..
     !byte %..#..#..
@@ -1466,8 +1439,7 @@ crumbleSprites
     !byte %....#...
     !byte %........
 
-    ; crumble 1
-    !byte %########
+    !byte %########    ; crumble 1
     !byte %########
     !byte %..##..##
     !byte %##..##..
@@ -1476,8 +1448,7 @@ crumbleSprites
     !byte %###..#.#
     !byte %........
 
-    ; crumble 2
-    !byte %.#####..
+    !byte %.#####..    ; crumble 2
     !byte %########
     !byte %#....###
     !byte %....##..
@@ -1486,8 +1457,7 @@ crumbleSprites
     !byte %....#...
     !byte %........
 
-    ; crumble 3
-    !byte %########
+    !byte %########    ; crumble 3
     !byte %#.#.#.#.
     !byte %.#.#.#.#
     !byte %#.#.#.#.
@@ -1497,7 +1467,7 @@ crumbleSprites
     !byte %#.#.#.#.
 
 conveyorSprites
-    !byte %#######.                 ; conveyor 0
+    !byte %#######.     ; conveyor 0
     !byte %.##..##.
     !byte %#######.
     !byte %........
@@ -1533,7 +1503,7 @@ conveyorSprites
     !byte %........
     !byte %........
 
-    !byte %##....##                 ; conveyor 1
+    !byte %##....##     ; conveyor 1
     !byte %.##..##.
     !byte %...##...
     !byte %.##..##.
@@ -1606,24 +1576,6 @@ conveyorSprites
     !byte %........
 
     ; [unused]
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-    !byte %........
-
     !byte %........
     !byte %........
     !byte %........
@@ -5127,8 +5079,9 @@ drawConveyor
     cmp #$ff                            ;
     beq return10                        ;
 
-    lda conveyorX                       ;
+    lda #0                              ;
     ldx conveyorDirection               ;
+    cpx #1                              ;
     bne +                               ;
     lda #3                              ;
 +
@@ -6763,7 +6716,9 @@ decodeNextSingleItem
 
     lda singleItemSprite                ;
     cmp #$8e                            ;
-    beq drawSpiderAndThread             ; if (spider) then branch
+    beq drawSpiderAndThread             ; if (spider sprite) then branch
+    cmp #$98                            ;
+    beq drawSpiderAndThread             ; if (spider sprite) then branch
     cmp #$90                            ;
     beq handleKey                       ; if (key) then branch
     cmp #$8b                            ;
@@ -6855,7 +6810,7 @@ threadLoop
 
 ; ***************************************************************************************
 drawSpider
-    lda #$8e                        ; spider at end of thread
+    lda singleItemSprite            ; spider at end of thread
     jsr OSWRCH                      ; [replace with cellPlot?]
     jmp decodeNextSingleItem        ;
 
@@ -8819,7 +8774,7 @@ levelColoursArray
     +levelColours1 black, green     ; level 4 - Abandoned Uranium Workings
     +levelColours1 red, cyan        ; level 5 - Eugene's Lair
     +levelColours1 black, green     ; level 6 - Processing Plant
-    +levelColours1 black, green     ; level 7 - The Vat
+    +levelColours1 black, blue      ; level 7 - The Vat
     +levelColours1 black, red       ; level 8 - Miner Willy meets the Kong Beast
     +levelColours1 black, red       ; level 9 - Wacky Amoebatrons
     +levelColours1 black, green     ; level 10 - The Endorian Forest
@@ -8838,7 +8793,7 @@ levelColoursArray
 ; Physical colour for logical colour 2
 levelColours2Array
     +levelColours2 green            ; level 1 - Central Cavern
-    +levelColours2 white            ; level 2 - The Cold Room
+    +levelColours2 cyan             ; level 2 - The Cold Room
     +levelColours2 magenta          ; level 3 - The Menagerie
     +levelColours2 magenta          ; level 4 - Abandoned Uranium Workings
     +levelColours2 white            ; level 5 - Eugene's Lair
@@ -8848,9 +8803,9 @@ levelColours2Array
     +levelColours2 green            ; level 9 - Wacky Amoebatrons
     +levelColours2 red              ; level 10 - The Endorian Forest
     +levelColours2 white            ; level 11 - Attack of the Mutant Telephones
-    +levelColours2 cyan             ; level 12 - Return of the Alien Kong Beast
+    +levelColours2 green            ; level 12 - Return of the Alien Kong Beast
     +levelColours2 white            ; level 13 - Ore Refinery
-    +levelColours2 magenta          ; level 14 - Skylab Landing Bay
+    +levelColours2 cyan             ; level 14 - Skylab Landing Bay
     +levelColours2 cyan             ; level 15 - The Bank
     +levelColours2 cyan             ; level 16 - The Sixteenth Cavern
     +levelColours2 blue             ; level 17 - The Warehouse
@@ -8891,8 +8846,8 @@ levelSideWallColoursConveyorArray
     +levelSideWallColoursConveyor       1,           2,           1    ; level 4 - Abandoned Uranium Workings
     +levelSideWallColoursConveyor       2,           3,           1    ; level 5 - Eugene's Lair
     +levelSideWallColoursConveyor       1,           3,           0    ; level 6 - Processing Plant
-    +levelSideWallColoursConveyor       0,           2,           1    ; level 7 - The Vat
-    +levelSideWallColoursConveyor       2,           3,           1    ; level 8 - Miner Willy meets the Kong Beast
+    +levelSideWallColoursConveyor       0,           1,           3    ; level 7 - The Vat
+    +levelSideWallColoursConveyor       2,           1,           3    ; level 8 - Miner Willy meets the Kong Beast
     +levelSideWallColoursConveyor       2,           3,           1    ; level 9 - Wacky Amoebatrons
     +levelSideWallColoursConveyor       1,           2,           3    ; level 10 - The Endorian Forest
     +levelSideWallColoursConveyor       0,           3,           1    ; level 11 - Attack of the Mutant Telephones
@@ -8900,7 +8855,7 @@ levelSideWallColoursConveyorArray
     +levelSideWallColoursConveyor       2,           3,           1    ; level 13 - Ore Refinery
     +levelSideWallColoursConveyor       2,           2,           0    ; level 14 - Skylab Landing Bay
     +levelSideWallColoursConveyor       0,           3,           1    ; level 15 - The Bank
-    +levelSideWallColoursConveyor       2,           3,           2    ; level 16 - The Sixteenth Cavern
+    +levelSideWallColoursConveyor       2,           2,           3    ; level 16 - The Sixteenth Cavern
     +levelSideWallColoursConveyor       1,           3,           1    ; level 17 - The Warehouse
     +levelSideWallColoursConveyor       0,           3,           1    ; level 18 - Amoebatrons' Revenge
     +levelSideWallColoursConveyor       1,           3,           0    ; level 19 - The Meteor Storm
@@ -8967,7 +8922,7 @@ levelExitTypeSpriteArray
 ; ***************************************************************************************
 levelExitColourArray
     +levelExitColour $f0        ; level 1 - Central Cavern
-    +levelExitColour $f0        ; level 2 - The Cold Room
+    +levelExitColour $0f        ; level 2 - The Cold Room
     +levelExitColour $ff        ; level 3 - The Menagerie
     +levelExitColour $f0        ; level 4 - Abandoned Uranium Workings
     +levelExitColour $f0        ; level 5 - Eugene's Lair
@@ -9237,6 +9192,7 @@ levelDefinitions
     +levelStrip 0, 6, 3,        0, 3
     +levelStrip 13, 5, 3,       0, 3
     +levelStrip 14, 3, 2,       0, 3
+    +levelStrip 0, 15, 13,      0, 3
 
     +levelIncrementType
 
@@ -9246,16 +9202,16 @@ levelDefinitions
     +levelIncrementType
 
     ; walls
-    +levelRect 16, 3, 1, 13,    3, 2
-    +levelStrip 13, 12, 4,      3, 2
-    +levelRect 13, 13, 1, 16,   3, 2
-    +levelStrip 13, 15, 17,     3, 2
-    +levelStrip 13, 0, 17,      3, 2
+    +levelRect 16, 3, 1, 13,    3, 1
+    +levelStrip 13, 12, 4,      3, 1
+    +levelRect 13, 13, 1, 16,   3, 1
+    +levelStrip 13, 15, 17,     3, 1
+    +levelStrip 13, 0, 17,      3, 1
 
     +levelIncrementType
 
     ; conveyor
-    +levelStrip 6, 5, 5,        0, 1
+    +levelStrip 6, 5, 5,        0, 2
 
     ; ***********************************************************************************
     ; level 8 - Miner Willy meets the Kong Beast
@@ -9290,9 +9246,9 @@ levelDefinitions
     +levelIncrementType
 
     ; walls
-    +levelRect 16, 0, 1, 15,    1, 3
-    +levelRect 19, 0, 1, 2,     1, 3
-    +levelRect 13, 13, 1, 15,   1, 3
+    +levelRect 16, 0, 1, 15,    3, 1
+    +levelRect 19, 0, 1, 2,     3, 1
+    +levelRect 13, 13, 1, 15,   3, 1
 
     +levelIncrementType
 
@@ -9588,12 +9544,12 @@ levelDefinitions
     +levelIncrementType
 
     ; wall
-    +levelStrip 9, 11, 2,       2, 3
-    +levelRect 10, 5, 1, 9,     2, 3
-    +levelStrip 13, 5, 1,       2, 3
-    +levelStrip 13, 6, 2,       2, 3
-    +levelStrip 13, 7, 3,       2, 3
-    +levelStrip 13, 8, 4,       2, 3
+    +levelStrip 9, 11, 2,       3, 2
+    +levelRect 10, 5, 1, 9,     3, 2
+    +levelStrip 13, 5, 1,       3, 2
+    +levelStrip 13, 6, 2,       3, 2
+    +levelStrip 13, 7, 3,       3, 2
+    +levelStrip 13, 8, 4,       3, 2
 
     +levelIncrementType
 
@@ -10532,7 +10488,7 @@ levelSingleItemDefinitions
     ; level 2 - The Cold Room
     !byte $ff
 
-    +singleType 5, 2        ; 5 keys, spike sprite 2
+    +singleType 5, 11       ; 5 keys, spike sprite 11
     +singlePos 2, 9         ; key
     +singlePos 6, 1         ; key
     +singleOffsetX15
@@ -10570,7 +10526,7 @@ levelSingleItemDefinitions
     ; level 4 - Abandoned Uranium Workings
     !byte $ff
 
-    +singleType 5, 3        ; 5 keys, spike sprite 3
+    +singleType 5, 12       ; 5 keys, spike sprite 12
     +singlePos 0, 0         ; key
     +singlePos 11, 1        ; key
     +singlePos 15, 6        ; key
@@ -10580,9 +10536,9 @@ levelSingleItemDefinitions
     +singlePos 13, 6        ; key
 
     +singleNextType
-    +singleSpider 6, 0, 0   ; spider
+    +singlePos 6, 0         ; spike
     +singleOffsetX15
-    +singleSpider 6, 12, 0  ; spider
+    +singlePos 6, 12        ; spike
 
     ; ***********************************************************************************
     ; level 5 - Eugene's Lair
@@ -10640,6 +10596,7 @@ levelSingleItemDefinitions
 
     +singleNextType
     +singleOffsetX15
+    +singleColour3
     +singlePos 6, 12        ; spider (no thread)
     +singlePos 6, 8         ; spider (no thread)
     +singlePos 11, 10       ; spider (no thread)
@@ -10657,6 +10614,7 @@ levelSingleItemDefinitions
     +singlePos 12, 13       ; key
 
     +singleOffsetX15
+    +singleColour2
     +singlePos 6, 14        ; thorn
 
     ; ***********************************************************************************
@@ -10695,7 +10653,7 @@ levelSingleItemDefinitions
     ; ***********************************************************************************
     ; level 11 - Attack of the Mutant Telephones
     !byte $ff
-    +singleType 5, 3        ; 5 keys, spike sprite 3
+    +singleType 5, 13       ; 5 keys, spike sprite 13
     +singlePos 0, 4         ; key
     +singleOffsetX15
     +singlePos 2, 6         ; key
@@ -10757,7 +10715,7 @@ levelSingleItemDefinitions
     ; ***********************************************************************************
     ; level 15 - The Bank
     !byte $ff
-    +singleType 3, 3        ; 3 keys, spike sprite 3
+    +singleType 3, 13       ; 3 keys, spike sprite 13
 
     +singlePos 11, 6        ; key
     +singleOffsetX15        ;

@@ -265,6 +265,7 @@ sideWallColour1                 = $a0       ;
 sideWallColour2                 = $a1       ;
 newSingleItemColour             = $a2       ;
 conveyorColour                  = $a3       ;
+volumeIndex                     = $a4       ;
 
 ; ***************************************************************************************
 verticalGuardianMODE1Address    = $0400     ;
@@ -6190,8 +6191,8 @@ updateSound
     cmp #$ff                            ;
     beq silenceChannel2                 ;
 
-    lda #$b0                            ;
-    jsr soundDirect                     ; Set channel 2 maximum volume
+    lda #$b1                            ;
+    jsr soundDirect                     ; Set channel 2 almost maximum volume
     lda #$a0                            ;
     jsr soundDirect                     ; Set channel 2 frequency first byte
     lda channel2Frequency               ;
@@ -6221,7 +6222,14 @@ updateMusicOpcode = *
     and #7                          ;
     beq updateChannel3              ; update channel 3
 updateMusicVolume
-    lda currentNoteTimePlayed       ;
+    cmp #6                          ; }
+    bcc +                           ; } decrease the volume more slowly after 6 ticks
+    and #1                          ; }
+    bne ++                          ; }
++
+    inc volumeIndex                 ; }
+++
+    lda volumeIndex                 ;
     lsr                             ;
     clc                             ;
     adc #$93                        ;
@@ -6229,7 +6237,7 @@ updateMusicVolume
     bcc +                           ;
     lda #$9f                        ;
 +
-    jmp soundDirect                 ; Channel 3 volume
+    jmp soundDirect                 ; set channel 3 volume
 
 updateChannel3
     inc musicCounter                ;
@@ -6241,6 +6249,13 @@ updateChannel3
     cmp previousNoteByte            ;
     beq updateMusicVolume           ; if (same as previous note) then branch
     sta previousNoteByte            ;
+    ldx #4                          ;
+    cmp #$80                        ;
+    bcc +                           ;
+    and #$7f                        ;
+    ldx #2                          ;
++
+    stx volumeIndex                 ;
     tax                             ;
     lda #0                          ;
     sta currentNoteTimePlayed       ;
@@ -6254,6 +6269,7 @@ finishChannel3Notes
     lda #$ff                        ;
     sta musicCounter                ; end channel 3 notes
     sta currentNoteTimePlayed       ;
+    sta volumeIndex                 ;
     sta previousNoteByte            ;
 +
     rts                             ;
@@ -8179,44 +8195,84 @@ cheatCodeEnd
 
 ; ***************************************************************************************
 music
-    ;     B2, C#3, D3, E3, F#3, D3, F#3,    E#3, C#3, E#3,    E3, B#2, E3
-    !byte  0,   2,  3,  5,   7,  3,   7,7,    6,   2,   6,6,   5,   1,  5, 5
-    ;     B2, C#3, D3, E3, F#3, D3, F#3,     B3,  A3, F#3,    D3, F#3, A3
-    !byte  0,   2,  3,  5,   7,  3,   7,     12,  10,   7,     3,   7, 10, 10, 10, 10
-    ;     B2, C#3, D3, E3, F#3, D3, F#3,    E#3, C#3, E#3,    E3, B#2, E3
-    !byte  0,   2,  3,  5,   7,  3,   7,7,    6,   2,   6,6,   5,   1,  5, 5
-    ;     B2, C#3, D3, E3, F#3, D3, F#3,     B3, F#3,  D3,   F#3,  B3, B2
-    !byte  0,   2,  3,  5,   7,  3,   7,     12,   7,   3,     7,  12,  0, 0, 0, 0, $ff
+    ;     B2, C#3, D3, E3,     F#3, D3, F#3,           F3, C#3,  F3,          E3,  C3, E3
+    !byte  0,   2,  3,  5, $80 + 7,  3,   7,7,   $80 +  6,   2,   6,6,  $80 +  5,   1,  5,5
+    ;     B2, C#3, D3, E3,     F#3, D3, F#3,           B3,  A3, F#3,    D3, F#3,       A3
+    !byte  0,   2,  3,  5,       7,  3,   7,           12,  10,   7,     3,   7, $80 + 10,$80 + 10,$80 + 10,$80 + 10
+
+    ;     B3, C#4, D4, E4,      F#4, D4, F#4,          F4, C#4,  F4,          E4,  C4, E4
+    !byte 12,  14, 15, 17, $80 + 19, 15,  19,19, $80 + 18,  14,  18,18, $80 + 17,  13, 17,17
+    ;     B3, C#4, D4, E4,      F#4, D4, F#4,          B4,  A4, F#4,          D4, F#4,       A4
+    !byte 12,  14, 15, 17,       19, 15,  19,          24,  22,  19,          15,  19, $80 + 22,$80 + 22,$80 + 22,$80 + 22
+
+    ;    F#3, G#3,A#3, B3,      C#4,A#3, C#4,          D4, A#3,  D4,         C#4, A#3, C#4
+    !byte  7,   9, 11, 12, $80 + 14, 11,  14,14, $80 + 15,  11,  15,15, $80 + 14,  11,  14,14
+    ;    F#3, G#3,A#3, B3,      C#4,A#3, C#4,          D4, A#3,  D4,         C#4
+    !byte  7,   9, 11, 12, $80 + 14, 11,  14,14, $80 + 15,  11,  15,15, $80 + 14, $80 + 14, $80 + 14, $80 + 14
+
+    ;     B2, C#3, D3, E3,       F#3, D3, F#3,           F3, C#3,  F3,          E3,   C3, E3
+    !byte  0,   2,  3,  5,  $80 +  7,  3,   7,7,   $80 +  6,   2,   6,6,  $80 +  5,   1,  5, 5
+    ;     B2, C#3, D3, E3,       F#3, D3, F#3,           B3, F#3,  D3,         F#3,  B3, B2
+    !byte  0,   2,  3,  5,         7,  3,   7,           12,   7,   3,           7,  12,  $80 + 0, $80 + 0, $80 + 0, $80 + 0
+    ; delay
+    !byte $80 + 0, $80 + 0, $80 + 0, $80 + 0,  $80 + 0, $80 + 0, $80 + 0, $80 + 0, $80 + 0, $80 + 0, $80 + 0, $80 + 0
+
+    !byte $ff
 
 soundFrequenciesFirst
-    !byte $80 + 4           ; 0   1012  B2
-    !byte $80 + 12          ; 1    956  C3 (=B#2)
-    !byte $80 + 6           ; 2    902  C#3
-    !byte $80 + 3           ; 3    851  D3
-    !byte $80 + 4           ; 4    804  D#3
-    !byte $80 + 6           ; 5    758  E3
-    !byte $80 + 12          ; 6    716  F3 (=E#3)
-    !byte $80 + 4           ; 7    676  F#3
-    !byte $80 + 14          ; 8    638  G3
-    !byte $80 + 10          ; 9    602  G#3
-    !byte $80 + 8           ; 10   568  A3
-    !byte $80 + 8           ; 11   536  A#3
-    !byte $80 + 10          ; 12   506  B3
+    !byte $80 + 1012 % 16   ; 0   1012  B2
+    !byte $80 +  956 % 16   ; 1    956  C3 (=B#2)
+    !byte $80 +  902 % 16   ; 2    902  C#3
+    !byte $80 +  851 % 16   ; 3    851  D3
+    !byte $80 +  804 % 16   ; 4    804  D#3
+    !byte $80 +  758 % 16   ; 5    758  E3
+    !byte $80 +  716 % 16   ; 6    716  F3 (=E#3)
+    !byte $80 +  676 % 16   ; 7    676  F#3
+    !byte $80 +  638 % 16   ; 8    638  G3
+    !byte $80 +  602 % 16   ; 9    602  G#3
+    !byte $80 +  568 % 16   ; 10   568  A3
+    !byte $80 +  536 % 16   ; 11   536  A#3
+    !byte $80 +  506 % 16   ; 12   506  B3
+    !byte $80 +  478 % 16   ; 13   478  C4
+    !byte $80 +  451 % 16   ; 14   451  C#4
+    !byte $80 +  426 % 16   ; 15   426  D4
+    !byte $80 +  402 % 16   ; 16   402  D#4
+    !byte $80 +  379 % 16   ; 17   379  E4
+    !byte $80 +  358 % 16   ; 18   358  F4
+    !byte $80 +  338 % 16   ; 19   338  F#4
+    !byte $80 +  319 % 16   ; 20   319  G4
+    !byte $80 +  301 % 16   ; 21   301  G#4
+    !byte $80 +  284 % 16   ; 22   284  A4
+    !byte $80 +  268 % 16   ; 23   268  A#4
+    !byte $80 +  253 % 16   ; 24   253  B4
 
 soundFrequenciesSecond
-    !byte 63                ; 0   1012  B2
-    !byte 59                ; 1    956  C3 (=B#2)
-    !byte 56                ; 2    902  C#3
-    !byte 53                ; 3    851  D3
-    !byte 50                ; 4    804  D#3
-    !byte 47                ; 5    758  E3
-    !byte 44                ; 6    716  F3 (=E#3)
-    !byte 42                ; 7    676  F#3
-    !byte 39                ; 8    638  G3
-    !byte 37                ; 9    602  G#3
-    !byte 35                ; 10   568  A3
-    !byte 33                ; 11   536  A#3
-    !byte 31                ; 12   506  B3
+    !byte 1012 / 16         ; 0   1012  B2
+    !byte  956 / 16         ; 1    956  C3 (=B#2)
+    !byte  902 / 16         ; 2    902  C#3
+    !byte  851 / 16         ; 3    851  D3
+    !byte  804 / 16         ; 4    804  D#3
+    !byte  758 / 16         ; 5    758  E3
+    !byte  716 / 16         ; 6    716  F3 (=E#3)
+    !byte  676 / 16         ; 7    676  F#3
+    !byte  638 / 16         ; 8    638  G3
+    !byte  602 / 16         ; 9    602  G#3
+    !byte  568 / 16         ; 10   568  A3
+    !byte  536 / 16         ; 11   536  A#3
+    !byte  506 / 16         ; 12   506  B3
+    !byte  478 / 16         ; 13   478  C4
+    !byte  451 / 16         ; 14   451  C#4
+    !byte  426 / 16         ; 15   426  D4
+    !byte  402 / 16         ; 16   402  D#4
+    !byte  379 / 16         ; 17   379  E4
+    !byte  358 / 16         ; 18   358  F4
+    !byte  338 / 16         ; 19   338  F#4
+    !byte  319 / 16         ; 20   319  G4
+    !byte  301 / 16         ; 21   301  G#4
+    !byte  284 / 16         ; 22   284  A4
+    !byte  268 / 16         ; 23   268  A#4
+    !byte  253 / 16         ; 24   253  B4
+
 
 ; ***************************************************************************************
 guardianColourTable

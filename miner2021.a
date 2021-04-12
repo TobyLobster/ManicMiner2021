@@ -14374,7 +14374,7 @@ left = 0
     } else {
         !byte (.x1 - 1) * 4 + 3
         !byte .y + .speed
-        !byte (.x2 * 4)
+        !byte (.x2 - 1) * 4
     }
 }
 
@@ -14392,14 +14392,14 @@ horizontalGuardianPositionData
     ; level 2 - The Cold Room
     !byte $ff
 ;    !byte $47, $03, $00,  $73, $0d, $2c
-    +guardianPos 3,  18,  0, left, normal
-    +guardianPos 13, 29, 11, left, normal
+    +guardianPos 3,  18,  1, left, normal
+    +guardianPos 13, 29, 12, left, normal
 
     ; level 3 - The Menagerie
     !byte $ff
 ;    !byte $3f, $03, $00,  $4b, $0d, $00,  $44, $83, $73
-    +guardianPos 13, 19, 0, left, normal
-    +guardianPos 3, 16, 0, left, normal
+    +guardianPos 13, 19, 1, left, normal
+    +guardianPos 3, 16, 1, left, normal
     +guardianPos 3, 18, 29, right, normal
 
     ; level 4 - Abandoned Uranium Workings
@@ -14411,7 +14411,7 @@ horizontalGuardianPositionData
     ; level 5 - Eugene's Lair
     !byte $ff
 ;    !byte $0c, $87, $2f,  $2f, $03, $01
-    +guardianPos 3, 12, 0, left, normal
+    +guardianPos 3, 12, 1, left, normal
     +guardianPos 7, 4, 12, right, normal
 
     ; level 6 - Processing Plant
@@ -14426,7 +14426,7 @@ horizontalGuardianPositionData
     !byte $ff
 ;    !byte $38, $81, $72,  $27, $08, $05,  $41, $8d, $72
     +guardianPos 13, 17, 29, right, normal
-    +guardianPos 8, 10, 1, left, normal
+    +guardianPos 8, 10, 2, left, normal
     +guardianPos 1, 15, 29, right, normal
 
     ; level 8 - Miner Willy meets the Kong Beast
@@ -14448,7 +14448,7 @@ horizontalGuardianPositionData
     +guardianPos 7, 9, 14, right, normal
     +guardianPos 10, 8, 14, right, slow
     +guardianPos 13, 4, 26, right, normal
-    +guardianPos 5, 21, 16, left, normal
+    +guardianPos 5, 21, 17, left, normal
 
     ; level 11 - Attack of the Mutant Telephones
     !byte $ff
@@ -14461,16 +14461,16 @@ horizontalGuardianPositionData
     !byte $ff
 ;    !byte $26, $ab, $3a,  $22, $0d, $02,  $5e, $86, $6e
     +guardianPos 11, 11, 15, right, slow
-    +guardianPos 13, 9, 0, left, normal
+    +guardianPos 13, 9, 1, left, normal
     +guardianPos 6, 25, 28, right, normal
 
     ; level 13 - Ore Refinery
     !byte $ff
 ;    !byte $1a, $81, $6e,  $6e, $24, $1a,  $62, $07, $26,  $5a, $2a, $1a
     +guardianPos 1, 7, 29, right, normal
-    +guardianPos 4, 29, 6, left, slow
-    +guardianPos 7, 26,  9, left, normal
-    +guardianPos 10, 29, 6, left, slow
+    +guardianPos 4, 29, 7, left, slow
+    +guardianPos 7, 26, 10, left, normal
+    +guardianPos 10, 29, 7, left, slow
 
     ; level 14 - Skylab Landing Bay
     !byte $ff
@@ -14483,7 +14483,7 @@ horizontalGuardianPositionData
     !byte $ff
 ;    !byte $65, $a5, $72,  $4a, $0d, $02,  $45, $87, $5e,  $02, $8a, $1e
     +guardianPos 10, 1, 7, right, normal
-    +guardianPos 13, 18, 1, left, normal
+    +guardianPos 13, 18, 2, left, normal
     +guardianPos 7, 18, 23, right, normal
     +guardianPos 5, 25, 29, right, slow
 
@@ -14497,9 +14497,9 @@ horizontalGuardianPositionData
     !byte $ff
 ;    !byte $2e, $a3, $46,  $46, $06, $2e,  $2e, $aa, $46,  $42, $0d, $2e
     +guardianPos 3, 12, 18, right, slow
-    +guardianPos 10, 17, 11, left, slow
+    +guardianPos 10, 17, 12, left, slow
     +guardianPos 6, 12, 17, right, normal
-    +guardianPos 13, 18, 11, left, normal
+    +guardianPos 13, 18, 12, left, normal
 
     ; level 19 - The Meteor Storm
     !byte $ff

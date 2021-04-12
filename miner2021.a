@@ -1,8 +1,8 @@
 ; miner2021.a
 ;
 ;debugPixelCollision
-;optionCheatOn
-;optionMusicOff
+optionCheatOn
+optionMusicOff
 
 ; constants
 charSPACE                           = $20       ;
@@ -4499,11 +4499,9 @@ findGuardianDataLoop
 +
     jsr readGuardianByte                ;
     cmp #$ff                            ;
-    beq checkLevelNumber                ; when we reach a 255 (a level separator byte), then branch
-    jmp findGuardianDataLoop            ;
+    bne findGuardianDataLoop            ; until we reach a 255 (a level separator byte), branch back
 
-; ***************************************************************************************
-checkLevelNumber
+    ; check level number
     iny                                 ;
     cpy currentLevel                    ;
     bne findGuardianDataLoop            ; if (not current level) then branch (loop back)
@@ -4511,22 +4509,22 @@ checkLevelNumber
     ldy #0                              ;
     ldx #1                              ;
 copyGuardianPositionDataLoop
-    jsr readGuardianByte                ; Read X1 Coordinate
+    jsr readGuardianByte                ; Read Initial X Coordinate
     cmp #$ff                            ;
     beq finishedReadingGuardians        ;
+    sta guardianPositions,y             ; Store initial X coordinate
+    inx
+    iny                                 ;
+    jsr readGuardianByte                ; Read Y Coordinate
+    sta guardianPositions,y             ; Store Y Coordinate
+    inx
+    iny                                 ;
+    jsr readGuardianByte                ; Read X1 coordinate
     sta guardianPositions,y             ; Store X1 coordinate
-    iny                                 ;
-    iny                                 ;
-    sta guardianPositions,y             ; Store X1 Coordinate
-    inx                                 ;
-    dey                                 ;
-    jsr readGuardianByte                ; Y coordinate
-    sta guardianPositions,y             ;
     inx                                 ;
     iny                                 ;
-    iny                                 ;
-    jsr readGuardianByte                ; X2 coordinate
-    sta guardianPositions,y             ;
+    jsr readGuardianByte                ; Read X2 coordinate
+    sta guardianPositions,y             ; Store X2 coordinate
     inx                                 ;
     iny                                 ;
     jmp copyGuardianPositionDataLoop    ;
@@ -14368,16 +14366,16 @@ right = 1
 left = 0
 
 !macro guardianPos .y, .initialX, .x1, .x2, .direction, .speed {
+    !byte (.initialX - 1) * 4
     !if (.direction = right) {
-        !byte (.x1 - 1) * 4
         !byte $80 + .y + .speed
+        !byte (.x1 - 1) * 4
         !byte (.x2 * 4) - 1
     } else {
-        !byte (.x1 - 1) * 4 + 3
         !byte .y + .speed
+        !byte (.x1 - 1) * 4 + 3
         !byte (.x2 - 1) * 4
     }
-;    !byte (.initialX - 1) * 4
 }
 
 ; ***************************************************************************************
@@ -14548,15 +14546,12 @@ horizontalGuardianPositionData
     +guardianPos 13, 29, 29, 23,  left, normal
     +guardianPos 13,  7,  7,  1,  left, normal
 
-;   X1, Y + top bit + speed, X2
-;   top bit indicates initial direction (set = right)
-;   speed = $0 for normal, $20 for slow
     ; ***********************************************************************************
     ; level 20 - The Final Barrier
     !byte $ff
 ;    !byte $1a, $83, $2e,  $4a, $21, $30,  $29, $29, $05
 ;                 Y,  X, X1, X2,   dir, speed
-    +guardianPos  3,  7,  7, 13, right, normal
+    +guardianPos  3,  7,  7, 12, right, normal
     +guardianPos  1, 19, 19, 13,  left, slow
     +guardianPos  9, 10, 10,  2,  left, slow
     !byte $ff   ; terminator

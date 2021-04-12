@@ -7252,19 +7252,10 @@ initializeLevelSprites
 
     ; set player start position
     ldx currentLevel                ;
-    lda playerStartPositions - 1,x  ;
-    tax                             ;
-    and #$f0                        ;
-    lsr                             ;
-    clc                             ;
-    adc #$17                        ;
-    sta playerPixelX                ; playerPixelX = 23 + (top nybble * 8)
+    lda playerStartXPositions - 1,x ;
+    sta playerPixelX                ;
     sta newPlayerPixelX             ;
-    txa                             ;
-    and #$0f                        ;
-    asl                             ;
-    asl                             ;
-    asl                             ;
+    lda playerStartYPositions - 1,x ;
     sta playerPixelY                ; playerPixelY = (lower nybble * 8)
     sta newPlayerPixelY             ;
     sta willyHighestPointReachedOnCurrentJump ;
@@ -8701,9 +8692,48 @@ free2 = $3280 - *
 !pseudopc $6480 {
 
 ; ***************************************************************************************
-playerStartPositions
-    ;level  1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,  16,  17,  18,  19,  20
-    !byte $0e, $0e, $0e, $de, $04, $74, $0e, $0e, $0e, $05, $12, $0e, $ee, $8e, $0e, $4e, $04, $de, $0e, $0e
+playerStartXPositions
+    !byte  2 * 4 + 16        ; level 1 - Central Cavern
+    !byte  2 * 4 + 16        ; level 2 - The Cold Room
+    !byte  2 * 4 + 16        ; level 3 - The Menagerie
+    !byte 29 * 4 + 16        ; level 4 - Abandoned Uranium Workings
+    !byte  1 * 4 + 16        ; level 5 - Eugene's Lair
+    !byte 15 * 4 + 16 + 3    ; level 6 - Processing Plant
+    !byte  2 * 4 + 16        ; level 7 - The Vat
+    !byte  2 * 4 + 16        ; level 8 - Miner Willy meets the Kong Beast
+    !byte  1 * 4 + 16        ; level 9 - Wacky Amoebatrons
+    !byte  1 * 4 + 16        ; level 10 - The Endorian Forest
+    !byte  3 * 4 + 16        ; level 11 - Attack of the Mutant Telephones
+    !byte  2 * 4 + 16        ; level 12 - Return of the Alien Kong Beast
+    !byte 29 * 4 + 16        ; level 13 - Ore Refinery
+    !byte 29 * 4 + 16        ; level 14 - Skylab Landing Bay
+    !byte  2 * 4 + 16        ; level 15 - The Bank
+    !byte  2 * 4 + 16        ; level 16 - The Sixteenth Cavern
+    !byte  2 * 4 + 16        ; level 17 - The Warehouse
+    !byte 29 * 4 + 16 + 3    ; level 18 - Amoebatrons' Revenge
+    !byte  2 * 4 + 16        ; level 19 - The Meteor Storm
+    !byte  2 * 4 + 16        ; level 20 - The Final Barrier
+playerStartYPositions
+    !byte 13 * 8 + 8         ; level 1 - Central Cavern
+    !byte 13 * 8 + 8         ; level 2 - The Cold Room
+    !byte 13 * 8 + 8         ; level 3 - The Menagerie
+    !byte 13 * 8 + 8         ; level 4 - Abandoned Uranium Workings
+    !byte  3 * 8 + 8         ; level 5 - Eugene's Lair
+    !byte  3 * 8 + 8         ; level 6 - Processing Plant
+    !byte 13 * 8 + 8         ; level 7 - The Vat
+    !byte 13 * 8 + 8         ; level 8 - Miner Willy meets the Kong Beast
+    !byte 13 * 8 + 8         ; level 9 - Wacky Amoebatrons
+    !byte  4 * 8 + 8         ; level 10 - The Endorian Forest
+    !byte  1 * 8 + 8         ; level 11 - Attack of the Mutant Telephones
+    !byte 13 * 8 + 8         ; level 12 - Return of the Alien Kong Beast
+    !byte 13 * 8 + 8         ; level 13 - Ore Refinery
+    !byte 13 * 8 + 8         ; level 14 - Skylab Landing Bay
+    !byte 13 * 8 + 8         ; level 15 - The Bank
+    !byte 13 * 8 + 8         ; level 16 - The Sixteenth Cavern
+    !byte  3 * 8 + 8         ; level 17 - The Warehouse
+    !byte 13 * 8 + 8         ; level 18 - Amoebatrons' Revenge
+    !byte 13 * 8 + 8         ; level 19 - The Meteor Storm
+    !byte 13 * 8 + 8         ; level 20 - The Final Barrier
 
 ; ***************************************************************************************
 !macro levelStrip .x, .y, .width, .backgroundColour, .colour {

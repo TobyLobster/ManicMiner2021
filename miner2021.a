@@ -9530,11 +9530,11 @@ levelDefinitions
     +levelStrip 0, 5, 1,        0, 1
     +levelStrip 5, 5, 1,        0, 1
     +levelStrip 3, 7, 1,        0, 1
-    +levelStrip 20, 13, 1,      0, 1
-    +levelStrip 26, 13, 1,      0, 1
-    +levelStrip 26, 11, 1,      0, 1
-    +levelStrip 25, 7, 5,       0, 1
-    +levelStrip 22, 5, 3,       0, 1
+    +levelStrip 19, 13, 1,      0, 1
+    +levelStrip 25, 13, 1,      0, 1
+    +levelStrip 25, 11, 1,      0, 1
+    +levelStrip 24, 7, 6,       0, 1
+    +levelStrip 21, 5, 3,       0, 1
 
     +levelIncrementType
 
@@ -9554,7 +9554,7 @@ levelDefinitions
     +levelIncrementType
 
     ; conveyor
-    +levelStrip 2, 9, 25,       0, 3
+    +levelStrip 2, 9, 24,       0, 3
 
     ; ***********************************************************************************
     ; level 17 - The Warehouse
@@ -14361,50 +14361,150 @@ kongBeastSprite
     !byte %###...#.
     !byte %#.......
 
+normal = 0
+slow = $20
+right = 1
+left = 0
+
+!macro guardianPos .y, .x1, .x2, .direction, .speed {
+    !if (.direction = right) {
+        !byte (.x1 - 1) * 4
+        !byte $80 + .y + .speed
+        !byte (.x2 * 4) - 1
+    } else {
+        !byte (.x1 - 1) * 4 + 3
+        !byte .y + .speed
+        !byte (.x2 * 4)
+    }
+}
 
 ; ***************************************************************************************
 ; Three bytes per horizontal guardian, specifying initial position and direction:
-;   X1, Y + top bit, X2
-;   top bit indicates initial direction (set = left), initial bounce at X2
+;   X1, Y + top bit + speed, X2
+;   top bit indicates initial direction (set = right)
+;   speed = $0 for normal, $20 for slow
 horizontalGuardianPositionData
     ; level 1 - Central Cavern
-    !byte $ff, $1c, $87, $3b
+    !byte $ff
+;    !byte $1c, $87, $3b
+    +guardianPos 7, 8, 15, right, normal
+
     ; level 2 - The Cold Room
-    !byte $ff, $47, $03, $00,  $73, $0d, $2c
+    !byte $ff
+;    !byte $47, $03, $00,  $73, $0d, $2c
+    +guardianPos 3,  18,  0, left, normal
+    +guardianPos 13, 29, 11, left, normal
+
     ; level 3 - The Menagerie
-    !byte $ff, $3f, $03, $00,  $4b, $0d, $00,  $44, $83, $73
+    !byte $ff
+;    !byte $3f, $03, $00,  $4b, $0d, $00,  $44, $83, $73
+    +guardianPos 13, 19, 0, left, normal
+    +guardianPos 3, 16, 0, left, normal
+    +guardianPos 3, 18, 29, right, normal
+
     ; level 4 - Abandoned Uranium Workings
-    !byte $ff, $01, $8d, $26,  $15, $8d, $3a
+    !byte $ff
+;    !byte $01, $8d, $26,  $15, $8d, $3a
+    +guardianPos 13, 1, 10, right, normal
+    +guardianPos 13, 6, 15, right, normal
+
     ; level 5 - Eugene's Lair
-    !byte $ff, $0c, $87, $2f,  $2f, $03, $01
+    !byte $ff
+;    !byte $0c, $87, $2f,  $2f, $03, $01
+    +guardianPos 3, 12, 0, left, normal
+    +guardianPos 7, 4, 12, right, normal
+
     ; level 6 - Processing Plant
-    !byte $ff, $14, $88, $32,  $34, $88, $52,  $19, $8d, $4e,  $5d, $8d, $72
+    !byte $ff
+;    !byte $14, $88, $32,  $34, $88, $52,  $19, $8d, $4e,  $5d, $8d, $72
+    +guardianPos 8, 6, 13, right, normal
+    +guardianPos 13, 8, 20, right, normal
+    +guardianPos 8, 14, 21, right, normal
+    +guardianPos 13, 24, 29, right, normal
+
     ; level 7 - The Vat
-    !byte $ff, $38, $81, $72,  $27, $08, $05,  $41, $8d, $72
+    !byte $ff
+;    !byte $38, $81, $72,  $27, $08, $05,  $41, $8d, $72
+    +guardianPos 13, 17, 29, right, normal
+    +guardianPos 8, 10, 1, left, normal
+    +guardianPos 1, 15, 29, right, normal
+
     ; level 8 - Miner Willy meets the Kong Beast
-    !byte $ff, $22, $0d, $01,  $29, $ab, $3a,  $45, $87, $52
+    !byte $ff
+;    !byte $22, $0d, $01,  $29, $ab, $3a,  $45, $87, $52
+    +guardianPos 13, 9, 1, left, normal
+    +guardianPos 11, 11, 15, right, slow
+    +guardianPos 7, 18, 21, right, normal
+
     ; level 9 - Wacky Amoebatrons
-    !byte $ff, $31, $83, $46,  $31, $aa, $46
+    !byte $ff
+;    !byte $31, $83, $46,  $31, $aa, $46
+    +guardianPos 3, 13, 18, right, normal
+    +guardianPos 10, 13, 18, right, slow
+
     ; level 10 - The Endorian Forest
-    !byte $ff, $41, $85, $52,  $20, $87, $36,  $0d, $8d, $66,  $36, $2a, $1c
+    !byte $ff
+;    !byte $41, $85, $52,  $20, $87, $36,  $0d, $8d, $66,  $36, $2a, $1c
+    +guardianPos 7, 9, 14, right, normal
+    +guardianPos 10, 8, 14, right, slow
+    +guardianPos 13, 4, 26, right, normal
+    +guardianPos 5, 21, 16, left, normal
+
     ; level 11 - Attack of the Mutant Telephones
-    !byte $ff, $14, $8d, $4a,  $38, $83, $5b,  $35, $a7, $49
+    !byte $ff
+;    !byte $14, $8d, $4a,  $38, $83, $5b,  $35, $a7, $49
+    +guardianPos 3, 15, 23, right, normal
+    +guardianPos 7, 14, 18, right, slow
+    +guardianPos 13, 5, 19, right, normal
+
     ; level 12 - Return of the Alien Kong Beast
-    !byte $ff, $26, $ab, $3a,  $22, $0d, $02,  $5e, $86, $6e
+    !byte $ff
+;    !byte $26, $ab, $3a,  $22, $0d, $02,  $5e, $86, $6e
+    +guardianPos 11, 11, 15, right, slow
+    +guardianPos 13, 9, 0, left, normal
+    +guardianPos 6, 25, 28, right, normal
+
     ; level 13 - Ore Refinery
-    !byte $ff, $1a, $81, $6e,  $6e, $24, $1a,  $62, $07, $26,  $5a, $2a, $1a
+    !byte $ff
+;    !byte $1a, $81, $6e,  $6e, $24, $1a,  $62, $07, $26,  $5a, $2a, $1a
+    +guardianPos 1, 7, 29, right, normal
+    +guardianPos 4, 29, 6, left, slow
+    +guardianPos 7, 26,  9, left, normal
+    +guardianPos 10, 29, 6, left, slow
+
     ; level 14 - Skylab Landing Bay
     !byte $ff
     ; level 15 - The Bank
-    !byte $ff, $40, $ad, $4b
+    !byte $ff
+;    !byte $40, $ad, $4b
+    +guardianPos 13, 17, 19, right, slow
+
     ; level 16 - The Sixteenth Cavern
-    !byte $ff, $65, $a5, $72,  $4a, $0d, $02,  $45, $87, $5e,  $02, $8a, $1e
+    !byte $ff
+;    !byte $65, $a5, $72,  $4a, $0d, $02,  $45, $87, $5e,  $02, $8a, $1e
+    +guardianPos 10, 1, 7, right, normal
+    +guardianPos 13, 18, 1, left, normal
+    +guardianPos 7, 18, 23, right, normal
+    +guardianPos 5, 25, 29, right, slow
+
     ; level 17 - The Warehouse
-    !byte $ff, $10, $ad, $1f,  $2c, $8d, $62
+    !byte $ff
+;    !byte $10, $ad, $1f,  $2c, $8d, $62
+    +guardianPos 13, 5, 8, right, slow
+    +guardianPos 13, 12, 25, right, normal
+
     ; level 18 - Amoebatrons' Revenge
-    !byte $ff, $2e, $a3, $46,  $46, $06, $2e,  $2e, $aa, $46,  $42, $0d, $2e
+    !byte $ff
+;    !byte $2e, $a3, $46,  $46, $06, $2e,  $2e, $aa, $46,  $42, $0d, $2e
+    +guardianPos 3, 12, 18, right, slow
+    +guardianPos 10, 17, 11, left, slow
+    +guardianPos 6, 12, 17, right, normal
+    +guardianPos 13, 18, 11, left, normal
+
     ; level 19 - The Meteor Storm
-    !byte $ff, $4a, $0b, $1e,  $72, $0d, $5a,  $1a, $0d, $02
+    !byte $ff
+    !byte $4a, $0b, $1e,  $72, $0d, $5a,  $1a, $0d, $02
+
     ; level 20 - The Final Barrier
     !byte $ff, $1a, $83, $2e,  $4a, $21, $30,  $29, $29, $05
     !byte $ff   ; terminator

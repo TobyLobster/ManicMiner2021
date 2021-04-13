@@ -377,6 +377,9 @@ keyGot2                         = $154      ; key 2 obtained
 keyGot3                         = $155      ; key 3 obtained
 keyGot4                         = $156      ; key 4 obtained
 
+highScore                       = $157      ; three bytes for the BCD score
+highScore2                      = $158      ;
+highScore3                      = $159      ;
 
 ; ***************************************************************************************
 verticalGuardianMODE1Address    = $0400     ;
@@ -474,16 +477,14 @@ initialize
     cli                                     ;
 
     ; print VDU stream
-    ldx #0                          ;
--
-    lda crtcSetup,x                 ;
-    cmp #$ff                        ;
-    beq output8Zeros                ;
-    jsr OSWRCH                      ;
-backFrom8Zeros
-    inx                             ;
-    cpx #crtcSetupEnd - crtcSetup   ;
-    bne -                           ;
+    jsr printFollowingMessage               ;
+    !byte crtcSetupEnd - crtcSetup
+crtcSetup
+    !byte 23, 0,  7,  30, 0,0,0,0,0,0,0,0   ; VDU 23,0,7,30,0;0;0;0;   vertical sync position = 30
+    !byte 23, 1,  0,   0, 0,0,0,0,0,0,0,0   ; VDU 23,0,1, 0,0;0;0;0;   horizontal displayed = 0
+    !byte 23, 0, 13, $50, 0,0,0,0,0,0,0,0   ; set display address (low)
+    !byte 26                                ; Reset text and graphics windows
+crtcSetupEnd
 
     ; *FX 229,1 - ESCAPE generates ASCII code
     lda #229                        ;
@@ -491,22 +492,13 @@ backFrom8Zeros
     ldy #0                          ;
     jsr OSBYTE                      ;
 
-    ; VDU 26 - reset text and graphics windows
-    lda #26                         ;
-    jsr OSWRCH                      ;
+    ; clear high score
+    lda #0                          ;
+    sta highScore                   ;
+    sta highScore + 1               ;
+    sta highScore + 2               ;
 
     jmp showTitleScreen             ;
-
-; ***************************************************************************************
-output8Zeros
-    ldy #8                          ;
-    lda #0                          ;
-zerosLoop
-    jsr OSWRCH                      ;
-    dey                             ;
-    bne zerosLoop                   ;
-    jmp backFrom8Zeros              ;
-
 
 * = $0500
 
@@ -774,6 +766,21 @@ vdu4CursorOff
     !byte 23, 1, 0, 0,0,0,0,0,0,0,0 ; cursor off
 vdu4CursorOffEnd
 airMessageEnd
+
+; ***************************************************************************************
+guardianColourTable
+    !byte $ff, $f0, $0f, $ff        ;
+
+maskColourTable
+    !byte $00, $0f, $f0, $ff        ;
+
+guardianColourMasks
+    !byte $f0, $ff, $0f, $f0        ;
+
+; ***************************************************************************************
+plotYOffsetArray
+    !byte 0,8,16,24
+
 
 !if * > $0800 {
     !error "space is wrong, ", *
@@ -3067,13 +3074,15 @@ switchCollisionFound
     sty textCursorY                 ; }
     jsr setTextPos                  ;
 
-    ldx #0                          ; loop counter
--
-    lda switchMessage,x                     ;
-    jsr OSWRCH                              ; [replace with cellPlot?]
-    inx                                     ;
-    cpx #switchMessageEnd - switchMessage   ;
-    bne -                                   ;
+    jsr printFollowingMessage               ;
+    !byte switchMessageEnd - switchMessage  ;
+switchMessage
+    !byte 17, 3                     ; COLOUR
+    !byte $99                       ; the switched switch sprite
+    !byte 31, 21, 12                ; TAB(21, 12)
+    !byte charSPACE                 ; space
+    !byte 10, 8, charSPACE          ; another space below. This removes a section of wall.
+switchMessageEnd
 
     lda playerPixelX                        ;
     cmp #80                                 ;
@@ -3084,13 +3093,14 @@ switchCollisionFound
     sta kongBeastSwitchTriggered            ; mark switch as triggered
 
     ; clear regular Kong and ground under Kong
-    ldx #0                                  ; loop counter
--
-    lda clearKongAndGroundUnderKong,x       ;
-    jsr OSWRCH                              ; [replace with cellPlot?]
-    inx                                     ;
-    cpx #clearKongAndGroundUnderKongEnd - clearKongAndGroundUnderKong ;
-    bne -                                   ;
+    jsr printFollowingMessage
+    !byte clearKongAndGroundUnderKongEnd - clearKongAndGroundUnderKong
+clearKongAndGroundUnderKong
+    !byte $1f, $13, $01             ; TAB(19, 1)
+    !byte $20, $20, $0a, $08, $08   ; two spaces and move down and back
+    !byte $20, $20, $0a, $08, $08   ; two spaces and move down and back
+    !byte $20, $20, $0a, $08, $08   ; two spaces and move down and back
+clearKongAndGroundUnderKongEnd
 
     ; don't draw regular Kong any more
     lda #$60                        ; store opcode $60 'RTS'
@@ -5007,6 +5017,7 @@ showTitleScreenMessageAndWaitForRETURN
 -
     lda titleScreenPalette,x        ;
     sta playAreaPalette,x           ;
+    lda titleScreenFooterPalette,x  ;
     sta footerPalette,x             ;
     inx                             ;
     cpx #4                          ;
@@ -5275,12 +5286,9 @@ showScoreLivesAndLevel
     jsr addToScore                  ; } add 0 to score
 
     ; show lives
-    lda #31                         ; }
-    jsr OSWRCH                      ; }
-    lda #34                         ; } TAB(34,20)
-    jsr OSWRCH                      ; }
-    lda #20                         ; }
-    jsr OSWRCH                      ; }
+    ldx #34                         ; }
+    ldy #20                         ; }
+    jsr setTextPos                  ; } TAB(34,20)
 
     lda currentLevel                ; show current level
     tax                             ; [redundant]
@@ -5322,22 +5330,13 @@ printY
 
 ; ***************************************************************************************
 setVerticalDisplayedCharacters
-    lda #23                         ;
-    jsr OSWRCH                      ; VDU 23
-    lda #0                          ;
-    jsr OSWRCH                      ; VDU 0
-    lda #6                          ;
-    jsr OSWRCH                      ; VDU 6
-    txa                             ;
-    jsr OSWRCH                      ; VDU X
-
-    lda #0                          ;
-    ldx #0                          ;
--
-    jsr OSWRCH                      ; VDU 0
-    inx                             ;
-    cpx #6                          ;
-    bne -                           ; loop 6 times
+    stx numChars                    ;
+    jsr printFollowingMessage       ;
+    !byte 10                        ; number of characters to print
+    !byte 23, 0, 6                  ;
+numChars
+    !byte $ff                       ;
+    !byte 0,0,0,0,0,0               ;
     rts                             ;
 
 ; ***************************************************************************************
@@ -5377,59 +5376,22 @@ level10Init
 
 ; ***************************************************************************************
 drawSwitches
-    lda #3                          ;
-    jsr setTextColour               ;
-
-    lda #31                         ; }
-    jsr OSWRCH                      ; }
-    lda #10                         ; }
-    jsr OSWRCH                      ; } TAB(10,1)
-    lda #1                          ; }
-    jsr OSWRCH                      ; }
-
-    lda #$98                        ; VDU $f8
-    jsr OSWRCH                      ; [replace with cellPlot?]
-
-    ; print 11 spaces
-    ldx #0                          ;
-    lda #$20                        ;
--
-    inx                             ;
-    jsr OSWRCH                      ;
-    cpx #11                         ;
-    bne -                           ;
-
-    lda #$98                        ; VDU $f8
-    jsr OSWRCH                      ; [replace with cellPlot?]
+    jsr printFollowingMessage       ;
+    !byte drawSwitchesMessageEnd - drawSwitchesMessage
+drawSwitchesMessage
+    !byte 17, 3                     ; COLOUR 3
+    !byte 31, 10, 1                 ; TAB
+    !byte $98                       ; Switch
+    !byte charSPACE, charSPACE, charSPACE, charSPACE, charSPACE
+    !byte charSPACE, charSPACE, charSPACE, charSPACE, charSPACE, charSPACE    ; 11 Spaces
+    !byte $98                       ; Switch
+drawSwitchesMessageEnd
     jmp nonLevel10Init              ;
 
 level13Init
     lda #$95                        ; ladder
     sta levelFeatureCrumble         ;
     jmp levelInitContinued          ;
-
-; ***************************************************************************************
-;
-; set an entry in the palette
-;
-; On Entry:
-;       X = logical colour to change
-;       A = physical colour to use
-;
-; ***************************************************************************************
-;setPalette
-;    tay                             ;
-;    lda #19                         ;
-;    jsr OSWRCH                      ; VDU 19
-;    txa                             ;
-;    jsr OSWRCH                      ; VDU X
-;    tya                             ;
-;    ldy #4                          ;
-;-
-;    jsr OSWRCH                      ; VDU Y
-;    dey                             ;
-;    bne -                           ; loop four times
-;    rts                             ;
 
 ; ***************************************************************************************
 readByteOffsetX
@@ -6231,19 +6193,6 @@ restorePalette
     jmp handledInterrupt                        ;
 
 ; ***************************************************************************************
-titleScreenPalette
-    !byte blue, red, green, white
-
-startOfPalettes
-playAreaPalette
-    !byte black, red, green, yellow
-footerPalette
-    !byte black, red, green, white
-
-paletteLookupTable
-    !byte $00, $20, $80, $A0
-
-; ***************************************************************************************
 definePaletteAX
     ldy #3                                  ;
 -
@@ -6409,6 +6358,22 @@ soundDirect
     rts                             ;
 
 ; ***************************************************************************************
+titleScreenPalette
+    !byte blue, red, green, white
+titleScreenFooterPalette
+    !byte blue, cyan, green, magenta
+
+startOfPalettes
+playAreaPalette
+    !byte black, red, green, yellow
+footerPalette
+    !byte black, red, green, white
+
+paletteLookupTable
+    !byte $00, $20, $80, $A0
+
+
+; ***************************************************************************************
 playAttractLoop
     lda #1                          ;
     sta currentLevel                ; start attract loop on level 1 - Central Cavern
@@ -6545,6 +6510,35 @@ return5
     rts                             ;
 
 ; ***************************************************************************************
+printFollowingMessage
+    pla                                     ;
+    sta altScreenAddressLow                 ;
+    pla                                     ;
+    sta altScreenAddressHigh                ; Pull the return address off the stack
+    ldy #1                                  ;
+    lda (altScreenAddressLow), Y            ;
+    tax                                     ;
+-
+    iny                                     ;
+    lda (altScreenAddressLow), Y            ;
+    jsr OSWRCH                              ;
+    dex                                     ;
+    bne -                                   ;
+    tya                                     ;
+    clc
+    adc altScreenAddressLow                 ;
+    sta altScreenAddressLow                 ;
+    bcc +                                   ;
+    inc altScreenAddressHigh                ;
++
+    lda altScreenAddressHigh                ; Pushing the return address onto the stack
+    pha                                     ; immediately after the data
+    lda altScreenAddressLow                 ;
+    pha                                     ;
+    rts                                     ;
+
+
+; ***************************************************************************************
 showTitleScreen
     jsr setBlackPalette             ;
     jsr clearScreen                 ;
@@ -6578,6 +6572,26 @@ showTitleScreen
 
     ; swap out the flowery logo
     jsr swapLogoWithC00             ;
+
+    jsr printFollowingMessage       ;
+    !byte highScorePositionMessageEnd - highScorePositionMessage
+highScorePositionMessage
+    !byte 5
+    !byte 18, 0, 3                  ; GCOL
+    !byte 25, 4                     ;
+    !word 368 + 11 * 32, 390        ;
+highScorePositionMessageEnd
+
+    ; print three pairs of numbers for the high score
+    ldx #2                          ;
+-
+    lda highScore,x                 ;
+    jsr printBCDNumber              ;
+    dex                             ;
+    bpl -                           ;
+
+    ; finish up (return to regular VDU 4 mode)
+    jsr setVdu4CursorOff            ;
 
     ; plot triangle logo
     ldx #$ff                        ;
@@ -7004,6 +7018,17 @@ colourCycleKeys
     jmp cellPlot                        ;
 
 ; ***************************************************************************************
+setVdu4CursorOff
+    ldx #0                          ;
+-
+    lda vdu4CursorOff,x             ;
+    jsr OSWRCH                      ;
+    inx                             ;
+    cpx #vdu4CursorOffEnd - vdu4CursorOff   ;
+    bne -                           ;
+    rts                             ;
+
+; ***************************************************************************************
 readRoomNameCharacter
     lda $ffff,x                     ;
 return12
@@ -7074,13 +7099,7 @@ drawRoomTitleBackgroundLoop
 +
 
     ; finish up (return to regular VDU 4 mode)
-    ldx #0                          ;
--
-    lda vdu4CursorOff,x             ;
-    jsr OSWRCH                      ;
-    inx                             ;
-    cpx #vdu4CursorOffEnd - vdu4CursorOff
-    bne -
+    jsr setVdu4CursorOff            ;
 
     ; clear colours just in case?
     lda #128                        ; COLOUR 128
@@ -7250,6 +7269,9 @@ showLevel
 
     lda #2                                  ; COLOUR 2
     jsr setTextColour                       ;
+
+    lda #0                                  ;
+    sta flashingExitCounter                 ;
 
     lda currentLevel                        ;
     jsr initLevel                           ;
@@ -7807,6 +7829,30 @@ getKongVisibleStateIntoX
     rts                             ;
 
 ; ***************************************************************************************
+updateHighScore
+    ldx #2                          ;
+-
+    lda score, x                    ;
+    cmp highScore, x                ;
+    bcc +                           ;
+    bcs setHighScore                ;
+    dex                             ;
+    bpl -                           ;
++
+    rts                             ;
+
+; ***************************************************************************************
+setHighScore
+    ldx #2                          ;
+-
+    lda score, x                    ;
+    sta highScore, x                ;
+    dex                             ;
+    bpl -                           ;
+    rts                             ;
+
+
+; ***************************************************************************************
 ;
 ; On Entry:
 ;   (A+1) is the BCD value of the score to add
@@ -7827,12 +7873,12 @@ addToScore
 
 printScoreAndLives
     cld                             ;
-    lda #31                         ; }
-    jsr OSWRCH                      ; }
-    lda #10                         ; } TAB(10,20)
-    jsr OSWRCH                      ; }
-    lda #20                         ; }
-    jsr OSWRCH                      ; }
+
+    jsr updateHighScore             ;
+
+    ldx #10                         ;
+    ldy #20                         ;
+    jsr setTextPos                  ;
 
     lda #3                          ; COLOUR 3
     jsr setTextColour               ;
@@ -7843,8 +7889,7 @@ printScoreAndLives
     lda score,x                     ;
     jsr printBCDNumber              ;
     dex                             ;
-    cpx #$ff                        ;
-    bne -                           ;
+    bpl -                           ;
 
     ; move eight positions right
     lda #9                          ; forward space
@@ -7862,6 +7907,8 @@ extraLife
     adc #0                          ;
     sta score + 2                   ;
     cld                             ;
+
+    jsr updateHighScore             ;
 
     lda #3                          ;
     ldx #100                        ;
@@ -7923,17 +7970,44 @@ playSoundAXY
     ldy #>oswordSoundBlock          ;
     jmp OSWORD                      ;
 
+getNextColour
+    dec $72                         ;
+    bne +
+    lda #3                          ;
+    sta $72                         ;
++
+    lda $72
+    rts                             ;
+
 ; ***************************************************************************************
 delayAndClearPedestalSprite
+    lda #48                         ; delay amount
     sta $70                         ;
+    lda #1                          ;
+    sta $72                         ;
+
 delayOuterLoop
-    ldx #$ff                        ;
-    ldy #$ff                        ;
+    ldx #14                         ;
+    ldy #8                          ;
+    jsr setTextPos                  ;
+    ldy #0                          ;
 -
-    dex                             ;
+    jsr getNextColour               ;
+    jsr setTextColour               ;
+    lda gameOverMessage,y           ;
+    jsr OSWRCH                      ;
+    iny                             ;
+    cpy #gameOverMessageEnd - gameOverMessage ;
     bne -                           ;
-    dey                             ;
-    bne -                           ;
+
+    lda #19                         ;
+    jsr OSBYTE                      ;
+    lda #19                         ;
+    jsr OSBYTE                      ;
+    lda #19                         ;
+    jsr OSBYTE                      ;
+
+    jsr getNextColour               ;
     dec $70                         ;
     bne delayOuterLoop              ;
 
@@ -8367,11 +8441,6 @@ soundFrequenciesSecond
 
 
 ; ***************************************************************************************
-guardianColourTable
-    !byte $ff, $f0, $0f, $ff        ;
-
-maskColourTable
-    !byte $00, $0f, $f0, $ff        ;
 
 guardianSetForEachLevel
     ; level 1,   2,   3,   4,   5,   6,   7,  8,    9,  10,  11,  12,  13,  14,  15,  16,  17,  18,  19,  20
@@ -8387,8 +8456,8 @@ guardianToleranceBL
 guardianToleranceBR
     !byte    7,       9,    9,      6,      8,     8,      8,      9,        7,       8,       7,       8,     8,    6,       12,      7
 
-penOffsetX = 4
-penOffsetY = -10
+penOffsetX = 0
+penOffsetY = 3
     ; A Penrose triangle as encoded PLOT statements
 penroseTriangle
     !byte $fe, 1                                    ; GCOL 0,1
@@ -8442,10 +8511,6 @@ plotYLow
 plotYHigh
     !byte $ea                       ;
 plotMessageEnd
-
-; ***************************************************************************************
-toFullColour
-    !byte $00, $11, $22, $33, $44, $55, $66, $77, $88, $99, $aa, $bb, $cc, $dd, $ee, $ff
 
 ; ***************************************************************************************
 byteMaskGreen
@@ -8673,24 +8738,16 @@ debugLineDataEnd
 
 
 ; ***************************************************************************************
-oswordSoundBlock
-    !byte $01, $00, $00, $00, $00, $00, $00, $00    ;
-oswordSoundBlock2
-    !byte $02, $00, $02, $00, $c8, $00, $01, $00    ;
-oswordSoundBlock3
-    !byte $02, $00, $00, $00, $00, $00, $01, $00    ;
-
-; ***************************************************************************************
-debugChangePalette
-    ora paletteLookupTable                  ;
-    sta videoULAPaletteRegister             ;
-    eor #$10                                ;
-    sta videoULAPaletteRegister             ;
-    eor #$50                                ;
-    sta videoULAPaletteRegister             ;
-    eor #$10                                ;
-    sta videoULAPaletteRegister             ;
-    rts                                     ;
+;debugChangePalette
+;    ora paletteLookupTable                  ;
+;    sta videoULAPaletteRegister             ;
+;    eor #$10                                ;
+;    sta videoULAPaletteRegister             ;
+;    eor #$50                                ;
+;    sta videoULAPaletteRegister             ;
+;    eor #$10                                ;
+;    sta videoULAPaletteRegister             ;
+;    rts                                     ;
 
 ; ***************************************************************************************
 ; sprite numbers to draw (level specific)
@@ -8707,17 +8764,6 @@ levelFeatureEmpty
     !byte $8a                           ; empty
 levelFeature5
     !byte $00                           ; [accessed in error, set to zero to avoid side-effects]
-
-; ***************************************************************************************
-verticalGuardianTolerancesTL
-;         eugene, kong, telephone, eye, skylab, safe, triangle, amoebatron, wacky am.
-    !byte 6     , 3   , 4        , 8  , 1     , 1   , 6       , 4         , 5
-verticalGuardianTolerancesTR
-    !byte 6     , 3   , 4        , 4  , 1     , 1   , 1       , 4         , 5
-verticalGuardianTolerancesBL
-    !byte 5     , 4   , 3        , 3  , 3     , 0   , 3       , 2         , 3
-verticalGuardianTolerancesBR
-    !byte 5     , 4   , 3        , 3  , 3     , 0   , 3       , 2         , 3
 
 
 !if (* > $3280 ) {
@@ -9815,7 +9861,7 @@ gameOver
     sta footerPalette               ;
     lda #white                      ;
     sta playAreaPalette + 1         ;
-    lda #cyan                       ; [not used]
+    lda #magenta                    ;
     sta playAreaPalette + 2         ;
     lda #yellow                     ;
     sta playAreaPalette + 3         ;
@@ -9893,7 +9939,6 @@ footDescendingLoop
     lda #$9f                        ;
     jsr soundDirect                 ; silence channel 3 sound
 
-    lda #$10                        ; delay amount
     jsr delayAndClearPedestalSprite ;
     jmp showTitleScreen             ;
 
@@ -14643,13 +14688,6 @@ levelTitles
     !byte $0d                               ; terminator
 
 ; ***************************************************************************************
-crtcSetup
-    !byte 23, 0,  7,  30, $ff       ; VDU 23,0,7,30,0;0;0;0;   vertical sync position = 30
-    !byte 23, 1,  0,   0, $ff       ; VDU 23,0,1, 0,0;0;0;0;   horizontal displayed = 0
-    !byte 23, 0, 13, $50, $ff       ; set display address (low)
-crtcSetupEnd
-
-; ***************************************************************************************
 ; The fixed text under the play area: "Score         Lives     Level"
 ; but with the top bit being the conveyor direction for each level (for the first 20 bytes)
 fixedText
@@ -14660,20 +14698,7 @@ fixedText
     !text $09, $09, $20, $20, "Level"
 fixedTextEnd
 
-; ***************************************************************************************
-clearKongAndGroundUnderKong
-    !byte $1f, $13, $01             ; TAB(19, 1)
-    !byte $20, $20, $0a, $08, $08   ; two spaces and move down and back
-    !byte $20, $20, $0a, $08, $08   ; two spaces and move down and back
-    !byte $20, $20, $0a, $08, $08   ; two spaces and move down and back
-clearKongAndGroundUnderKongEnd
 
-switchMessage
-    !byte $99                       ; the switched switch sprite
-    !byte 31, 21, 12                ; TAB(21, 12)
-    !byte charSPACE                 ; space
-    !byte 10, 8, charSPACE          ; another space below. This removes a section of wall.
-switchMessageEnd
 
 ; ***************************************************************************************
 pedestalMessage
@@ -14701,58 +14726,80 @@ cacheOffsetY
     !byte 0, 0, 1, 1, 2, 2
 
 ; ***************************************************************************************
-plotYOffsetArray
-    !byte 0,8,16,24
-
-guardianColourMasks
-    !byte $f0, $ff, $0f, $f0        ;
-
-; ***************************************************************************************
 creditsMessage
     !byte 18, 0, 129                ; GCOL 0,129
     !byte 24                        ; define graphics window
     !word 20 * 32 - 8               ; left
-    !word 18 * 32                   ; bottom
+    !word 19 * 32                   ; bottom
     !word 37 * 32 + 8               ; right
-    !word (32-7)*32                 ; top
+    !word (32-6)*32                 ; top
     !byte 16                        ; clear graphics area
 
     !byte 18, 0, 128                ; GCOL 0,128
     !byte 26                        ; reset text window
 
     !byte 17, 2                     ; COLOUR 1
-    !byte 31, 1, 18                 ; TAB(19,17)
-    !text "2021 Edition"            ;
-    !byte 31, 1, 19                 ;
-    !text "by TobyLobster"          ;
+    !byte 31, 6, 18                 ; TAB
+    !text "2021 Edition by TobyLobster" ;
     !byte 17, 3                     ;
-    !byte 31, 20, 3                 ; TAB(19,2)
+    !byte 31, 20, 2                 ; TAB
     !text "SOFTWARE PROJECTS"       ;
-;    !byte 31, 24, 5                ; TAB(23,4)
     !byte 5                         ;
     !byte 18, 0, 3                  ; GCOL 0,3
     !byte 25, 4                     ;
-    !word 780, 864                  ;
+    !word 780, 896                  ;
     !text "Presents"                ;
     !byte 25, 4                     ;
-    !word 656, 512                  ;
+    !word 656, 512 + 32 + 24        ;
     !text "Original program"        ;
     !byte 25, 4                     ;
-    !word 656, 460                  ;
+    !word 656, 460 + 32 + 28        ;
     !text "by Matthew Smith"        ;
     !byte 25, 4                     ;
-    !word 876, 700                  ;
+    !word 876, 700 + 32             ;
     !text "by"                      ;
     !byte 25, 4                     ;
-    !word 720, 700-32*2             ;
+    !word 720, 700-32*1             ;
     !text "D.J.COATHUPE"            ;
+    !byte 18, 0, 3                  ; GCOL
+    !byte 25, 4                     ;
+    !word 368, 390                  ;
+    !text "High Score "             ;
 
     !byte 4                         ; VDU 4
     !byte 23, 1, 0, 0,0,0,0,0,0,0,0 ; cursor off
+
     !byte 17, 129                   ; COLOUR 129
-    !byte 31, 22, 12                ; TAB(21,11)
-    !byte 31, 20, 8                 ; TAB(19,7)
+    !byte 31, 20, 7                 ; TAB
 creditsMessageEnd
+
+gameOverMessage
+    !text "Game", 9, 9, 9, 9, "Over"
+gameOverMessageEnd
+
+; ***************************************************************************************
+oswordSoundBlock
+    !byte $01, $00, $00, $00, $00, $00, $00, $00    ;
+oswordSoundBlock2
+    !byte $02, $00, $02, $00, $c8, $00, $01, $00    ;
+oswordSoundBlock3
+    !byte $02, $00, $00, $00, $00, $00, $01, $00    ;
+
+; ***************************************************************************************
+verticalGuardianTolerancesTL
+;         eugene, kong, telephone, eye, skylab, safe, triangle, amoebatron, wacky am.
+    !byte 6     , 3   , 4        , 8  , 1     , 1   , 6       , 4         , 5
+verticalGuardianTolerancesTR
+    !byte 6     , 3   , 4        , 4  , 1     , 1   , 1       , 4         , 5
+verticalGuardianTolerancesBL
+    !byte 5     , 4   , 3        , 3  , 3     , 0   , 3       , 2         , 3
+verticalGuardianTolerancesBR
+    !byte 5     , 4   , 3        , 3  , 3     , 0   , 3       , 2         , 3
+
+; ***************************************************************************************
+toFullColour
+    !byte $00, $11, $22, $33, $44, $55, $66, $77, $88, $99, $aa, $bb, $cc, $dd, $ee, $ff
+
 
 !if * > $7fa0 {
     !error "space is wrong, ", *

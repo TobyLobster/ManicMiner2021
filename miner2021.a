@@ -267,6 +267,113 @@ newSingleItemColour             = $a2       ;
 conveyorColour                  = $a3       ;
 volumeIndex                     = $a4       ;
 saveY                           = $a5       ;
+energyFieldLoopIndex            = $a6       ;
+
+
+; ***************************************************************************************
+collisionPlayerX                = $100      ;
+collisionGuardianX              = $101      ;
+collisionGuardianY              = $102      ;
+collisionLow                    = $103      ;
+collisionHigh                   = $104      ;
+verticalToleranceTL             = $105      ;
+verticalToleranceTR             = $106      ;
+verticalToleranceBL             = $107      ;
+verticalToleranceBR             = $108      ;
+verticalToleranceReversedTL     = $109      ;
+verticalToleranceReversedTR     = $10a      ;
+verticalToleranceReversedBL     = $10b      ;
+verticalToleranceReversedBR     = $10c      ;
+horizontalToleranceTL           = $10d      ;
+horizontalToleranceTR           = $10e      ;
+horizontalToleranceBL           = $10f      ;
+horizontalToleranceBR           = $110      ;
+horizontalToleranceReversedTL   = $111      ;
+horizontalToleranceReversedTR   = $112      ;
+horizontalToleranceReversedBL   = $113      ;
+horizontalToleranceReversedBR   = $114      ;
+toleranceTL                     = $115      ;
+toleranceTR                     = $116      ;
+toleranceBL                     = $117      ;
+toleranceBR                     = $118      ;
+toleranceReversedTL             = $119      ;
+toleranceReversedTR             = $11a      ;
+toleranceReversedBL             = $11b      ;
+toleranceReversedBR             = $11c      ;
+guardianPositionsCopy           = $11d      ;
+guardianPositionsCopy1          = $11e      ;
+guardianPositionsCopy2          = $11f      ;
+guardianPositionsCopy3          = $120      ;
+guardianPositionsCopy4          = $121      ;
+willySpriteAddressLow           = $122      ;
+willySpriteAddressHigh          = $123      ;
+willySpriteAddressHigh1         = $124      ; [UNUSED, but copied in and out of cache]
+willySpriteAddressHigh2         = $125      ; [UNUSED, but copied in and out of cache]
+willySpriteAddressHigh3         = $126      ; [UNUSED, but copied in and out of cache]
+
+horizontalGuardianPositions     = $127      ; } first guardian
+horizontalGuardianPositions1    = $128      ; } first guardian
+horizontalGuardianPositions2    = $129      ; } first guardian
+horizontalGuardianPositions3    = $12a      ; } first guardian
+
+horizontalGuardianPositions4    = $12b      ; } second guardian
+horizontalGuardianPositions5    = $12c      ; } second guardian
+horizontalGuardianPositions6    = $12d      ; } second guardian
+horizontalGuardianPositions7    = $12e      ; } second guardian
+
+horizontalGuardianPositions8    = $12f      ; } third guardian
+horizontalGuardianPositions9    = $130      ; } third guardian
+horizontalGuardianPositions10   = $131      ; } third guardian
+horizontalGuardianPositions11   = $132      ; } third guardian
+
+horizontalGuardianPositions12   = $133      ; } fourth guardian
+horizontalGuardianPositions13   = $134      ; } fourth guardian
+horizontalGuardianPositions14   = $135      ; } fourth guardian
+horizontalGuardianPositions15   = $136      ; } fourth guardian
+
+horizontalGuardianPositionsTerminator = $137 ; terminator
+
+; ***************************************************************************************
+; Each vertical guardian has four bytes in this table
+; <x coord + top bit for direction + bit 6 for speed>, <y coord>, <Y extent 1>, <Y extent 2>
+currentVerticalGuardians        = $138      ; } first guardian x
+currentVerticalGuardians1       = $139      ; } first guardian y
+currentVerticalGuardians2       = $13a      ; } first guardian y extent 1
+currentVerticalGuardians3       = $13b      ; } first guardian y extent 2
+
+verticalGuardian2
+currentVerticalGuardians4       = $13c      ; } second guardian x
+currentVerticalGuardians5       = $13d      ; } second guardian y
+currentVerticalGuardians6       = $13e      ; } second guardian y extent 1
+currentVerticalGuardians7       = $13f      ; } second guardian y extent 2
+
+currentVerticalGuardians8       = $140      ; } third guardian x
+currentVerticalGuardians9       = $141      ; } third guardian y
+currentVerticalGuardians10      = $142      ; } third guardian y extent 1
+currentVerticalGuardians11      = $143      ; } third guardian y extent 2
+
+currentVerticalGuardians12      = $144      ; } fourth guardian x
+currentVerticalGuardians13      = $145      ; } fourth guardian y
+currentVerticalGuardians14      = $146      ; } fourth guardian y extent 1
+currentVerticalGuardians15      = $147      ; } fourth guardian y extent 2
+
+keyXPositions                   = $148      ; X position of key 0
+keyXPositions1                  = $149      ; X position of key 1
+keyXPositions2                  = $14a      ; X position of key 2
+keyXPositions3                  = $14b      ; X position of key 3
+keyXPositions4                  = $14c      ; X position of key 4
+
+keyYPositions                   = $14d      ; Y position of key 0
+keyYPositions1                  = $14e      ; Y position of key 1
+keyYPositions2                  = $14f      ; Y position of key 2
+keyYPositions3                  = $150      ; Y position of key 3
+keyYPositions4                  = $151      ; Y position of key 4
+
+keyGot                          = $152      ; key 0 obtained
+keyGot1                         = $153      ; key 1 obtained
+keyGot2                         = $154      ; key 2 obtained
+keyGot3                         = $155      ; key 3 obtained
+keyGot4                         = $156      ; key 4 obtained
 
 
 ; ***************************************************************************************
@@ -297,7 +404,8 @@ ShortTimerValue = 24*62 + 46
 * = $0400
 ; ***************************************************************************************
 initialize
-    lda #$ff                                ;
+    lda #$ff                                    ;
+    sta horizontalGuardianPositionsTerminator   ;
     sta musicCounter                        ;
     sta rasterArea                          ;
     sta channel2Frequency                   ;
@@ -616,11 +724,6 @@ manicMinerGraphic
     !byte %.##..#..
     !byte %....#...
     !byte %####....
-
-; ***************************************************************************************
-guardianPositions
-    !byte $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-    !byte $ff   ; terminator
 
 airOffsetY = -4
 ; ***************************************************************************************
@@ -1927,6 +2030,11 @@ currentSecondFloorSpriteCopy
     !byte %........
     !byte %........
 spriteEnd
+
+!if (* != $0d00) {
+    !error "oops! not at $0d00"
+}
+    rti
 
 ; ***************************************************************************************
 getLowByteAddress
@@ -4193,10 +4301,10 @@ updateHorizontalGuardians
     tax                             ;
 
 drawGuardiansLoop
-    lda guardianPositions,y         ; }
+    lda horizontalGuardianPositions,y ; }
     sta zpGuardianPositionX,x       ; }
     iny                             ; } copy guardian info to zero page cache
-    inx                             ; } from guardianPositions to $8a for four bytes
+    inx                             ; } from horizontalGuardianPositions to $8a for four bytes
     cpx #4                          ; }
     bne drawGuardiansLoop           ; }
 
@@ -4215,9 +4323,9 @@ drawGuardiansLoop
 
 -
     lda zpGuardianPositionX,x       ; }
-    sta guardianPositions,y         ; }
+    sta horizontalGuardianPositions,y ; }
     inx                             ; } copy guardian info back from zero page cache
-    iny                             ; } from $8a to guardianPositions for four bytes
+    iny                             ; } from $8a to horizontalGuardianPositions for four bytes
     cpx #4                          ; }
     bne -                           ; }
 
@@ -4477,9 +4585,9 @@ copyHorizontalGuardiansWithAddress
     ldx #0                              ; loop counter
 -
     jsr readGuardianByte                ;
-    sta guardianSpriteCache,x           ; copy from guardian sprites to cache
+    sta horizontalGuardianCache,x       ; copy from guardian sprites to cache
     jsr reverseBits                     ;
-    sta guardianSpriteCache + $80,x     ; copy reflected guardians to cache
+    sta horizontalGuardianCache + $80,x ; copy reflected guardians to cache
     inx                                 ;
     cpx #$80                            ;
     bne -                               ;
@@ -4512,24 +4620,24 @@ copyGuardianPositionDataLoop
     jsr readGuardianByte                ; Read Initial X Coordinate
     cmp #$ff                            ;
     beq finishedReadingGuardians        ;
-    sta guardianPositions,y             ; Store initial X coordinate
+    sta horizontalGuardianPositions,y   ; Store initial X coordinate
     inx
     iny                                 ;
     jsr readGuardianByte                ; Read Y Coordinate
-    sta guardianPositions,y             ; Store Y Coordinate
+    sta horizontalGuardianPositions,y   ; Store Y Coordinate
     inx
     iny                                 ;
     jsr readGuardianByte                ; Read X1 coordinate
-    sta guardianPositions,y             ; Store X1 coordinate
+    sta horizontalGuardianPositions,y   ; Store X1 coordinate
     inx                                 ;
     iny                                 ;
     jsr readGuardianByte                ; Read X2 coordinate
-    sta guardianPositions,y             ; Store X2 coordinate
+    sta horizontalGuardianPositions,y   ; Store X2 coordinate
     inx                                 ;
     iny                                 ;
     jmp copyGuardianPositionDataLoop    ;
 finishedReadingGuardians
-    sta guardianPositions,y             ; terminator
+    sta horizontalGuardianPositions,y   ; terminator
     rts                                 ;
 
 ; ***************************************************************************************
@@ -4604,9 +4712,9 @@ drawIfNotOverExit
     asl                                 ;
     asl                                 ;
     clc                                 ;
-    adc #<guardianSpriteCache           ;
+    adc #<horizontalGuardianCache       ;
     sta cellPlotSourceSpriteAddressLow  ;
-    lda #>guardianSpriteCache           ;
+    lda #>horizontalGuardianCache       ;
     adc #0                              ;
     sta cellPlotSourceSpriteAddressHigh ;
     jsr cellPlot                        ;
@@ -4639,10 +4747,10 @@ swapGuardianInfoWithCopy
 -
     lda guardianPositionsCopy,x         ;
     tay                                 ;
-    lda guardianPositions,x             ;
+    lda horizontalGuardianPositions,x   ;
     sta guardianPositionsCopy,x         ;
     tya                                 ;
-    sta guardianPositions,x             ;
+    sta horizontalGuardianPositions,x   ;
     inx                                 ;
     cpx #5                              ;
     bne -                               ;
@@ -4658,15 +4766,15 @@ checkForMeteorCollision
     sbc #5                              ;
     asl                                 ;
     asl                                 ;
-    sta guardianPositions               ;
+    sta horizontalGuardianPositions     ;
 
     lda meteorYCoordinate               ; y coordinate
     clc                                 ;
     adc #1                              ;
-    sta guardianPositions + 1           ; set y coordinate
+    sta horizontalGuardianPositions + 1 ; set y coordinate
 
     lda #$ff                            ;
-    sta guardianPositions + 4           ; only one guardian
+    sta horizontalGuardianPositions + 4 ; only one guardian
     jsr collideWithHorizontalGuardians  ; check for collision
 
     ; copy guardian info back
@@ -4867,7 +4975,7 @@ showTitleScreenMessageAndWaitForRETURN
     lda #2                          ;
     sta lives                       ;
 
-    ; set palette to regular numbers
+    ; set palette to regular numbers for the title screen
     ldx #0                          ;
 -
     lda titleScreenPalette,x        ;
@@ -4877,36 +4985,28 @@ showTitleScreenMessageAndWaitForRETURN
     cpx #4                          ;
     bne -                           ;
 
-    ; delay loop
-    lda #$d0                        ;
+    ; wait for key press loop
+    lda #$ff                        ;
     sta $70                         ;
-    tax                             ;
-    tay                             ;
-
--
-    inx                             ;
-    bne -                           ;
-    iny                             ;
-    bne -                           ;
-    stx $71                         ; reset to zero
-    sty $72                         ;
-
+    lda #0                          ;
+    sta $71                         ;
+waitForKeyPressDelayLoop
     ldx #keyCodeRETURN              ; }
     jsr isKeyPressed                ; } is RETURN pressed
     beq startGameJumper             ; if (RETURN pressed) then branch
+    inc $71                         ;
+    bne waitForKeyPressDelayLoop    ;
+    dec $70                         ;
+    bne waitForKeyPressDelayLoop    ;
 
-    ldy $72                         ;
-    ldx $71                         ;
-    inc $70                         ;
-    bne -                           ;
-
-    lda #$ff                        ; }
-    sta previousNoteByte            ; }
-    sta musicCounter                ; }
-    lda #200                        ; }
-    sta currentNoteTimePlayed       ; }
-    jsr resumeMusic                 ; } demo mode
-    jmp playAttractLoop             ; }
+    ; start demo mode
+    lda #$ff                        ;
+    sta previousNoteByte            ;
+    sta musicCounter                ;
+    lda #200                        ;
+    sta currentNoteTimePlayed       ;
+    jsr resumeMusic                 ;
+    jmp playAttractLoop             ;
 
 ; ***************************************************************************************
 startGameJumper
@@ -7854,13 +7954,13 @@ death
     jsr updateMusicState            ;
     jmp playCurrentLevel            ;
 
-guardianSpriteCache
+horizontalGuardianCache
     * = * + 256
 
 ; ***************************************************************************************
 ;
 ; Like OSBYTE 135, this reads a character from the screen and returns it's ASCII code in X
-; but this is tweaked to only check SPACE and the used defined characters 128-160
+; but this is tweaked to only check SPACE and the user defined characters 128-160
 ;
 ; ***************************************************************************************
 readCharacter
@@ -8251,14 +8351,14 @@ guardianSetForEachLevel
     !byte $01, $02, $03, $04, $05, $06, $07, $08, $09, $0a, $0b, $08, $0c, $00, $0d, $0e, $0f, $09, $10, $01
 
 guardianToleranceTL
-    ;     duck, penguin, ostrich, seal, toilet, pacman, kanga, barrel. wheels, endorian, spinner, ore mac, money, flag, speader, mirror
-    !byte    3,       4,    6,      5,      0,     2,      3,      4,        4,       1,       4,       1,     5,    4,       1,      5
+    ;     duck, penguin, ostrich, seal, toilet, pacman, kanga, barrel. wheels, endorian, spinner, ore mac, money, flag, spreader, mirror
+    !byte    3,       4,    6,      5,      0,     2,      3,      4,        4,       1,       4,       1,     5,    4,        1,      5
 guardianToleranceTR
-    !byte    5,      10,    8,      8,     11,     7,      9,       9,      10,      11,       10,      7,    8,    11,       9,      9
+    !byte    5,      10,    8,      8,     11,     7,      9,       9,      10,      11,       10,      7,    8,    11,        9,      9
 guardianToleranceBL
-    !byte    3,       3,    4,      1,      0,     3,      0,      3,        1,       1,       3,       2,     0,    3,       0,      1
+    !byte    3,       3,    4,      1,      0,     3,      0,      3,        1,       1,       3,       2,     0,    3,        0,      1
 guardianToleranceBR
-    !byte    7,       9,    9,      6,      8,     8,      8,      9,        7,       8,       7,       8,     8,    6,      12,      7
+    !byte    7,       9,    9,      6,      8,     8,      8,      9,        7,       8,       7,       8,     8,    6,       12,      7
 
 penOffsetX = 4
 penOffsetY = -10
@@ -8298,16 +8398,6 @@ penroseTriangle
     !byte $ff                                       ; TERMINATOR
 
 ; ***************************************************************************************
-    ; Each vertical guardian has four bytes in this table
-    ; <x coord + top bit for direction + bit 6 for speed>, <y coord>, <Y extent 1>, <Y extent 2>
-currentVerticalGuardians
-    !byte $ea, $ea, $ea, $ea        ; first  guardian
-verticalGuardian2
-    !byte $ea, $ea, $ea, $ea        ; second guardian
-    !byte $ea, $ea, $ea, $ea        ; third  guardian
-    !byte $ea, $ea, $ea, $ea        ; fourth guardian
-
-; ***************************************************************************************
 boundaryArray
     !byte 255,23,15,8
 
@@ -8327,14 +8417,6 @@ plotYHigh
 plotMessageEnd
 
 ; ***************************************************************************************
-keyXPositions
-    !byte $ea, $ea, $ea, $ea, $ea   ;
-keyYPositions
-    !byte $ea, $ea, $ea, $ea, $ea   ;
-keyGot
-    !byte $00, $00, $00, $00, $00   ;
-
-; ***************************************************************************************
 toFullColour
     !byte $00, $11, $22, $33, $44, $55, $66, $77, $88, $99, $aa, $bb, $cc, $dd, $ee, $ff
 
@@ -8345,68 +8427,6 @@ byteMaskGreen
 ; ***************************************************************************************
 byteMaskRed
     !byte $0f, $8f, $cf, $ef
-
-collisionPlayerX
-    !byte 0
-collisionGuardianX
-    !byte 0
-collisionGuardianY
-    !byte 0
-collisionLow
-    !byte 0
-collisionHigh
-    !byte 0
-
-verticalToleranceTL
-    !byte 0
-verticalToleranceTR
-    !byte 0
-verticalToleranceBL
-    !byte 0
-verticalToleranceBR
-    !byte 0
-verticalToleranceReversedTL
-    !byte 0
-verticalToleranceReversedTR
-    !byte 0
-verticalToleranceReversedBL
-    !byte 0
-verticalToleranceReversedBR
-    !byte 0
-
-horizontalToleranceTL
-    !byte 0
-horizontalToleranceTR
-    !byte 0
-horizontalToleranceBL
-    !byte 0
-horizontalToleranceBR
-    !byte 0
-horizontalToleranceReversedTL
-    !byte 0
-horizontalToleranceReversedTR
-    !byte 0
-horizontalToleranceReversedBL
-    !byte 0
-horizontalToleranceReversedBR
-    !byte 0
-
-toleranceTL
-    !byte 0
-toleranceTR
-    !byte 0
-toleranceBL
-    !byte 0
-toleranceBR
-    !byte 0
-toleranceReversedTL
-    !byte 0
-toleranceReversedTR
-    !byte 0
-toleranceReversedBL
-    !byte 0
-toleranceReversedBR
-    !byte 0
 
 playerTolerance
     !byte 3, 8, 1, 8, 3, 8, 1, 8
@@ -8454,7 +8474,7 @@ checkPixelCollision
     txa                                 ;
     pha                                 ;
 
-    lda guardianPositions + 1,x         ;
+    lda horizontalGuardianPositions + 1,x ;
     bpl +                               ;
 
     ldx #0                              ;
@@ -8624,17 +8644,6 @@ debugEndX
 debugLineDataEnd
 }
 
-guardianPositionsCopy
-    !byte $00, $00, $00, $00, $00
-
-willySpriteAddressLow
-    !byte $00
-willySpriteAddressHigh
-    !byte $00
-
-    !byte $00                       ; [UNUSED, but copied in and out of cache]
-    !byte $00                       ; [UNUSED, but copied in and out of cache]
-    !byte $00                       ; [UNUSED, but copied in and out of cache]
 
 ; ***************************************************************************************
 oswordSoundBlock
@@ -8647,14 +8656,14 @@ oswordSoundBlock3
 ; ***************************************************************************************
 debugChangePalette
     ora paletteLookupTable                  ;
-    sta videoULAPaletteRegister             ; store actual colour in register
+    sta videoULAPaletteRegister             ;
     eor #$10                                ;
-    sta videoULAPaletteRegister             ; store actual colour in register
+    sta videoULAPaletteRegister             ;
     eor #$50                                ;
-    sta videoULAPaletteRegister             ; store actual colour in register
+    sta videoULAPaletteRegister             ;
     eor #$10                                ;
-    sta videoULAPaletteRegister             ; store actual colour in register
-    rts
+    sta videoULAPaletteRegister             ;
+    rts                                     ;
 
 ; ***************************************************************************************
 ; sprite numbers to draw (level specific)
@@ -9738,8 +9747,6 @@ meteorXCellPositions
     !byte 8, 31, 12, 13, 26, 33, 6, 28, 9, 27, 11, 29, 14, 32, 25, 7
 meteorLandingYCell
     !byte 6,  3,  4,  8, 11,  3, 3,  5, 6,  5,  4,  9,  8,  3, 11, 6
-;meteorPositions
-;    !byte $64, $1b, $28, $a9, $16, $1d, $02, $58, $65, $57, $27, $d9, $aa, $1c, $15, $63
 
 ; ***************************************************************************************
     ; vertical movements at each stage of a jump
@@ -9931,13 +9938,13 @@ collideWithHorizontalGuardians
 
     ; debug
 !ifdef debugPixelCollision {
-    lda #$1c
-    sta guardianPositions
-    lda #13
-    sta guardianPositions + 1
+    lda #$1c                            ;
+    sta horizontalGuardianPositions     ;
+    lda #13                             ;
+    sta horizontalGuardianPositions + 1 ;
 
-    lda #0
-    sta $3280
+    lda #0                              ;
+    sta $3280                           ;
 }
 
     jsr calculateCollisionPlayerX       ;
@@ -9952,7 +9959,7 @@ collideWithHorizontalGuardians
 checkCollision
     ldx #0                              ;
 checkCollisionLoop
-    lda guardianPositions,x             ;
+    lda horizontalGuardianPositions,x   ;
     cmp #$ff                            ;
     beq return8                         ; if (out of guardians) then return
     jsr checkCollisionForOneGuardian    ;
@@ -9985,7 +9992,7 @@ calculateCollisionPlayerX
 
 ; ***************************************************************************************
 checkCollisionForOneGuardian
-    lda guardianPositions + 1,x         ; get guardian cell Y
+    lda horizontalGuardianPositions + 1,x ; get guardian cell Y
     clc                                 ;
     adc #1                              ;
     asl                                 ;
@@ -9993,7 +10000,7 @@ checkCollisionForOneGuardian
     asl                                 ;
     sta collisionGuardianY              ;
 
-    lda guardianPositions,x             ;
+    lda horizontalGuardianPositions,x   ;
     asl                                 ;
     cmp #0                              ;
     beq +                               ;
@@ -10027,7 +10034,7 @@ possibleCollisionInX
     rts                                 ;
 
 possibleCollisionInY
-    lda guardianPositions + 1,x         ;
+    lda horizontalGuardianPositions + 1,x ;
     clc                                 ;
     adc #3                              ;
     asl                                 ;
@@ -10238,8 +10245,6 @@ energyFieldScreenAddressHigh
     !byte >level20EnergyFieldScreenAddress0
     !byte >level20EnergyFieldScreenAddress1
 
-energyFieldLoopIndex
-    !byte 0                             ;
 
 ; ***************************************************************************************
 updateEnergyFields
@@ -10343,13 +10348,13 @@ switchFlipped
 
     ; level 12 switch flipped - Return of the Alien Kong Beast
     lda #$47                            ;
-    sta guardianPositions + 3           ; change guardian extent
+    sta horizontalGuardianPositions + 3 ; change guardian extent
 +
     rts                                 ;
 
 level8SwitchFlipped
     lda #$47                            ; change guardian extent
-    sta guardianPositions + 7           ;
+    sta horizontalGuardianPositions + 7 ;
 return6
     rts                                 ;
 

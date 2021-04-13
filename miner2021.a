@@ -43,6 +43,7 @@ irqv2                               = $206      ;
 
 logicalScreenStart                  = $3000     ;
 
+; **************** BBC SHEILA *******************
 videoULAPaletteRegister             = $fe21     ; Video ULA palette register
 
 ; System timer 1
@@ -65,6 +66,7 @@ userVIAAuxiliaryControlRegister     = $fe6b     ;
 userVIAInterruptFlagRegister        = $fe6d     ;
 userVIAInterruptEnableRegister      = $fe6e     ;
 
+; ***************** OS CALLS ********************
 OSWRCH                          = $ffee     ;
 OSWORD                          = $fff1     ;
 OSBYTE                          = $fff4     ;
@@ -2037,9 +2039,9 @@ spriteEnd
     rti
 
 ; ***************************************************************************************
-getLowByteAddress
+plotRoutineArrayLow
     !byte <getSpriteMode1Byte, <getSpriteMode2Byte, <getSpriteMode3Byte, <getSpriteMode4Byte, <getSpriteMode5Byte, <getSpriteMode6Byte
-getHighByteAddress
+plotRoutineArrayHigh
     !byte >getSpriteMode1Byte, >getSpriteMode2Byte, >getSpriteMode3Byte, >getSpriteMode4Byte, >getSpriteMode5Byte, >getSpriteMode6Byte
 
 screenRowAddressLow
@@ -2202,45 +2204,31 @@ plot
 
     ; based on the current mode, store the address of routine to get the next byte to write
     ldx plotMode                        ;
-    lda getLowByteAddress - 1,x         ;
+    lda plotRoutineArrayLow - 1,x       ;
     sta getSourceByte + 1               ;
-    lda getHighByteAddress - 1,x        ;
+    lda plotRoutineArrayHigh - 1,x      ;
     sta getSourceByte + 2               ;
 
     lda #16                             ;
     sta spriteRowCounter                ;
 
 spriteDrawRow
-    ldy #24                             ;
+    ldx #3                              ;
+plotInnerLoop
+    ldy plotYOffsetArray,x              ;
 getSourceByte
-    jmp $ffff                           ; call routine to get source byte
+    jmp $ffff                           ; call routine to get destination value to write
 afterGetSourceByte
     sta (plotScreenAddressLow),y        ; store on screen
-    lda yOffsetsTable, y                ; } sneaky table lookup to do y=y-8
-    tay                                 ; }
-    bpl getSourceByte                   ; copy four bytes
+    dex                                 ;
+    bpl plotInnerLoop                   ; copy four bytes
 
+plotMoveToNextRow
     dec spriteRowCounter                ;
     beq return3                         ;
     lda spriteRowCounter                ;
     and #7                              ;
-    bne +                               ;
-
-    lda plotSourceSpriteAddressLow      ; }
-    clc                                 ; }
-    adc #$18                            ; }
-    sta plotSourceSpriteAddressLow      ; } add 24 to source sprite address
-    bcc +                               ; }
-    inc plotSourceSpriteAddressHigh     ; }
-
-+
-    inc plotYOffset                     ; increment offset within character row
-
-    ; increment screen address
-    inc plotScreenAddressLow            ;
-    bne +                               ;
-    inc plotScreenAddressHigh           ;
-+
+    beq moveSourcePointerOnOneRow       ;
 
     ; increment sprite address
     inc plotSourceSpriteAddressLow      ;
@@ -2248,7 +2236,15 @@ afterGetSourceByte
     inc plotSourceSpriteAddressHigh     ;
 +
 
+incrementScreenAddress
+    ; increment screen address
+    inc plotScreenAddressLow            ;
+    bne +                               ;
+    inc plotScreenAddressHigh           ;
++
+
     ; check for end of character row
+    inc plotYOffset                     ; increment offset within character row
     lda plotYOffset                     ;
     cmp #8                              ;
     bne spriteDrawRow                   ;
@@ -2267,40 +2263,72 @@ afterGetSourceByte
 
     jmp spriteDrawRow                   ;
 
+moveSourcePointerOnOneRow
+    lda plotSourceSpriteAddressLow      ; }
+    clc                                 ; }
+    adc #$19                            ; }
+    sta plotSourceSpriteAddressLow      ; } add 24 + 1 to source sprite address
+    bcc incrementScreenAddress          ; }
+    inc plotSourceSpriteAddressHigh     ; }
+    jmp incrementScreenAddress          ; }
+
 ; ***************************************************************************************
 return3
     rts                                 ;
 
 ; ***************************************************************************************
 getSpriteMode1Byte
+-
+    ldy plotYOffsetArray,x              ;
     lda (plotSourceSpriteAddressLow),y  ; read source sprite
     and spriteColourMask                ; AND with mask
     ora (plotScreenAddressLow),y        ; OR with screen
-    jmp afterGetSourceByte              ;
+    sta (plotScreenAddressLow),y        ; store on screen
+    dex                                 ;
+    bpl -                               ; copy four bytes
+    jmp plotMoveToNextRow               ;
 
 ; ***************************************************************************************
 getSpriteMode2Byte
     lda #0                              ;
-    jmp afterGetSourceByte              ;
+-
+    ldy plotYOffsetArray,x              ;
+    sta (plotScreenAddressLow),y        ; store on screen
+    dex                                 ;
+    bpl -                               ; copy four bytes
+    jmp plotMoveToNextRow               ;
 
 ; ***************************************************************************************
 getSpriteMode3Byte
+-
+    ldy plotYOffsetArray,x              ;
     lda (plotSourceSpriteAddressLow),y  ; read source sprite
     and spriteColourMask                ; AND with mask
-    jmp afterGetSourceByte              ;
+    sta (plotScreenAddressLow),y        ; store on screen
+    dex                                 ;
+    bpl -                               ; copy four bytes
+    jmp plotMoveToNextRow               ;
 
 ; ***************************************************************************************
 getSpriteMode4Byte
     lda (plotScreenAddressLow),y        ; read screen
     cmp #$ff                            ;
-    bne getSpriteMode3Byte              ; if (not four pixels of colour 3) then use mode 3
-    jmp afterGetSourceByte              ;
+    beq +                               ; if (not four pixels of colour 3) then use mode 3
+    lda (plotSourceSpriteAddressLow),y  ; read source sprite
+    and spriteColourMask                ; AND with mask
++
+    sta (plotScreenAddressLow),y        ; store on screen
+    dex                                 ;
+    bpl -                               ; copy four bytes
+    jmp plotMoveToNextRow               ;
 
 ; ***************************************************************************************
 getSpriteMode5Byte
     lda (plotScreenAddressLow),y        ; read screen
     cmp #$ff                            ;
-    bne getSpriteMode2Byte              ; if (not four pixels of colour 3) then use mode 2
+    beq +                               ; if (not four pixels of colour 3) then use mode 2
+    lda #0                              ;
++
     jmp afterGetSourceByte              ;
 
 ; ***************************************************************************************
@@ -2802,7 +2830,6 @@ getPlayerSourceSpriteAddress
 ;
 ; On Entry: A = Y coordinate to check
 ; On Exit: X = index into danger area arrays
-;          Carry set if in a danger area
 ;
 ; ***************************************************************************************
 getDangerArea
@@ -2846,8 +2873,8 @@ updateConveyorAndPlayer
     jsr isInDangerArea                  ;
     beq -
 
-;    lda #2                              ;
-;    jsr debugChangePalette              ;
+    lda #2                              ;
+    jsr debugChangePalette              ;
 
     ldx playerPixelX                    ; }
     ldy playerPixelY                    ; }
@@ -2875,8 +2902,8 @@ rts
 opcodeForJsrPlot
     jsr plot                            ; draw player (plot mode 1)
 
-;    lda #7
-;    jsr debugChangePalette
+    lda #7
+    jsr debugChangePalette
 
     jsr updateAirAndCheckExit           ;
     jsr checkForLandingOnSpike          ;
@@ -3815,7 +3842,7 @@ updateVerticalGuardian
     tay                             ;
 verticalGuardiansPlotType = * + 1
     lda #5                          ;
-    jsr plot                        ; draw vertical guardian (mode 5)
+    jsr plot                        ; draw vertical guardian (mode 2 or mode 5)
     lda currentGuardianX            ; }
     and #$80                        ; } check current direction
     cmp #$80                        ; }
@@ -7367,7 +7394,7 @@ initializeLevelSprites
 afterLooking
     sta willyAnimationEOR           ;
     ldy playerPixelY                ;
-    lda #1                          ;
+    lda #1                          ; read from screen, write to cache
     jsr readOrWriteCachedBackground ;
     lda willyGraphicsPage           ;
     sta willySpriteAddressHigh      ;
@@ -9889,7 +9916,7 @@ checkForCollisions
     ldx newPlayerPixelX                 ; have been drawn (which could have erased part of a nearby player)
     ldy newPlayerPixelY                 ;
     lda #2                              ;
-    jsr plot                            ; draw player (plot mode 1)
+    jsr plot                            ; draw player (plot mode 2, erase)
 
     jsr updateHorizontalGuardians       ;
 
@@ -14674,11 +14701,8 @@ cacheOffsetY
     !byte 0, 0, 1, 1, 2, 2
 
 ; ***************************************************************************************
-yOffsetsTable
-    !byte $ff,0,0,0,0,0,0,0
-    !byte 0,0,0,0,0,0,0,0
-    !byte 8,0,0,0,0,0,0,0
-    !byte 16
+plotYOffsetArray
+    !byte 0,8,16,24
 
 guardianColourMasks
     !byte $f0, $ff, $0f, $f0        ;

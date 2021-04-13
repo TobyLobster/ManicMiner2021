@@ -2873,8 +2873,8 @@ updateConveyorAndPlayer
     jsr isInDangerArea                  ;
     beq -
 
-    lda #2                              ;
-    jsr debugChangePalette              ;
+;    lda #2                              ;
+;    jsr debugChangePalette              ;
 
     ldx playerPixelX                    ; }
     ldy playerPixelY                    ; }
@@ -2902,8 +2902,8 @@ rts
 opcodeForJsrPlot
     jsr plot                            ; draw player (plot mode 1)
 
-    lda #7
-    jsr debugChangePalette
+;    lda #7
+;    jsr debugChangePalette
 
     jsr updateAirAndCheckExit           ;
     jsr checkForLandingOnSpike          ;

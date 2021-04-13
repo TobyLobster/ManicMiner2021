@@ -5845,7 +5845,7 @@ drawExit
 ; ***************************************************************************************
 setRoomColours
     lda #0                          ;
-    jsr OSWRCH                      ; [replace with cellPlot?]
+    jsr OSWRCH                      ; [????]
     jsr drawInitialAirMeter         ;
 
     jsr updateAirAndCheckExit       ;
@@ -5981,25 +5981,19 @@ setColourAndDrawLevel14Platform
     cmp #0                              ;
     bne setColourAndDrawPlatform        ;
 
-    lda #1                              ; COLOUR 1
-    jsr setTextColour                   ;
-
-    lda #31                             ;
-    jsr OSWRCH                          ;
     lda $71                             ;
     clc                                 ;
     adc #5                              ;
-    jsr OSWRCH                          ; TAB($71 + 5, $72 + 1)
-    lda $72                             ;
-    clc                                 ;
-    adc #1                              ;
-    jsr OSWRCH                          ;
-
-    lda #$80                            ;
-    jsr OSWRCH                          ; [replace with cellPlot?]
-    lda #$81                            ;
-    jsr OSWRCH                          ; [replace with cellPlot?]
-
+    tax                                 ;
+    ldy $72                             ;
+    iny                                 ;
+    jsr setTextPos                      ;
+    jsr printFollowingMessage           ;
+    !byte platformMessageEnds - platformMessage
+platformMessage
+    !byte 17, 1                         ; COLOUR 1
+    !byte $80, $81                      ; platform
+platformMessageEnds
     rts                                 ;
 
 ; ***************************************************************************************
@@ -6010,19 +6004,16 @@ commandDrawHorizontalStrip
 
 setColourAndDrawPlatform
 drawPlatform
-    lda #31                             ;
-    jsr OSWRCH                          ;
 
     lda $71                             ;
     clc                                 ;
-    adc #5                              ;
-    jsr OSWRCH                          ; TAB($71 + 5, $72 + 1)
-
+    adc #5                              ; TAB($71 + 5, $72 + 1)
+    tax
     lda $72                             ;
     and #$1f                            ;
-    clc                                 ;
-    adc #1                              ;
-    jsr OSWRCH                          ;
+    tay                                 ;
+    iny                                 ;
+    jsr setTextPos                      ;
 
     lda $73                             ;
     and #$1f                            ;
@@ -6361,7 +6352,7 @@ soundDirect
 titleScreenPalette
     !byte blue, red, green, white
 titleScreenFooterPalette
-    !byte blue, cyan, green, magenta
+    !byte blue, yellow, green, magenta
 
 startOfPalettes
 playAreaPalette
@@ -6511,6 +6502,8 @@ return5
 
 ; ***************************************************************************************
 printFollowingMessage
+    stx tempX                               ;
+    sty tempY                               ;
     pla                                     ;
     sta altScreenAddressLow                 ;
     pla                                     ;
@@ -6535,6 +6528,8 @@ printFollowingMessage
     pha                                     ; immediately after the data
     lda altScreenAddressLow                 ;
     pha                                     ;
+    ldx tempX                               ;
+    ldy tempY                               ;
     rts                                     ;
 
 
@@ -6550,13 +6545,54 @@ showTitleScreen
     jsr pauseMusic                  ;
 
     ; Show credits
-    ldx #0                          ; loop counter
--
-    lda creditsMessage,x            ;
-    jsr OSWRCH                      ;
-    inx                             ;
-    cpx #creditsMessageEnd - creditsMessage ;
-    bne -                           ;
+    jsr printFollowingMessage
+    !byte creditsMessageEnd - creditsMessage
+creditsMessage
+    !byte 18, 0, 129                ; GCOL 0,129
+    !byte 24                        ; define graphics window
+    !word 20 * 32 - 8               ; left
+    !word 19 * 32                   ; bottom
+    !word 37 * 32 + 8               ; right
+    !word (32-6)*32                 ; top
+    !byte 16                        ; clear graphics area
+
+    !byte 18, 0, 128                ; GCOL 0,128
+    !byte 26                        ; reset text window
+
+    !byte 17, 2                     ; COLOUR 1
+    !byte 31, 6, 18                 ; TAB
+    !text "2021 Edition by TobyLobster" ;
+    !byte 17, 3                     ;
+    !byte 31, 20, 2                 ; TAB
+    !text "SOFTWARE PROJECTS"       ;
+    !byte 5                         ;
+    !byte 18, 0, 3                  ; GCOL 0,3
+    !byte 25, 4                     ;
+    !word 780, 896                  ;
+    !text "Presents"                ;
+    !byte 25, 4                     ;
+    !word 656, 512 + 32 + 24        ;
+    !text "Original program"        ;
+    !byte 25, 4                     ;
+    !word 656, 460 + 32 + 28        ;
+    !text "by Matthew Smith"        ;
+    !byte 25, 4                     ;
+    !word 876, 700 + 32             ;
+    !text "by"                      ;
+    !byte 25, 4                     ;
+    !word 720, 700-32*1             ;
+    !text "D.J.COATHUPE"            ;
+    !byte 18, 0, 3                  ; GCOL
+    !byte 25, 4                     ;
+    !word 368, 394                  ;
+    !text "High Score "             ;
+
+    !byte 4                         ; VDU 4
+    !byte 23, 1, 0, 0,0,0,0,0,0,0,0 ; cursor off
+
+    !byte 17, 129                   ; COLOUR 129
+    !byte 31, 20, 7                 ; TAB
+creditsMessageEnd
 
     ; swap in the flowery logo
     jsr swapLogoWithC00             ;
@@ -6577,9 +6613,9 @@ showTitleScreen
     !byte highScorePositionMessageEnd - highScorePositionMessage
 highScorePositionMessage
     !byte 5
-    !byte 18, 0, 3                  ; GCOL
+    !byte 18, 0, 1                  ; GCOL
     !byte 25, 4                     ;
-    !word 368 + 11 * 32, 390        ;
+    !word 368 + 11 * 32, 394        ;
 highScorePositionMessageEnd
 
     ; print three pairs of numbers for the high score
@@ -6619,13 +6655,22 @@ plotLoop
     sta plotYLow                    ;
 
     ; PLOT
-    ldy #0                          ; loop counter
--
-    lda plotMessageStart,y          ;
-    jsr OSWRCH                      ;
-    iny                             ;
-    cpy #plotMessageEnd - plotMessageStart  ;
-    bne -                           ;
+    jsr printFollowingMessage
+    !byte plotMessageEnd - plotMessageStart
+plotMessageStart
+    !byte 25                        ; VDU 25
+plotType
+    !byte $ea                       ;
+plotXLow
+    !byte $ea                       ;
+plotXHigh
+    !byte $ea                       ;
+plotYLow
+    !byte $ea                       ;
+plotYHigh
+    !byte $ea                       ;
+plotMessageEnd
+
     jmp plotLoop                    ;
 
 ; ***************************************************************************************
@@ -8319,37 +8364,6 @@ meteorAndTailSprites
     !byte %.#.###.#
 
 ; ***************************************************************************************
-;
-; Later levels (9 and 11 upwards) can have up to four vertical guardians
-;
-; Guardian position data is packed into two bytes:
-;
-; <x coordinate>    x position in cells, top bit specifies initial direction, (clear = up, set = down), bit 6 is speed (1 = fast)
-; <y coordinates>   top nybble is the initial Y and also the second extent, bottom nybble is the first extent
-;
-; ***************************************************************************************
-verticalGuardianPositions
-    !byte $00, $00,  $00, $00,  $00, $00,  $00, $00    ; [UNUSED]
-    !byte $85, $0d,  $cb, $0d,  $94, $0d,  $d9, $0d    ; level 9 - Wacky Amoebatrons
-    !byte $00, $00,  $00, $00,  $00, $00,  $00, $00    ; [UNUSED]
-    !byte $83, $4d,  $8c, $07,  $95, $6d,  $da, $0d    ; level 11 - Attack of the Mutant Telephones
-    !byte $ff, $ff,  $ff, $ff,  $ff, $ff,  $ff, $ff    ; level 12 - Return of the Alien Kong Beast
-    !byte $85, $1d,  $ff, $ff,  $ff, $ff,  $ff, $ff    ; level 13 - Ore Refinery
-    !byte $c1, $09,  $8b, $04,  $d5, $07,  $ff, $ff    ; level 14 - Skylab Landing Bay
-    !byte $89, $4d,  $8f, $5d,  $d5, $4d,  $ff, $ff    ; level 15 - The Bank
-    !byte $ff, $ff,  $ff, $ff,  $ff, $ff,  $ff, $ff    ; level 16 - The Sixteenth Cavern
-    !byte $83, $8d,  $4a, $c0,  $13, $80,  $db, $0c    ; level 17 - The Warehouse
-    !byte $c5, $1d,  $8a, $1d,  $d4, $1d,  $99, $1d    ; level 18 - Amoebatrons' Revenge
-    !byte $ff, $ff,  $ff, $ff,  $ff, $ff,  $ff, $ff    ; level 19 - The Meteor Storm
-    !byte $82, $06,  $da, $4d,  $ff, $ff,  $ff, $ff    ; level 20 - The Final Barrier
-
-; ***************************************************************************************
-verticalGuardiansSpritesArray
-    ; vertical guardians for the later levels
-    ; Level     11,  12,  13,  14,  15,  16,  17,  18,  19,  20
-    !byte $ea, $03, $00, $04, $05, $06, $00, $07, $09, $08, $04
-
-; ***************************************************************************************
 cheatCode
     ; code: A, <space>, S,   E,   C,   R,   E,   T
     ;
@@ -8441,11 +8455,6 @@ soundFrequenciesSecond
 
 
 ; ***************************************************************************************
-
-guardianSetForEachLevel
-    ; level 1,   2,   3,   4,   5,   6,   7,  8,    9,  10,  11,  12,  13,  14,  15,  16,  17,  18,  19,  20
-    !byte $01, $02, $03, $04, $05, $06, $07, $08, $09, $0a, $0b, $08, $0c, $00, $0d, $0e, $0f, $09, $10, $01
-
 guardianToleranceTL
     ;     duck, penguin, ostrich, seal, toilet, pacman, kanga, barrel. wheels, endorian, spinner, ore mac, money, flag, spreader, mirror
     !byte    3,       4,    6,      5,      0,     2,      3,      4,        4,       1,       4,       1,     5,    4,        1,      5
@@ -8498,19 +8507,6 @@ boundaryArray
     !byte 255,23,15,8
 
 ; ***************************************************************************************
-plotMessageStart
-    !byte 25                        ; VDU 25
-plotType
-    !byte $ea                       ;
-plotXLow
-    !byte $ea                       ;
-plotXHigh
-    !byte $ea                       ;
-plotYLow
-    !byte $ea                       ;
-plotYHigh
-    !byte $ea                       ;
-plotMessageEnd
 
 ; ***************************************************************************************
 byteMaskGreen
@@ -14726,53 +14722,6 @@ cacheOffsetY
     !byte 0, 0, 1, 1, 2, 2
 
 ; ***************************************************************************************
-creditsMessage
-    !byte 18, 0, 129                ; GCOL 0,129
-    !byte 24                        ; define graphics window
-    !word 20 * 32 - 8               ; left
-    !word 19 * 32                   ; bottom
-    !word 37 * 32 + 8               ; right
-    !word (32-6)*32                 ; top
-    !byte 16                        ; clear graphics area
-
-    !byte 18, 0, 128                ; GCOL 0,128
-    !byte 26                        ; reset text window
-
-    !byte 17, 2                     ; COLOUR 1
-    !byte 31, 6, 18                 ; TAB
-    !text "2021 Edition by TobyLobster" ;
-    !byte 17, 3                     ;
-    !byte 31, 20, 2                 ; TAB
-    !text "SOFTWARE PROJECTS"       ;
-    !byte 5                         ;
-    !byte 18, 0, 3                  ; GCOL 0,3
-    !byte 25, 4                     ;
-    !word 780, 896                  ;
-    !text "Presents"                ;
-    !byte 25, 4                     ;
-    !word 656, 512 + 32 + 24        ;
-    !text "Original program"        ;
-    !byte 25, 4                     ;
-    !word 656, 460 + 32 + 28        ;
-    !text "by Matthew Smith"        ;
-    !byte 25, 4                     ;
-    !word 876, 700 + 32             ;
-    !text "by"                      ;
-    !byte 25, 4                     ;
-    !word 720, 700-32*1             ;
-    !text "D.J.COATHUPE"            ;
-    !byte 18, 0, 3                  ; GCOL
-    !byte 25, 4                     ;
-    !word 368, 390                  ;
-    !text "High Score "             ;
-
-    !byte 4                         ; VDU 4
-    !byte 23, 1, 0, 0,0,0,0,0,0,0,0 ; cursor off
-
-    !byte 17, 129                   ; COLOUR 129
-    !byte 31, 20, 7                 ; TAB
-creditsMessageEnd
-
 gameOverMessage
     !text "Game", 9, 9, 9, 9, "Over"
 gameOverMessageEnd
@@ -14799,6 +14748,41 @@ verticalGuardianTolerancesBR
 ; ***************************************************************************************
 toFullColour
     !byte $00, $11, $22, $33, $44, $55, $66, $77, $88, $99, $aa, $bb, $cc, $dd, $ee, $ff
+
+; ***************************************************************************************
+;
+; Later levels (9 and 11 upwards) can have up to four vertical guardians
+;
+; Guardian position data is packed into two bytes:
+;
+; <x coordinate>    x position in cells, top bit specifies initial direction, (clear = up, set = down), bit 6 is speed (1 = fast)
+; <y coordinates>   top nybble is the initial Y and also the second extent, bottom nybble is the first extent
+;
+; ***************************************************************************************
+verticalGuardianPositions
+    !byte $00, $00,  $00, $00,  $00, $00,  $00, $00    ; [UNUSED]
+    !byte $85, $0d,  $cb, $0d,  $94, $0d,  $d9, $0d    ; level 9 - Wacky Amoebatrons
+    !byte $00, $00,  $00, $00,  $00, $00,  $00, $00    ; [UNUSED]
+    !byte $83, $4d,  $8c, $07,  $95, $6d,  $da, $0d    ; level 11 - Attack of the Mutant Telephones
+    !byte $ff, $ff,  $ff, $ff,  $ff, $ff,  $ff, $ff    ; level 12 - Return of the Alien Kong Beast
+    !byte $85, $1d,  $ff, $ff,  $ff, $ff,  $ff, $ff    ; level 13 - Ore Refinery
+    !byte $c1, $09,  $8b, $04,  $d5, $07,  $ff, $ff    ; level 14 - Skylab Landing Bay
+    !byte $89, $4d,  $8f, $5d,  $d5, $4d,  $ff, $ff    ; level 15 - The Bank
+    !byte $ff, $ff,  $ff, $ff,  $ff, $ff,  $ff, $ff    ; level 16 - The Sixteenth Cavern
+    !byte $83, $8d,  $4a, $c0,  $13, $80,  $db, $0c    ; level 17 - The Warehouse
+    !byte $c5, $1d,  $8a, $1d,  $d4, $1d,  $99, $1d    ; level 18 - Amoebatrons' Revenge
+    !byte $ff, $ff,  $ff, $ff,  $ff, $ff,  $ff, $ff    ; level 19 - The Meteor Storm
+    !byte $82, $06,  $da, $4d,  $ff, $ff,  $ff, $ff    ; level 20 - The Final Barrier
+
+; ***************************************************************************************
+verticalGuardiansSpritesArray
+    ; vertical guardians for the later levels
+    ; Level     11,  12,  13,  14,  15,  16,  17,  18,  19,  20
+    !byte $ea, $03, $00, $04, $05, $06, $00, $07, $09, $08, $04
+
+guardianSetForEachLevel
+    ; level 1,   2,   3,   4,   5,   6,   7,  8,    9,  10,  11,  12,  13,  14,  15,  16,  17,  18,  19,  20
+    !byte $01, $02, $03, $04, $05, $06, $07, $08, $09, $0a, $0b, $08, $0c, $00, $0d, $0e, $0f, $09, $10, $01
 
 
 !if * > $7fa0 {

@@ -1,8 +1,8 @@
 ; miner2021.a
 ;
 ;debugPixelCollision
-optionCheatOn
-optionMusicOff
+;optionCheatOn
+;optionMusicOff
 
 ; constants
 charSPACE                           = $20       ;
@@ -270,6 +270,8 @@ conveyorColour                  = $a3       ;
 volumeIndex                     = $a4       ;
 saveY                           = $a5       ;
 energyFieldLoopIndex            = $a6       ;
+tempX2                          = $a7       ;
+tempY2                          = $a8       ;
 
 
 ; ***************************************************************************************
@@ -2487,7 +2489,6 @@ onConveyor                              ;
     cmp #1                              ;
     bne checkPlayerY                    ;
     lda willyDirectionAgainstFlowOfConveyor ;
-    cmp #0                              ;
     bne checkPlayerY                    ;
     jmp checkForUpdatePlayerOnConveyor  ;
 
@@ -2495,7 +2496,6 @@ onConveyor                              ;
 checkPlayerY
     lda playerPixelY                    ;
     and #7                              ;
-    cmp #0                              ;
     beq checkIfSupported                ;
 updatePlayerFalling
     lda newPlayerPixelY                 ;
@@ -2566,7 +2566,6 @@ checkForXKey
 
     ; handle X pressed
     lda willyAnimationEOR                   ;
-    cmp #0                                  ;
     bne switchToLookingRight                ; if (looking left) then branch
     lda #1                                  ;
     sta willyDeltaX                         ;
@@ -2594,7 +2593,6 @@ checkForUpdatePlayerOnConveyor
 
     jsr readTwoCharactersFromScreen         ; read the two characters immediately lower on screen than the player
     lda willyIsOnConveyor                   ;
-    cmp #0                                  ;
     bne handleGoingOnConveyor               ;
     lda screenCharacterA                    ;
     jsr isConveyor                          ;
@@ -2649,7 +2647,6 @@ conveyorNotFalling
 ; ***************************************************************************************
 conveyorHandling
     lda willyDeltaX                         ;
-    cmp #0                                  ;
     beq movingWithConveyor                  ;
     lda willyDeltaX                         ;
     cmp conveyorDirection                   ;
@@ -2659,7 +2656,6 @@ movingWithConveyor
     sta willyDirectionAgainstFlowOfConveyor ;
 +
     lda willyDirectionAgainstFlowOfConveyor ;
-    cmp #0                                  ;
     bne +                                   ;
     lda willyIsOnConveyor                   ;
     cmp #1                                  ;
@@ -2668,7 +2664,6 @@ movingWithConveyor
 +
     lda willyDeltaX                         ;
     sta jumpDirection                       ;
-    cmp #0                                  ;
     beq checkForJump                        ;
     jsr checkIfBlockedLeftOrRight           ;
 checkForJump
@@ -2678,10 +2673,8 @@ checkForJump
 
     ; handle jump
     lda willyJustLandedOnConveyor           ;
-    cmp #0                                  ;
     bne cancelJump                          ;
     lda willyFalling                        ;
-    cmp #0                                  ;
     bne cancelJump                          ;
     jmp checkForWallOnJump                  ;
 
@@ -2739,7 +2732,6 @@ checkIfBlockedLeftOrRight
     sta playerYNegativeOffsetWithinCell ;
     lda newPlayerPixelY                 ;
     and #7                              ;
-    cmp #0                              ;
     beq onCellFloor                     ;
 
     ; handle having a vertical gap from the cell floor
@@ -2777,7 +2769,6 @@ onCellFloor
 ; ***************************************************************************************
 +
     lda playerXOffsetWithinCell         ;
-    cmp #0                              ;
     bne +                               ;
     lda willyDeltaX                     ;
     cmp #1                              ;
@@ -2809,7 +2800,6 @@ updateNewPlayerY
     bne updateConveyorAndPlayer         ; if (player height not the same as when last on ground) then branch (move player)
 
     lda jumpPhase                       ;
-    cmp #0                              ;
     bne updateConveyorAndPlayer         ; if (jumping) then branch (move player)
 
     lda newPlayerPixelY                 ;
@@ -2922,7 +2912,6 @@ opcodeForJsrPlot
 
     lda newPlayerPixelY                 ;
     and #7                              ;
-    cmp #0                              ;
     beq +                               ; if (level with cell vertically) then branch
     inc cursorX                         ; [TODO: is this right?, why check vertical alignment then check an extra X position?]
     jsr checkSpikeKeySwitch             ;
@@ -3166,7 +3155,6 @@ notConveyor
 ; ***************************************************************************************
 checkUpdateConveyor
     lda jumpDirection               ;
-    cmp #0                          ;
     bne updateConveyor              ;
     lda #1                          ;
     sta willyFalling                ;
@@ -3208,7 +3196,6 @@ handleJumping
 updatePlayerWhenJumping
     lda playerPixelY                ;
     and #7                          ;
-    cmp #0                          ;
     beq checkForLanding             ;
     jmp updateJump                  ;
 
@@ -3250,7 +3237,6 @@ hitWall
 updateInAir
     lda playerPixelY                ;
     and #7                          ;
-    cmp #0                          ;
     bne updateJump                  ;
     lda jumpPhase                   ;
     cmp #8                          ;
@@ -3330,7 +3316,6 @@ checkWhatsLeftOfThePlayer
 
     lda newPlayerPixelY             ;
     and #7                          ;
-    cmp #0                          ;
     beq +                           ;
 
     ; if we are not vertically aligned with a cell then we need to check another cell
@@ -3393,7 +3378,6 @@ checkWhatsRightOfThePlayer
 
     lda newPlayerPixelY             ;
     and #7                          ;
-    cmp #0                          ;
     beq +                           ;
 
     ; if we are not vertically aligned with a cell then we need to check another cell
@@ -3476,7 +3460,6 @@ updateConveyorMovement
 
     ; conveyor left
     lda willyAnimationEOR           ;
-    cmp #0                          ;
     bne walkWithConveyor            ;
     lda #>willyLeft0                ; }
     sta willyGraphicsPage           ; }
@@ -4924,7 +4907,6 @@ eraseLandedMeteors
 updateLevel19EnergyFields
     lda energyFieldTimer                ;
     and #$10                            ;
-    cmp #0                              ;
     beq +                               ;
     ldx #3                              ;
     ldy #$ff                            ;
@@ -5978,7 +5960,6 @@ decodeNextFeature
 ; ***************************************************************************************
 setColourAndDrawLevel14Platform
     lda currentLevelFeatureIndex        ;
-    cmp #0                              ;
     bne setColourAndDrawPlatform        ;
 
     lda $71                             ;
@@ -6423,11 +6404,9 @@ endOfAttractLoop
 ; ***************************************************************************************
 checkCheatCode
     lda $ed                         ;
-    cmp #0                          ;
     bne resetCheatProgress          ; if (two keys pressed) then branch (reset progress)
     lda $ec                         ; read key pressed
     and #$7f                        ; remove top bit set
-    cmp #0                          ;
     beq return2                     ; if (nothing pressed) then branch (return)
     ldx cheatCodeCounter            ;
     cmp cheatCode,x                 ;
@@ -6480,7 +6459,6 @@ notInAir
     cmp #1                          ;
     beq return5                     ;
     lda willyIsOnGround             ;
-    cmp #0                          ;
     bne return5                     ;
 
     lda #$ff                        ;
@@ -6502,8 +6480,8 @@ return5
 
 ; ***************************************************************************************
 printFollowingMessage
-    stx tempX                               ;
-    sty tempY                               ;
+    stx tempX2                              ;
+    sty tempY2                              ;
     pla                                     ;
     sta altScreenAddressLow                 ;
     pla                                     ;
@@ -6528,8 +6506,8 @@ printFollowingMessage
     pha                                     ; immediately after the data
     lda altScreenAddressLow                 ;
     pha                                     ;
-    ldx tempX                               ;
-    ldy tempY                               ;
+    ldx tempX2                              ;
+    ldy tempY2                              ;
     rts                                     ;
 
 
@@ -6635,19 +6613,29 @@ plotLoop
     jsr getNextPenroseByte          ;
     cmp #$ff                        ;
     beq finishPlot                  ;
-    cmp #$fe                        ;
+    lsr                             ;
+    lsr                             ;
+    lsr                             ;
+    lsr                             ;
     beq gcol                        ;
+    tay                             ;
+    lda plotTypeArray - 1, y        ;
     sta plotType                    ; PLOT type
+
     lda #0                          ;
     sta plotXHigh                   ;
     sta plotYHigh                   ;
-    jsr getNextPenroseByte          ; Y coordinate low (top 2 bits) and X low (top two bits)
+    lda penroseTriangle,x           ; get byte again
+    and #$0f                        ;
+    asl                             ;
+    tay                             ;
+    lda penroseCoordinates, y       ;
     asl                             ;
     rol plotXHigh                   ;
     asl                             ;
     rol plotXHigh                   ;
     sta plotXLow                    ;
-    jsr getNextPenroseByte          ;
+    lda penroseCoordinates + 1, y   ;
     asl                             ;
     rol plotYHigh                   ;
     asl                             ;
@@ -6674,6 +6662,13 @@ plotMessageEnd
     jmp plotLoop                    ;
 
 ; ***************************************************************************************
+; $1P = move P
+; $2P = tri P
+; $3P = draw P
+plotTypeArray
+    !byte 4, $55, 5
+
+; ***************************************************************************************
 finishPlot
     lda #128                        ;
     jsr setTextColour               ;
@@ -6684,9 +6679,10 @@ finishPlot
 gcol
     lda #18                         ;
     jsr OSWRCH                      ;
-    lda #0                          ; GCOL 0,next byte
+    lda #0                          ; GCOL 0, lower two bits of penroseTriangle,X
     jsr OSWRCH                      ;
-    jsr getNextPenroseByte          ;
+    lda penroseTriangle,x           ;
+    and #3                          ;
     jsr OSWRCH                      ;
     jmp plotLoop                    ;
 
@@ -7260,7 +7256,6 @@ playCurrentLevel
     ; check for cheat mode enabled
 checkForFunctionKeys
     lda cheatModeEnabled                    ;
-    cmp #0                                  ;
     beq +                                   ; if (cheat mode not enabled) then branch
 
     ; read function keys
@@ -7380,7 +7375,6 @@ storeLevelNumber
     dec zeroBasedLevel                  ; make the level zero based
 
     lda cheatModeEnabled                ;
-    cmp #0                              ;
     beq .return1                        ;
 
     lda currentLevel                    ;
@@ -7561,7 +7555,6 @@ updateFlashingExit
     inc flashingExitCounter         ;
     lda flashingExitCounter         ;
     and #3                          ;
-    cmp #0                          ;
     beq flashExit                   ;
     rts                             ;
 
@@ -7642,11 +7635,9 @@ drainAirRemaining
     inc keyCounter                  ;
     lda keyCounter                  ;
     and #3                          ;
-    cmp #0                          ;
     beq addScoreAsAirDrains         ;
 continueDrainingAir
     lda airRemaining                ;
-    cmp #0                          ;
     bne drainAirRemaining           ;
     lda #255                        ;
     sta channel2Frequency           ; stop sound
@@ -7696,7 +7687,6 @@ updateAir
     inc airRemainingDelayCounter    ;
     lda airRemainingDelayCounter    ;
     and #$07                        ;
-    cmp #0                          ;
 !ifndef debugPixelCollision {
     beq loseAir                     ;
 }
@@ -7880,7 +7870,7 @@ updateHighScore
     lda score, x                    ;
     cmp highScore, x                ;
     bcc +                           ;
-    bcs setHighScore                ;
+    bne setHighScore                ;
     dex                             ;
     bpl -                           ;
 +
@@ -8364,16 +8354,6 @@ meteorAndTailSprites
     !byte %.#.###.#
 
 ; ***************************************************************************************
-cheatCode
-    ; code: A, <space>, S,   E,   C,   R,   E,   T
-    ;
-    ; key codes as stored in memory address $ec (by the OS) when pressed, all with top bit set:
-    ;     $C1, $E2, $D1, $A2, $D2, $B3, $A2, $A3
-    ; stored here without top bit set:
-    !byte $41, $62, $51, $22, $52, $33, $22, $23
-cheatCodeEnd
-
-; ***************************************************************************************
 music
     ;     B2, C#3, D3, E3,     F#3, D3, F#3,           F3, C#3,  F3,          E3,  C3, E3
     !byte  0,   2,  3,  5, $80 + 7,  3,   7,7,   $80 +  6,   2,   6,6,  $80 +  5,   1,  5,5
@@ -8465,42 +8445,84 @@ guardianToleranceBL
 guardianToleranceBR
     !byte    7,       9,    9,      6,      8,     8,      8,      9,        7,       8,       7,       8,     8,    6,       12,      7
 
+    ; A Penrose triangle as encoded PLOT statements
+    ;
+    ;                           L
+    ;                           ###  H
+    ;                        #######|
+    ;                     #######||||
+    ;                  #######|||||||
+    ;               #######||||||E|||
+    ;            #######||||||"""||||
+    ;         #######|||||| F""""||||
+    ;    B ######J||||||     """"||||
+    ;     """#######|I       """"||||
+    ;    A""""""#######      """"||||
+    ;       """""""#######   """"||||
+    ;          """""""######K""""||||
+    ;             """""""####""""||||
+    ;                """""""D""""||||
+    ;                   """""""""||||
+    ;                      """"""||||
+    ;                         """||| G
+    ;                            C
+
 penOffsetX = 0
 penOffsetY = 3
-    ; A Penrose triangle as encoded PLOT statements
+
+penroseCoordinates
+    !byte $12 + penOffsetX, $ac + penOffsetY   ; A = 0
+    !byte $12 + penOffsetX, $b8 + penOffsetY   ; B = 1
+    !byte $78 + penOffsetX, $79 + penOffsetY   ; C = 2
+    !byte $6c + penOffsetX, $8b + penOffsetY   ; D = 3
+    !byte $78 + penOffsetX, $d3 + penOffsetY   ; E = 4
+    !byte $6c + penOffsetX, $cc + penOffsetY   ; F = 5
+    !byte $83 + penOffsetX, $7f + penOffsetY   ; G = 6
+    !byte $83 + penOffsetX, $e4 + penOffsetY   ; H = 7
+    !byte $37 + penOffsetX, $b3 + penOffsetY   ; I = 8
+    !byte $2c + penOffsetX, $b8 + penOffsetY   ; J = 9
+    !byte $6c + penOffsetX, $98 + penOffsetY   ; K = 10
+    !byte $77 + penOffsetX, $ea + penOffsetY   ; L = 11
+
 penroseTriangle
-    !byte $fe, 1                                    ; GCOL 0,1
-    !byte $04, $12 + penOffsetX, $ac + penOffsetY   ; MOVE
-    !byte $04, $12 + penOffsetX, $b8 + penOffsetY   ; MOVE
-    !byte $55, $78 + penOffsetX, $79 + penOffsetY   ; TRI
-    !byte $55, $6c + penOffsetX, $8b + penOffsetY   ; TRI
-    !byte $55, $78 + penOffsetX, $d3 + penOffsetY   ; TRI
-    !byte $55, $6c + penOffsetX, $cd + penOffsetY   ; TRI
-    !byte $fe, 2                                    ; GCOL 0,2
-    !byte $04, $78 + penOffsetX, $79 + penOffsetY   ; MOVE
-    !byte $04, $83 + penOffsetX, $7f + penOffsetY   ; MOVE
-    !byte $55, $78 + penOffsetX, $d3 + penOffsetY   ; TRI
-    !byte $55, $83 + penOffsetX, $e4 + penOffsetY   ; TRI
-    !byte $55, $37 + penOffsetX, $b3 + penOffsetY   ; TRI
-    !byte $55, $2d + penOffsetX, $b8 + penOffsetY   ; TRI
-    !byte $fe, 3                                    ; GCOL 0,3
-    !byte $04, $6c + penOffsetX, $cc + penOffsetY   ; MOVE
-    !byte $05, $6c + penOffsetX, $98 + penOffsetY   ; DRAW
-    !byte $05, $2c + penOffsetX, $b8 + penOffsetY   ; DRAW
-    !byte $05, $83 + penOffsetX, $e4 + penOffsetY   ; DRAW
-    !byte $05, $77 + penOffsetX, $ea + penOffsetY   ; DRAW
-    !byte $05, $12 + penOffsetX, $b8 + penOffsetY   ; DRAW
-    !byte $05, $12 + penOffsetX, $ac + penOffsetY   ; DRAW
-    !byte $05, $78 + penOffsetX, $79 + penOffsetY   ; DRAW
-    !byte $05, $83 + penOffsetX, $7f + penOffsetY   ; DRAW
-    !byte $05, $83 + penOffsetX, $e4 + penOffsetY   ; DRAW
-    !byte $04, $78 + penOffsetX, $79 + penOffsetY   ; MOVE
-    !byte $05, $78 + penOffsetX, $d3 + penOffsetY   ; DRAW
-    !byte $05, $37 + penOffsetX, $b3 + penOffsetY   ; DRAW
-    !byte $04, $6c + penOffsetX, $99 + penOffsetY   ; MOVE
-    !byte $05, $6c + penOffsetX, $8b + penOffsetY   ; DRAW
-    !byte $05, $12 + penOffsetX, $b8 + penOffsetY   ; DRAW
-    !byte $ff                                       ; TERMINATOR
+    ; commands:
+    ; $0C = GCOL 0,C
+    ; $1P = move P
+    ; $2P = tri P
+    ; $3P = draw P
+    ; $ff = terminator
+    !byte $01                                       ; GCOL 0,1
+    !byte $10                                       ; MOVE A
+    !byte $11                                       ; MOVE B
+    !byte $22                                       ; TRI C
+    !byte $23                                       ; TRI D
+    !byte $24                                       ; TRI E
+    !byte $25                                       ; TRI F
+    !byte $02                                       ; GCOL 0,2
+    !byte $12                                       ; MOVE C
+    !byte $16                                       ; MOVE G
+    !byte $24                                       ; TRI E
+    !byte $27                                       ; TRI H
+    !byte $28                                       ; TRI I
+    !byte $29                                       ; TRI J
+    !byte $03                                       ; GCOL 0,3
+    !byte $15                                       ; MOVE F
+    !byte $3a                                       ; DRAW K
+    !byte $39                                       ; DRAW J
+    !byte $37                                       ; DRAW H
+    !byte $3b                                       ; DRAW L
+    !byte $31                                       ; DRAW B
+    !byte $30                                       ; DRAW A
+    !byte $32                                       ; DRAW C
+    !byte $36                                       ; DRAW G
+    !byte $37                                       ; DRAW H
+    !byte $12                                       ; MOVE C
+    !byte $34                                       ; DRAW E
+    !byte $38                                       ; DRAW I
+    !byte $1a                                       ; MOVE K
+    !byte $33                                       ; DRAW D
+    !byte $31                                       ; DRAW B
+    !byte $ff                                       ; terminator
 
 ; ***************************************************************************************
 boundaryArray
@@ -10070,7 +10092,6 @@ checkCollisionForOneGuardian
 
     lda horizontalGuardianPositions,x   ;
     asl                                 ;
-    cmp #0                              ;
     beq +                               ;
     sec                                 ;
     sbc #1                              ;
@@ -10132,7 +10153,6 @@ collideWithVerticalGuardians
     lda playerPixelX                    ;
     and #3                              ;
     eor willyAnimationEOR               ;
-    cmp #0                              ;
     beq +                               ;
     lda #1                              ;
     sta collisionFudgeFactor            ;
@@ -10167,7 +10187,6 @@ kongSpecifics
     lda #$ff                            ;
     sta currentVerticalGuardians        ;
     lda $33c0                           ; screen byte where Kong lives
-    cmp #0                              ;
     beq regularLevels                   ;
     lda #$0f                            ; }
     sta currentVerticalGuardians        ; } column 15
@@ -10227,7 +10246,6 @@ checkOneVerticalCollision
     sec                                 ;
 tempScreenByte = * + 1
     sbc #$ff                            ; playerX + 4 - (guardianX + 5) * 4
-    cmp #0                              ;
     beq checkVerticalCollision          ;
     cmp #7                              ;
     bcc checkVerticalCollision          ;
@@ -10403,7 +10421,6 @@ showScoreAndResetVerticalGuardians
 
 checkForSwitchFlipped
     lda $332e                           ; screen address that becomes non-zero when the switch is flipped
-    cmp #0                              ;
     bne switchFlipped                   ;
     rts                                 ;
 
@@ -10429,7 +10446,6 @@ return6
 ; ***************************************************************************************
 updateAirEtc
     lda airRemaining                    ;
-    cmp #0                              ;
     beq deathJumper5                    ; if (out of air) then branch (die)
 
     lda playerPixelY                    ;
@@ -10439,7 +10455,6 @@ updateAirEtc
 +
     lda playerPixelY                    ;
     and #7                              ;
-    cmp #0                              ;
     beq +                               ;
     lda #0                              ;
     sta willyIsOnGround                 ;
@@ -10452,7 +10467,6 @@ updateAirEtc
     bne setOffsetYWithinCell            ;
 
     lda willyIsOnGround                 ;
-    cmp #0                              ;
     bne setOffsetYWithinCell            ;
 
     ; land (or die if fallen too far)
@@ -10491,7 +10505,6 @@ checkForDeath
 
     lda energyFieldTimer                ;
     and #$10                            ;
-    cmp #0                              ;
     beq +                               ;
 
     ; check for collision
@@ -14783,6 +14796,16 @@ verticalGuardiansSpritesArray
 guardianSetForEachLevel
     ; level 1,   2,   3,   4,   5,   6,   7,  8,    9,  10,  11,  12,  13,  14,  15,  16,  17,  18,  19,  20
     !byte $01, $02, $03, $04, $05, $06, $07, $08, $09, $0a, $0b, $08, $0c, $00, $0d, $0e, $0f, $09, $10, $01
+
+; ***************************************************************************************
+cheatCode
+    ; code: A, <space>, S,   E,   C,   R,   E,   T
+    ;
+    ; key codes as stored in memory address $ec (by the OS) when pressed, all with top bit set:
+    ;     $C1, $E2, $D1, $A2, $D2, $B3, $A2, $A3
+    ; stored here without top bit set:
+    !byte $41, $62, $51, $22, $52, $33, $22, $23
+cheatCodeEnd
 
 
 !if * > $7fa0 {

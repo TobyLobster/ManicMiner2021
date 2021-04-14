@@ -70,7 +70,6 @@ userVIAInterruptEnableRegister      = $fe6e     ;
 OSWRCH                          = $ffee     ;
 OSWORD                          = $fff1     ;
 OSBYTE                          = $fff4     ;
-OSCLI                           = $fff7     ;
 
 
 ; ***************************************************************************************
@@ -178,7 +177,7 @@ tempY                           = $5b       ;
 byteToReverse                   = $5c       ;
 keysLeft                        = $5d       ;
 currentNoteTimePlayed           = $5e       ;
-musicCounter                    = $5f       ;
+unused5F                        = $5f       ;
 channel2Frequency               = $60       ;
 previousNoteByte                = $61       ;
 rememberCharacterToDraw         = $62       ;
@@ -272,6 +271,10 @@ saveY                           = $a5       ;
 energyFieldLoopIndex            = $a6       ;
 tempX2                          = $a7       ;
 tempY2                          = $a8       ;
+musicCounterLow                 = $a9       ;
+musicCounterHigh                = $aa       ;
+
+lastPageZeroLocationUsed        = $aa       ;
 
 
 ; ***************************************************************************************
@@ -383,6 +386,8 @@ highScore                       = $157      ; three bytes for the BCD score
 highScore2                      = $158      ;
 highScore3                      = $159      ;
 
+horizontalByteCounter           = $15a      ;
+
 ; ***************************************************************************************
 verticalGuardianMODE1Address    = $0400     ;
 verticalGuardianMODE1Address1   = $0440     ;
@@ -411,9 +416,19 @@ ShortTimerValue = 24*62 + 46
 * = $0400
 ; ***************************************************************************************
 initialize
+    ; clear all zero page variables (initialize to zero by default)
+    lda #0                                  ;
+    ldx #lastPageZeroLocationUsed + 1       ;
+-
+    dex                                     ;
+    sta 0,x                                 ;
+    bne -                                   ;
+
+    ; initialize variables
     lda #$ff                                    ;
     sta horizontalGuardianPositionsTerminator   ;
-    sta musicCounter                        ;
+    sta musicCounterLow                         ;
+    sta musicCounterHigh                        ;
     sta rasterArea                          ;
     sta channel2Frequency                   ;
     sta previousNoteByte                    ;
@@ -2048,6 +2063,22 @@ spriteEnd
     rti
 
 ; ***************************************************************************************
+resetMusic
+    lda #<music                 ;
+    sta musicCounterLow         ;
+    lda #>music                 ;
+    sta musicCounterHigh        ;
+
+    lda #$ff                    ;
+    sta channel2Frequency       ;
+    sta previousNoteByte        ;
+    sta musicEnabled            ;
+    sta volumeIndex             ;
+
+    lda #200                    ;
+    sta currentNoteTimePlayed   ;
+    rts                         ;
+
 plotRoutineArrayLow
     !byte <getSpriteMode1Byte, <getSpriteMode2Byte, <getSpriteMode3Byte, <getSpriteMode4Byte, <getSpriteMode5Byte, <getSpriteMode6Byte
 plotRoutineArrayHigh
@@ -2415,8 +2446,7 @@ handleNotJumping
 
     lda screenCharacterA                    ;
     jsr isCrumble                           ;
-    cmp #1                                  ;
-    beq updateLeftCrumble                   ;
+    bne updateLeftCrumble                   ;
 afterUpdateCrumble
     lda plotScreenAddressLow                ;
     clc                                     ;
@@ -2428,8 +2458,7 @@ afterUpdateCrumble
     sta plotScreenAddressHigh           ;
     lda screenCharacterB                ;
     jsr isCrumble                       ;
-    cmp #1                              ;
-    bne checkForConveyors               ;
+    beq checkForConveyors               ;
 
     ; crumble the right hand crumble (in the background cache)
     ldx #7                              ; loop counter
@@ -3123,18 +3152,16 @@ notSupporting
 
 ; ***************************************************************************************
 isCrumble
-    cmp #$5f                        ;
-    beq +                           ;
     cmp #$82                        ;
     bcc notCrumble                  ;
     cmp #$8a                        ;
     bcs notCrumble                  ;
-+
     lda #1                          ;
     rts                             ;
 
 ; ***************************************************************************************
 notCrumble
+notConveyor
     lda #0                          ;
     rts                             ;
 
@@ -3146,11 +3173,6 @@ isConveyor
     bcs notConveyor                 ; } if (conveyor belt) then A=1 else A=0
     lda #1                          ; }
     rts                             ; }
-
-; ***************************************************************************************
-notConveyor
-    lda #0                          ;
-    rts                             ;
 
 ; ***************************************************************************************
 checkUpdateConveyor
@@ -3440,21 +3462,6 @@ updateWillyOnConveyor
 ; ***************************************************************************************
 updateConveyorMovement
     lda conveyorDirection           ;
-    cmp #1                          ;
-    bne +                           ;
-
-    ; conveyor right
-    lda conveyorDirection           ;
-    sta willyDeltaX                 ;
-    lda newPlayerPixelX             ;
-    clc                             ;
-    adc conveyorDirection           ;
-    sta newPlayerPixelX             ;
-    rts                             ;
-
-; ***************************************************************************************
-+
-    lda conveyorDirection           ;
     cmp #$ff                        ;
     bne walkWithConveyor            ;
 
@@ -3662,12 +3669,12 @@ drawEugene
     lda eugenePositionY                 ;
     and #$7f                            ;
     tay                                 ;
-    jsr setEugineSprite                 ;
+    jsr useFirstVerticalSprite          ;
     lda #3                              ;
     jmp plot                            ; plot Eugene (mode 3)
 
 ; ***************************************************************************************
-setEugineSprite
+useFirstVerticalSprite
     lda #<verticalGuardianMODE1Address  ; }
     sta plotSourceSpriteAddressLow      ; } address verticalGuardianMODE1Address
     lda #>verticalGuardianMODE1Address  ; }
@@ -3692,10 +3699,7 @@ drawRegularKong
     and #8                              ;
     cmp #8                              ;
     beq showKongAnimationState1         ;
-    lda #<verticalGuardianMODE1Address  ; }
-    sta plotSourceSpriteAddressLow      ; }
-    lda #>verticalGuardianMODE1Address  ; } address of Kong animation 0
-    sta plotSourceSpriteAddressHigh     ; }
+    jsr useFirstVerticalSprite          ; address of Kong animation 0
     jmp +                               ;
 
 ; ***************************************************************************************
@@ -3787,10 +3791,9 @@ updateOneVerticalGuardian
     stx currentGuardianIndex            ;
     lda currentGuardianX                ;
     and #$40                            ;
-    cmp #$40                            ;
-    beq fastVerticalGuardian            ;
+    bne fastVerticalGuardian            ;
     lda #2                              ; set slow speed
-    jmp +                               ;
+    bne +                               ; ALWAYS branch
 
 ; ***************************************************************************************
 fastVerticalGuardian
@@ -4069,7 +4072,6 @@ copyVerticalGuardianIntoMODE1Format
 specialSpriteSourceAddress = * + 1
     lda $ffff,x                     ; [address overwritten before use]
     sta copyEugeneSourceByte        ; store source byte
-    stx tempX                       ; [redundant]
     and #$f0                        ; extract top nybble
     sta copyEugeneTempByte          ; save it
     lsr                             ;
@@ -4077,9 +4079,9 @@ specialSpriteSourceAddress = * + 1
     lsr                             ;
     lsr                             ; shift to lower nybble
     clc                             ;
-    adc copyEugeneTempByte          ; add original to get a Eugene in colour 3
+    adc copyEugeneTempByte          ; add original to get colour 3
 
-    jsr storeByteY                  ; store left hand byte
+    jsr storeByteY                  ; store left hand byte of vertical guardian
 
     lda copyEugeneSourceByte        ; recall source byte
     and #$0f                        ; lower nybble
@@ -4089,7 +4091,7 @@ specialSpriteSourceAddress = * + 1
     asl                             ;
     asl                             ;
     clc                             ;
-    adc copyEugeneTempByte          ; add lower nybble to get white Eugene in colour 3
+    adc copyEugeneTempByte          ; add lower nybble to get colour 3
     sta copyEugeneTempByte          ; store
 
     tya                             ; }
@@ -4098,17 +4100,16 @@ specialSpriteSourceAddress = * + 1
     tay                             ; }
 
     lda copyEugeneTempByte          ;
-    jsr storeByteY                  ; store right hand side byte of Eugene
+    jsr storeByteY                  ; store right hand side byte of vertical guardian
+    inc tempX                       ; increment source counter
     ldx tempX                       ;
-    inx                             ; increment source counter
-    stx tempX                       ;
     tya                             ; }
     sec                             ; }
     sbc #7                          ; } Y -= 7
     tay                             ; }
     cmp #8                          ;
     bne -                           ; loop 8 times
-    ldy #$00                        ; reset loop counter
+    ldy #0                          ; reset loop counter
     lda storeByteY + 1              ;
     clc                             ;
     adc #$10                        ; add 16 to destination byte
@@ -4120,23 +4121,20 @@ specialSpriteSourceAddress = * + 1
 
 ; ***************************************************************************************
 levelWithKongBeast
-    lda #2                          ;
-    sta copyWhichSprite             ; copy Kong
-    jmp continueCopySprites         ;
+    lda #2                          ; copy Kong
+    bne continueCopySprites         ; ALWAYS branch
 
 ; ***************************************************************************************
 levelWithAmoebatrons
-    lda #8                          ;
-    sta copyWhichSprite             ; copy Amoebatrons
-    jmp continueCopySprites         ;
+    lda #8                          ; copy Amoebatrons
+    bne continueCopySprites         ; ALWAYS branch
 
 ; ***************************************************************************************
 levelEugenesLair
-    lda #1                          ;
-    sta copyWhichSprite             ; copy Eugene
     lda #8                          ;
     sta eugenePositionY             ;
-    jmp continueCopySprites         ;
+    lda #1                          ; copy Eugene
+    bne continueCopySprites         ; ALWAYS branch
 
 ; ***************************************************************************************
 copyVerticalSprites
@@ -4161,8 +4159,8 @@ copyVerticalSprites
     sbc #10                             ;
     tax                                 ;
     lda verticalGuardiansSpritesArray,x ;
-    sta copyWhichSprite                 ; copy based on level number - 10
 continueCopySprites
+    sta copyWhichSprite                 ; copy based on level number - 10
 
     ; copy tolerances
 
@@ -4381,10 +4379,6 @@ updateAndDrawGuardian
     cmp #$40                        ;
     beq moveLeftOrRight             ; if (bit 6 set) then branch
     rts                             ;
-
-spriteToDraw
-    !byte $e0, $e1, $e8, $e9
-    !byte $f1, $f0, $f9, $f8
 
 ; ***************************************************************************************
 moveLeftOrRight
@@ -4634,30 +4628,27 @@ findGuardianDataLoop
     cpy currentLevel                    ;
     bne findGuardianDataLoop            ; if (not current level) then branch (loop back)
 
-    ldy #0                              ;
-    ldx #1                              ;
+    ldy #$ff                            ;
+    ldx #0                              ;
 copyGuardianPositionDataLoop
+    inx                                 ;
+    iny                                 ;
     jsr readGuardianByte                ; Read Initial X Coordinate
+    sta horizontalGuardianPositions,y   ; Store initial X coordinate (or terminator)
     cmp #$ff                            ;
     beq finishedReadingGuardians        ;
-    sta horizontalGuardianPositions,y   ; Store initial X coordinate
-    inx
+
+    lda #3                              ;
+    sta horizontalByteCounter           ;
+-
+    inx                                 ;
     iny                                 ;
     jsr readGuardianByte                ; Read Y Coordinate
     sta horizontalGuardianPositions,y   ; Store Y Coordinate
-    inx
-    iny                                 ;
-    jsr readGuardianByte                ; Read X1 coordinate
-    sta horizontalGuardianPositions,y   ; Store X1 coordinate
-    inx                                 ;
-    iny                                 ;
-    jsr readGuardianByte                ; Read X2 coordinate
-    sta horizontalGuardianPositions,y   ; Store X2 coordinate
-    inx                                 ;
-    iny                                 ;
+    dec horizontalByteCounter           ;
+    bne -                               ;
     jmp copyGuardianPositionDataLoop    ;
 finishedReadingGuardians
-    sta horizontalGuardianPositions,y   ; terminator
     rts                                 ;
 
 ; ***************************************************************************************
@@ -4765,8 +4756,7 @@ moveForward2
 swapGuardianInfoWithCopy
     ldx #0                              ; loop counter
 -
-    lda guardianPositionsCopy,x         ;
-    tay                                 ;
+    ldy guardianPositionsCopy,x         ;
     lda horizontalGuardianPositions,x   ;
     sta guardianPositionsCopy,x         ;
     tya                                 ;
@@ -5020,11 +5010,7 @@ waitForKeyPressDelayLoop
     bne waitForKeyPressDelayLoop    ;
 
     ; start demo mode
-    lda #$ff                        ;
-    sta previousNoteByte            ;
-    sta musicCounter                ;
-    lda #200                        ;
-    sta currentNoteTimePlayed       ;
+    jsr resetMusic                  ;
     jsr resumeMusic                 ;
     jmp playAttractLoop             ;
 
@@ -5055,8 +5041,9 @@ nonLevel10
     lda #1                          ;
     sta conveyorDirection           ; direction = $01
     ldy currentLevel                ;
-    lda fixedText - 1,y             ;
-    bmi +                           ; conveyor direction
+    lda levelSideWallColoursConveyorArray - 1,y  ;
+    lsr                             ;
+    bcs +                           ; conveyor direction
     lda #255
     sta conveyorDirection           ; direction = $ff
 +
@@ -5085,19 +5072,13 @@ nonLevel10
     sta conveyorColour              ;
 
 drawFixedString
-    ldx #4                          ;
-    ldy #20                         ;
-    jsr setTextPos                  ; TAB(4,20)
-
     ; draw fixed text below play area
-    ldy #0                          ;
--
-    lda fixedText,y                 ;
-    and #$7f                        ;
-    jsr OSWRCH                      ;
-    iny                             ;
-    cpy #fixedTextEnd - fixedText   ;
-    bne -                           ;
+    jsr printFollowingMessage       ;
+    !byte fixedTextEnd - fixedText  ;
+fixedText
+    !byte 31, 4, 20                 ; TAB(4, 20)
+    !text "Score ", 9, 9, 9, 9, 9, 9, "  Lives ", 9, 9, "  Level"
+fixedTextEnd
     rts                             ;
 
 ; ***************************************************************************************
@@ -5571,9 +5552,9 @@ storeAddressLow = * + 1
     ; *****************************
     ; get conveyor sprite
     ; *****************************
-    ; We transform abcdefgh -> fgh00000
+    ; We transform abcdefgh -> efg00000
     lda levelSideWallColoursConveyorArray - 1, x    ;
-    asl                             ;
+    and #$fe                        ; lose bottom bit (conveyor direction)
     asl                             ;
     asl                             ;
     asl                             ;
@@ -6233,6 +6214,7 @@ updateMusic
 updateMusicOpcode = *
     inc currentNoteTimePlayed       ; This first instruction MUST be an INC (this byte is modified elsewhere)
     lda currentNoteTimePlayed       ;
+musicTempo = * + 1
     cmp #10                         ;
     bcs updateChannel3              ; update channel 3
 updateMusicVolume
@@ -6254,24 +6236,44 @@ updateMusicVolume
     jmp soundDirect                 ; set channel 3 volume
 
 updateChannel3
-    lda #0                          ;
-    sta currentNoteTimePlayed       ;
-    inc musicCounter                ;
-    lda musicCounter                ;
-    tax                             ;
-    lda music,x                     ;
+    ldy #0                          ;
+    sty currentNoteTimePlayed       ;
+
+    ; read music byte
+    lda (musicCounterLow),y         ;
+
+    ; increment pointer
+    inc musicCounterLow             ;
+    bne +                           ;
+    inc musicCounterHigh            ;
++
+
+    ; parse music byte
     cmp #$ff                        ;
-    beq finishChannel3Notes         ; if (end of tune) then branch
+    beq finishTune                  ; if (end of tune) then branch
     cmp previousNoteByte            ;
     beq updateMusicVolume           ; if (same as previous note) then branch
     sta previousNoteByte            ;
-    ldx #4                          ;
-    cmp #$80                        ;
+
+    ; set volume index
+    ldx #4                          ; volume index
+    cmp #$80                        ; top bit set means it's a louder (accented) note
     bcc +                           ;
-    and #$7f                        ;
-    ldx #2                          ;
+    ldx #2                          ; volume index
 +
     stx volumeIndex                 ;
+
+    ; deal with grace notes
+    and #$40                        ; test for grace note
+    beq +                           ; if (not grace note) then branch
+    ldy musicTempo                  ; }
+    dey                             ; } set time played for grace note
+    sty currentNoteTimePlayed       ; }
++
+
+    ; deal with note frequency
+    lda previousNoteByte            ;
+    and #$3f                        ; just the lower bits
     tax                             ;
     lda soundFrequenciesFirst,x     ;
     jsr soundDirect                 ; Channel 3 frequency
@@ -6279,13 +6281,14 @@ updateChannel3
     jsr soundDirect                 ; Channel 3 frequency
     jmp updateMusicVolume           ;
 
-finishChannel3Notes
-    lda #$ff                        ;
-    sta musicCounter                ; end channel 3 notes
-    sta volumeIndex                 ;
-    sta previousNoteByte            ;
-    lda #200                        ;
-    sta currentNoteTimePlayed       ;
+finishTune
+    jsr resetMusic                  ;
+    dec musicTempo                  ;
+    lda musicTempo                  ;
+    cmp #7                          ;
+    bne +                           ;
+    lda #10                         ;
+    sta musicTempo                  ;
 +
     rts                             ;
 
@@ -6696,8 +6699,7 @@ getNextPenroseByte
 swapLogoWithC00
     ldx #0                          ; loop counter
 -
-    lda manicMinerGraphic,x         ;
-    tay                             ;
+    ldy manicMinerGraphic,x         ;
     lda softCharacterDefinitions,x  ;
     sta manicMinerGraphic,x         ;
     tya                             ; swap logo with current character defintions
@@ -6788,8 +6790,7 @@ drawExtraSpikes
     beq drawSpecialSpikes               ; } special thinner spikes on
     cmp #12                             ; } the ceiling of levels 8 and 12
     beq drawSpecialSpikes               ; }
-    ldx #0                              ; swap characters back
-    jmp swapPagesC00andSingleItemPage   ;
+    jmp swapPagesC00andSingleItemPage   ; swap characters back
 
 ; ***************************************************************************************
 drawSpecialSpikes
@@ -6817,7 +6818,6 @@ drawSpecialSpikes
     lda #$8c                            ; }
     jsr OSWRCH                          ; } VDU &EC (second spike)
 
-    ldx #0                              ; swap characters back
     jmp swapPagesC00andSingleItemPage   ;
 
 ; ***************************************************************************************
@@ -6845,7 +6845,6 @@ setSingleItemColourCommand
 ; ***************************************************************************************
 toggleAlternativeSingleItemSprite
     jsr setSingleOffsetX5               ; X offset 5, type++
-    ldx #0                              ;
     jsr swapPagesC00andSingleItemPage   ; swap pages
     lda #$8b                            ; regular single item character code
     sta singleItemSprite                ;
@@ -6941,15 +6940,15 @@ setSingleOffsetX5
 
 ; ***************************************************************************************
 swapPagesC00andSingleItemPage
-    lda softCharacterDefinitions,x      ;
-    tay                                 ;
+    ldx #0                              ;
+-
+    ldy softCharacterDefinitions,x      ;
     lda startOfSingleItemPage,x         ;
     sta softCharacterDefinitions,x      ;
     tya                                 ;
     sta startOfSingleItemPage,x         ;
     inx                                 ;
-    cpx #$ff                            ;
-    bne swapPagesC00andSingleItemPage   ;
+    bne -                               ;
     jsr defineMasterCharacters          ;
     rts                                 ;
 
@@ -7071,44 +7070,41 @@ setVdu4CursorOff
 
 ; ***************************************************************************************
 readRoomNameCharacter
+readRoomNameCharacterLow = * + 1
+readRoomNameCharacterHigh = * + 2
     lda $ffff,x                     ;
 return12
     rts                             ;
 
 drawRoomName
     lda #<levelTitles               ;
-    sta readRoomNameCharacter + 1   ;
+    sta readRoomNameCharacterLow    ;
     lda #>levelTitles               ;
-    sta readRoomNameCharacter + 2   ;
+    sta readRoomNameCharacterHigh   ;
     lda #0                          ;
     sta roomNumberReached           ;
 
     ; scan for next control character
-    ldx #0                          ; loop counter
 scanForControl
+    ldx #0                          ;
     jsr readRoomNameCharacter       ;
     cmp #charSPACE                  ;
     bcc foundControlCharacter       ;
 -
-    inx                             ;
-    cpx #0                          ;
-    bne scanForControl              ;
-    inc readRoomNameCharacter + 2   ;
+    inc readRoomNameCharacterLow    ;
+    bne +                           ;
+    inc readRoomNameCharacterHigh   ;
     jmp scanForControl              ;
 
 foundControlCharacter
     inc roomNumberReached           ; }
-    lda currentLevel                ; }
-    cmp roomNumberReached           ; }
+    ldx currentLevel                ; }
+    cpx roomNumberReached           ; }
     bne -                           ; } if (room not reached) then branch back
 
-    stx tempX                       ;
-
     ; calculate the correct position
-    lda #0
-    sta titleTextStartXHigh         ;
-    ldx tempX                       ;
-    jsr readRoomNameCharacter       ; get cell X to draw room title
+    ldx #0
+    stx titleTextStartXHigh         ;
     clc                             ;
     adc #4                          ;
     ldx #4                          ;
@@ -7120,23 +7116,37 @@ foundControlCharacter
     sta titleTextStartXLow          ;
 
     ; draw the background an move into position
-    ldx #0
-drawRoomTitleBackgroundLoop
-    lda roomTitleBackground, x      ;
-    jsr OSWRCH                      ;
-    inx                             ;
-    cpx #roomTitleBackgroundEnd - roomTitleBackground   ;
-    bne drawRoomTitleBackgroundLoop ;
+    jsr printFollowingMessage       ;
+    !byte roomTitleBackgroundEnd - roomTitleBackground  ;
+roomTitleBackground
+    ; draw yellow bar (colour 3)
+    !byte 18, 0, 3                          ; GCOL 0, 3
+    !byte 25, 4                             ;
+    !word 32*4, 400 + yOffsetToTitle        ; MOVE bottom left
+    !byte 25, 4                             ;
+    !word 1279-4*32, 400 + yOffsetToTitle   ; MOVE bottom right
+    !byte 25, $55                           ;
+    !word 32*4, 432 + yOffsetToTitle        ; TRI top left
+    !byte 25, $55                           ;
+    !word 1279-4*32, 432 + yOffsetToTitle   ; TRI top right
+    !byte 25, 4                             ;
+titleTextStartXLow = *
+titleTextStartXHigh = * + 1
+    !word 0                                 ; X coordinate for title text
+    !word 428 + yOffsetToTitle              ; Y coordinate for title text
+    !byte 18, 0, 0                          ; GCOL 0, 0
+    !byte 5                                 ; VDU 5
+roomTitleBackgroundEnd
 
     ; print the room title
-    ldx tempX                       ;
+    ldx #0                          ;
 -
     inx                             ;
     jsr readRoomNameCharacter       ; read next character
     cmp #charSPACE                  ;
     bcc +                           ; if (control character) then branch
     jsr OSWRCH                      ;
-    jmp -
+    jmp -                           ;
 +
 
     ; finish up (return to regular VDU 4 mode)
@@ -7304,6 +7314,8 @@ musicOn
 
 showLevel
     jsr storeLevelNumber                    ; store level number
+    lda #10                                 ;
+    sta musicTempo                          ;
     lda #5                                  ;
     sta keysLeft                            ;
 
@@ -7331,11 +7343,7 @@ pauseMusic
     jmp soundDirect                         ; silence sound channel 3
 
 updateMusicState
-    lda #$ff                                ;
-    sta musicCounter                        ;
-    sta previousNoteByte                    ;
-    lda #200                                ;
-    sta currentNoteTimePlayed               ;
+    jsr resetMusic                          ;
     lda musicEnabled                        ;
     beq pauseMusic                          ;
     jmp resumeMusic                         ;
@@ -8370,69 +8378,105 @@ music
     ;    F#3, G#3,A#3, B3,      C#4,A#3, C#4,          D4, A#3,  D4,         C#4
     !byte  7,   9, 11, 12, $80 + 14, 11,  14,14, $80 + 15,  11,  15,15, $80 + 14, $80 + 14, $80 + 14, $80 + 14
 
+    ;    F#4, G#4,A#4, B4,      C#5,A#4, C#5,          D5, A#4,  D5,         C#5, A#4, C#5
+    !byte 19,  21, 23, 24, $80 + 26, 23,  26,26, $80 + 27,  23,  27,27, $80 + 26,  23,  26, 26
+    ;    F#4, G#4,A#4, B4,      C#5,A#4, C#5,          D5, A#4,  D5,         C#5
+    !byte 19,  21, 23, 24, $80 + 26, 23,  26,26, $80 + 27,  23,  27,27, $80 + 26, $80 + 26, $80 + 26, $80 + 26
+
+    ;     B3, C#4, D4, E4,      F#4, D4, F#4,          F4, C#4,  F4,          E4,  C4, E4
+    !byte 12,  14, 15, 17, $80 + 19, 15,  19,19, $80 + 18,  14,  18,18, $80 + 17,  13, 17,17
+    ;     B3, C#4, D4, E4,      F#4, D4, F#4,          B4,  A4, F#4,          D4, F#4,       A4
+    !byte 12,  14, 15, 17,       19, 15,  19,          24,  22,  19,          15,  19, $80 + 22,$80 + 22,$80 + 22,$80 + 22
+
     ;     B2, C#3, D3, E3,       F#3, D3, F#3,           F3, C#3,  F3,          E3,   C3, E3
     !byte  0,   2,  3,  5,  $80 +  7,  3,   7,7,   $80 +  6,   2,   6,6,  $80 +  5,   1,  5, 5
     ;     B2, C#3, D3, E3,       F#3, D3, F#3,           B3, F#3,  D3,         F#3,  B3, B2
     !byte  0,   2,  3,  5,         7,  3,   7,           12,   7,   3,           7,  12,  $80 + 0, $80 + 0, $80 + 0, $80 + 0
+
+    ;     B2,        G#6,       A6,      A#6,  B6,                     B2,        G#6,       A6,      A#6, B6
+    !byte  0,0, $40 + 45, $40 + 46, $40 + 47,  $40 + 48, 48,48,48,      0,0, $40 + 45, $40 + 46, $40 + 47, $40 + 48,48,48,48
+    ;     B4, C#5, D5, E5, F#5, D5, F#5, B5, A#5, F#5, A#5, C#6, B5
+    !byte 24,  26, 27, 29,  31, 27,  31, 36,  35,  31,  35,  38, 36,36,36,36
+
+    ;     B2,        G#6,       A6,      A#6,  B6,                     B2,        G#6,       A6,      A#6, B6
+    !byte  0,0, $40 + 45, $40 + 46, $40 + 47,  $40 + 48, 48,48,48,      0,0, $40 + 45, $40 + 46, $40 + 47, $40 + 48,48,48,48
+    ;     B5, C#6, D6, E6, F#6, D6, F#6, B6, A#6, F#6, A#6, C#7, B6
+    !byte 36,  38, 39, 41,  43, 39,  43, 48,  47,  43,  47,  50, 48,48,48,48
+
+    ;     B2,        G#6,       A6,      A#6,  B6,                     B2,        G#6,       A6,      A#6, B6
+    !byte  0,0, $40 + 45, $40 + 46, $40 + 47,  48,48,48,      0,0, $40 + 45, $40 + 46, $40 + 47, 48,48,48
+
+    ;     G#6,       A6,      A#6,  B6
+    !byte $40 + 45, $40 + 46, $40 + 47,  $40 + 48, 48
+    !byte $40 + 45, $40 + 46, $40 + 47,  $40 + 48, 48
+    !byte $40 + 45, $40 + 46, $40 + 47,  $40 + 48, 48
+    !byte $40 + 45, $40 + 46, $40 + 47,  $40 + 48, 48
+    !byte $40 + 45, $40 + 46, $40 + 47,  $40 + 48, 48
+    !byte $40 + 45, $40 + 46, $40 + 47,  48,48,48,48,48
+
+    ;     B2, B3, B2, B3, B2,  B3
+    ;!byte  0, 12,  0, 12,  0,  12
+
+    ;     B2,        G#6,       A6,      A#6,  B6
+    !byte  0,0, $80 + $40 + 45, $80 + $40 + 46, $80 + $40 + 47,  $80 + 48,$80 + 48,$80 + 48,$80 + 48
+
     ; delay
-    !byte $80 + 0, $80 + 0, $80 + 0, $80 + 0,  $80 + 0, $80 + 0, $80 + 0, $80 + 0, $80 + 0, $80 + 0, $80 + 0, $80 + 0
+    !byte $80 + 48,$80 + 48,$80 + 48,$80 + 48
+    !byte $80 + 48,$80 + 48,$80 + 48,$80 + 48
 
     !byte $ff
 
-soundFrequenciesFirst
-    !byte $80 + 1012 % 16   ; 0   1012  B2
-    !byte $80 +  956 % 16   ; 1    956  C3 (=B#2)
-    !byte $80 +  902 % 16   ; 2    902  C#3
-    !byte $80 +  851 % 16   ; 3    851  D3
-    !byte $80 +  804 % 16   ; 4    804  D#3
-    !byte $80 +  758 % 16   ; 5    758  E3
-    !byte $80 +  716 % 16   ; 6    716  F3 (=E#3)
-    !byte $80 +  676 % 16   ; 7    676  F#3
-    !byte $80 +  638 % 16   ; 8    638  G3
-    !byte $80 +  602 % 16   ; 9    602  G#3
-    !byte $80 +  568 % 16   ; 10   568  A3
-    !byte $80 +  536 % 16   ; 11   536  A#3
-    !byte $80 +  506 % 16   ; 12   506  B3
-    !byte $80 +  478 % 16   ; 13   478  C4
-    !byte $80 +  451 % 16   ; 14   451  C#4
-    !byte $80 +  426 % 16   ; 15   426  D4
-    !byte $80 +  402 % 16   ; 16   402  D#4
-    !byte $80 +  379 % 16   ; 17   379  E4
-    !byte $80 +  358 % 16   ; 18   358  F4
-    !byte $80 +  338 % 16   ; 19   338  F#4
-    !byte $80 +  319 % 16   ; 20   319  G4
-    !byte $80 +  301 % 16   ; 21   301  G#4
-    !byte $80 +  284 % 16   ; 22   284  A4
-    !byte $80 +  268 % 16   ; 23   268  A#4
-    !byte $80 +  253 % 16   ; 24   253  B4
-
-soundFrequenciesSecond
-    !byte 1012 / 16         ; 0   1012  B2
-    !byte  956 / 16         ; 1    956  C3 (=B#2)
-    !byte  902 / 16         ; 2    902  C#3
-    !byte  851 / 16         ; 3    851  D3
-    !byte  804 / 16         ; 4    804  D#3
-    !byte  758 / 16         ; 5    758  E3
-    !byte  716 / 16         ; 6    716  F3 (=E#3)
-    !byte  676 / 16         ; 7    676  F#3
-    !byte  638 / 16         ; 8    638  G3
-    !byte  602 / 16         ; 9    602  G#3
-    !byte  568 / 16         ; 10   568  A3
-    !byte  536 / 16         ; 11   536  A#3
-    !byte  506 / 16         ; 12   506  B3
-    !byte  478 / 16         ; 13   478  C4
-    !byte  451 / 16         ; 14   451  C#4
-    !byte  426 / 16         ; 15   426  D4
-    !byte  402 / 16         ; 16   402  D#4
-    !byte  379 / 16         ; 17   379  E4
-    !byte  358 / 16         ; 18   358  F4
-    !byte  338 / 16         ; 19   338  F#4
-    !byte  319 / 16         ; 20   319  G4
-    !byte  301 / 16         ; 21   301  G#4
-    !byte  284 / 16         ; 22   284  A4
-    !byte  268 / 16         ; 23   268  A#4
-    !byte  253 / 16         ; 24   253  B4
-
+    ; 0    B2
+    ; 1    C3
+    ; 2    C#3
+    ; 3    D3
+    ; 4    D#3
+    ; 5    E3
+    ; 6    F3
+    ; 7    F#3
+    ; 8    G3
+    ; 9    G#3
+    ; 10   A3
+    ; 11   A#3
+    ; 12   B3
+    ; 13   C4
+    ; 14   C#4
+    ; 15   D4
+    ; 16   D#4
+    ; 17   E4
+    ; 18   F4
+    ; 19   F#4
+    ; 20   G4
+    ; 21   G#4
+    ; 22   A4
+    ; 23   A#4
+    ; 24   B4
+    ; 25   C5
+    ; 26   C#5
+    ; 27   D5
+    ; 28   D#5
+    ; 29   E5
+    ; 30   F5
+    ; 31   F#5
+    ; 32   G5
+    ; 33   G#5
+    ; 34   A5
+    ; 35   A#5
+    ; 36   B5
+    ; 37   C6
+    ; 38   C#6
+    ; 39   D6
+    ; 40   D#6
+    ; 41   E6
+    ; 42   F6
+    ; 43   F#6
+    ; 44   G6
+    ; 45   G#6
+    ; 46   A6
+    ; 47   A#6
+    ; 48   B6
+    ; 49   C7
+    ; 50   C#7
 
 ; ***************************************************************************************
 guardianToleranceTL
@@ -8444,85 +8488,6 @@ guardianToleranceBL
     !byte    3,       3,    4,      1,      0,     3,      0,      3,        1,       1,       3,       2,     0,    3,        0,      1
 guardianToleranceBR
     !byte    7,       9,    9,      6,      8,     8,      8,      9,        7,       8,       7,       8,     8,    6,       12,      7
-
-    ; A Penrose triangle as encoded PLOT statements
-    ;
-    ;                           L
-    ;                           ###  H
-    ;                        #######|
-    ;                     #######||||
-    ;                  #######|||||||
-    ;               #######||||||E|||
-    ;            #######||||||"""||||
-    ;         #######|||||| F""""||||
-    ;    B ######J||||||     """"||||
-    ;     """#######|I       """"||||
-    ;    A""""""#######      """"||||
-    ;       """""""#######   """"||||
-    ;          """""""######K""""||||
-    ;             """""""####""""||||
-    ;                """""""D""""||||
-    ;                   """""""""||||
-    ;                      """"""||||
-    ;                         """||| G
-    ;                            C
-
-penOffsetX = 0
-penOffsetY = 3
-
-penroseCoordinates
-    !byte $12 + penOffsetX, $ac + penOffsetY   ; A = 0
-    !byte $12 + penOffsetX, $b8 + penOffsetY   ; B = 1
-    !byte $78 + penOffsetX, $79 + penOffsetY   ; C = 2
-    !byte $6c + penOffsetX, $8b + penOffsetY   ; D = 3
-    !byte $78 + penOffsetX, $d3 + penOffsetY   ; E = 4
-    !byte $6c + penOffsetX, $cc + penOffsetY   ; F = 5
-    !byte $83 + penOffsetX, $7f + penOffsetY   ; G = 6
-    !byte $83 + penOffsetX, $e4 + penOffsetY   ; H = 7
-    !byte $37 + penOffsetX, $b3 + penOffsetY   ; I = 8
-    !byte $2c + penOffsetX, $b8 + penOffsetY   ; J = 9
-    !byte $6c + penOffsetX, $98 + penOffsetY   ; K = 10
-    !byte $77 + penOffsetX, $ea + penOffsetY   ; L = 11
-
-penroseTriangle
-    ; commands:
-    ; $0C = GCOL 0,C
-    ; $1P = move P
-    ; $2P = tri P
-    ; $3P = draw P
-    ; $ff = terminator
-    !byte $01                                       ; GCOL 0,1
-    !byte $10                                       ; MOVE A
-    !byte $11                                       ; MOVE B
-    !byte $22                                       ; TRI C
-    !byte $23                                       ; TRI D
-    !byte $24                                       ; TRI E
-    !byte $25                                       ; TRI F
-    !byte $02                                       ; GCOL 0,2
-    !byte $12                                       ; MOVE C
-    !byte $16                                       ; MOVE G
-    !byte $24                                       ; TRI E
-    !byte $27                                       ; TRI H
-    !byte $28                                       ; TRI I
-    !byte $29                                       ; TRI J
-    !byte $03                                       ; GCOL 0,3
-    !byte $15                                       ; MOVE F
-    !byte $3a                                       ; DRAW K
-    !byte $39                                       ; DRAW J
-    !byte $37                                       ; DRAW H
-    !byte $3b                                       ; DRAW L
-    !byte $31                                       ; DRAW B
-    !byte $30                                       ; DRAW A
-    !byte $32                                       ; DRAW C
-    !byte $36                                       ; DRAW G
-    !byte $37                                       ; DRAW H
-    !byte $12                                       ; MOVE C
-    !byte $34                                       ; DRAW E
-    !byte $38                                       ; DRAW I
-    !byte $1a                                       ; MOVE K
-    !byte $33                                       ; DRAW D
-    !byte $31                                       ; DRAW B
-    !byte $ff                                       ; terminator
 
 ; ***************************************************************************************
 boundaryArray
@@ -8783,6 +8748,12 @@ levelFeatureEmpty
 levelFeature5
     !byte $00                           ; [accessed in error, set to zero to avoid side-effects]
 
+; ***************************************************************************************
+cacheOffsetX
+    !byte 0, 1, 0, 1, 0, 1
+cacheOffsetY
+    !byte 0, 0, 1, 1, 2, 2
+
 
 !if (* > $3280 ) {
     !error "Code too big by ", * - $3280, " bytes"
@@ -8871,8 +8842,8 @@ playerStartYPositions
     !byte .floor * 16 + .crumble
 }
 
-!macro levelSideWallColoursConveyor .conveyor, .sideWallColour1, .sideWallColour2{
-    !byte (.sideWallColour2 * 4 + .sideWallColour1) * 16 + .conveyor
+!macro levelSideWallColoursConveyor .conveyor, .conveyorDir, .sideWallColour1, .sideWallColour2{
+    !byte (.sideWallColour2 * 4 + .sideWallColour1) * 16 + .conveyor * 2 + .conveyorDir
 }
 
 !macro levelSideWallKeySprites .sideWall, .key {
@@ -8967,27 +8938,28 @@ levelFloorCrumbleArray
 
 ; ***************************************************************************************
 levelSideWallColoursConveyorArray
-    ;                            conveyor, wall colour, wall colour
-    +levelSideWallColoursConveyor       1,           3,           1    ; level 1 - Central Cavern
-    +levelSideWallColoursConveyor       1,           3,           1    ; level 2 - The Cold Room
-    +levelSideWallColoursConveyor       2,           1,           2    ; level 3 - The Menagerie
-    +levelSideWallColoursConveyor       1,           2,           1    ; level 4 - Abandoned Uranium Workings
-    +levelSideWallColoursConveyor       2,           3,           1    ; level 5 - Eugene's Lair
-    +levelSideWallColoursConveyor       1,           3,           0    ; level 6 - Processing Plant
-    +levelSideWallColoursConveyor       0,           1,           3    ; level 7 - The Vat
-    +levelSideWallColoursConveyor       2,           1,           3    ; level 8 - Miner Willy meets the Kong Beast
-    +levelSideWallColoursConveyor       2,           3,           1    ; level 9 - Wacky Amoebatrons
-    +levelSideWallColoursConveyor       1,           2,           3    ; level 10 - The Endorian Forest
-    +levelSideWallColoursConveyor       0,           3,           1    ; level 11 - Attack of the Mutant Telephones
-    +levelSideWallColoursConveyor       2,           2,           1    ; level 12 - Return of the Alien Kong Beast
-    +levelSideWallColoursConveyor       2,           3,           1    ; level 13 - Ore Refinery
-    +levelSideWallColoursConveyor       2,           2,           0    ; level 14 - Skylab Landing Bay
-    +levelSideWallColoursConveyor       0,           3,           1    ; level 15 - The Bank
-    +levelSideWallColoursConveyor       2,           2,           3    ; level 16 - The Sixteenth Cavern
-    +levelSideWallColoursConveyor       1,           3,           1    ; level 17 - The Warehouse
-    +levelSideWallColoursConveyor       0,           3,           1    ; level 18 - Amoebatrons' Revenge
-    +levelSideWallColoursConveyor       1,           3,           0    ; level 19 - The Meteor Storm
-    +levelSideWallColoursConveyor       1,           3,           0    ; level 20 - The Final Barrier
+    ;                            conveyor, dir, wall colour, wall colour
+    +levelSideWallColoursConveyor       1,    0,       3,           1    ; level 1 - Central Cavern
+    +levelSideWallColoursConveyor       1,    1,       3,           1    ; level 2 - The Cold Room
+    +levelSideWallColoursConveyor       2,    0,       1,           2    ; level 3 - The Menagerie
+    +levelSideWallColoursConveyor       1,    1,       2,           1    ; level 4 - Abandoned Uranium Workings
+    +levelSideWallColoursConveyor       2,    0,       3,           1    ; level 5 - Eugene's Lair
+    +levelSideWallColoursConveyor       1,    0,       3,           0    ; level 6 - Processing Plant
+    +levelSideWallColoursConveyor       0,    0,       1,           3    ; level 7 - The Vat
+    +levelSideWallColoursConveyor       2,    1,       1,           3    ; level 8 - Miner Willy meets the Kong Beast
+    +levelSideWallColoursConveyor       2,    1,       3,           1    ; level 9 - Wacky Amoebatrons
+    +levelSideWallColoursConveyor       1,    0,       2,           3    ; level 10 - The Endorian Forest
+    +levelSideWallColoursConveyor       0,    0,       3,           1    ; level 11 - Attack of the Mutant Telephones
+    +levelSideWallColoursConveyor       2,    1,       2,           1    ; level 12 - Return of the Alien Kong Beast
+    +levelSideWallColoursConveyor       2,    1,       3,           1    ; level 13 - Ore Refinery
+    +levelSideWallColoursConveyor       2,    0,       2,           0    ; level 14 - Skylab Landing Bay
+    +levelSideWallColoursConveyor       0,    0,       3,           1    ; level 15 - The Bank
+    +levelSideWallColoursConveyor       2,    0,       2,           3    ; level 16 - The Sixteenth Cavern
+    +levelSideWallColoursConveyor       1,    1,       3,           1    ; level 17 - The Warehouse
+    +levelSideWallColoursConveyor       0,    0,       3,           1    ; level 18 - Amoebatrons' Revenge
+    +levelSideWallColoursConveyor       1,    1,       3,           0    ; level 19 - The Meteor Storm
+    +levelSideWallColoursConveyor       1,    0,       3,           0    ; level 20 - The Final Barrier
+
 
 ; ***************************************************************************************
 levelSideWallKeyArray
@@ -9347,7 +9319,6 @@ levelDefinitions
 
     ; floors
     +levelStrip 3, 12, 2,       0, 1
-    +levelStrip 3, 12, 2,       0, 1            ; required - to not screw up the next level?
     +levelStrip 0, 10, 1,       0, 1
     +levelStrip 1, 7, 3,        0, 1
     +levelStrip 0, 5, 3,        0, 1
@@ -9418,8 +9389,6 @@ levelDefinitions
     +levelRect 10, 4, 2, 14,    0, 3
     +levelRect 19, 4, 2, 14,    0, 3
     +levelRect 24, 4, 2, 14,    0, 3
-
-    +levelSetType 3                 ; back to conveyor [TODO: needed to terminate properly??]
 
     ; ***********************************************************************************
     ; level 10 - The Endorian Forest
@@ -9718,8 +9687,6 @@ levelDefinitions
     +levelRect 18, 5, 2, 10,    0, 3
     +levelRect 26, 5, 2, 13,    0, 3
 
-    +levelSetType 4                     ; [TODO: redundant?]
-
     ; ***********************************************************************************
     ; level 18 - Amoebatrons' Revenge
     !byte $ff, $ff
@@ -9747,8 +9714,6 @@ levelDefinitions
     +levelRect 19, 5, 2, 13,    0, 3
     +levelRect 24, 5, 2, 13,    0, 3
 
-    +levelSetType 4                     ; [TODO: redundant?]
-
     ; ***********************************************************************************
     ; level 19 - The Meteor Storm
     !byte $ff, $ff
@@ -9763,8 +9728,6 @@ levelDefinitions
     +levelStrip 22, 7, 2,       0, 1
     +levelStrip 26, 5, 4,       0, 1
     +levelStrip 27, 9, 3,       0, 1
-
-    +levelIncrementType ; [redundant]
 
     +levelSetType 2
 
@@ -9847,25 +9810,6 @@ jumpMovementArray
 ; ***************************************************************************************
 yOffsetToTitle = 11 * 4
 
-roomTitleBackground
-    ; draw yellow bar (colour 3)
-    !byte 18, 0, 3                          ; GCOL 0, 3
-    !byte 25, 4                             ;
-    !word 32*4, 400 + yOffsetToTitle        ; MOVE bottom left
-    !byte 25, 4                             ;
-    !word 1279-4*32, 400 + yOffsetToTitle   ; MOVE bottom right
-    !byte 25, $55                           ;
-    !word 32*4, 432 + yOffsetToTitle        ; TRI top left
-    !byte 25, $55                           ;
-    !word 1279-4*32, 432 + yOffsetToTitle   ; TRI top right
-    !byte 25, 4                             ;
-titleTextStartXLow = *
-titleTextStartXHigh = * + 1
-    !word 0                                 ; X coordinate for title text
-    !word 428 + yOffsetToTitle              ; Y coordinate for title text
-    !byte 18, 0, 0                          ; GCOL 0, 0
-    !byte 5                                 ; VDU 5
-roomTitleBackgroundEnd
 
 ; ***************************************************************************************
 gameOver
@@ -10738,8 +10682,6 @@ levelSingleItemDefinitions
     +singleType 2, 1        ; 2 keys [we only want one, but need at least two keys defined]
     +singlePos 15, 1        ; key
     +singlePos 15, 1        ; key [this key just overwrites the first]
-
-    +singleOffsetX15        ; [redundant]
 
     ; ***********************************************************************************
     ; level 10 - The Endorian Forest
@@ -14697,19 +14639,6 @@ levelTitles
     !byte $0d                               ; terminator
 
 ; ***************************************************************************************
-; The fixed text under the play area: "Score         Lives     Level"
-; but with the top bit being the conveyor direction for each level (for the first 20 bytes)
-fixedText
-    !text $00 + 'S', $80 + 'c', $00 + 'o', $80 + 'r', $00 + 'e'
-    !text $00 + ' ', $00 + $09, $80 + $09, $80 + $09, $00 + $09
-    !text $00 + $09, $80 + $09, $80 + ' ', $00 + ' ', $00 + 'L'
-    !text $00 + 'i', $80 + 'v', $00 + 'e', $80 + 's', $00 + ' '
-    !text $09, $09, $20, $20, "Level"
-fixedTextEnd
-
-
-
-; ***************************************************************************************
 pedestalMessage
     !byte $11, $01                  ; COLOUR 1
     !byte $1f, $13, $0f             ; TAB(19,15)
@@ -14727,12 +14656,6 @@ keysToReadEnd
 ; ***************************************************************************************
 dangerAreas
     !byte  7, 8, 9, 10, 11, 12, 0, 1, 2, 3, 4, 5, 6, 7
-
-; ***************************************************************************************
-cacheOffsetX
-    !byte 0, 1, 0, 1, 0, 1
-cacheOffsetY
-    !byte 0, 0, 1, 1, 2, 2
 
 ; ***************************************************************************************
 gameOverMessage
@@ -14807,6 +14730,195 @@ cheatCode
     !byte $41, $62, $51, $22, $52, $33, $22, $23
 cheatCodeEnd
 
+; ***************************************************************************************
+soundFrequenciesFirst
+    !byte $80 + 1012 % 16   ; 0   1012  B2
+    !byte $80 +  956 % 16   ; 1    956  C3
+    !byte $80 +  902 % 16   ; 2    902  C#3
+    !byte $80 +  851 % 16   ; 3    851  D3
+    !byte $80 +  804 % 16   ; 4    804  D#3
+    !byte $80 +  758 % 16   ; 5    758  E3
+    !byte $80 +  716 % 16   ; 6    716  F3
+    !byte $80 +  676 % 16   ; 7    676  F#3
+    !byte $80 +  638 % 16   ; 8    638  G3
+    !byte $80 +  602 % 16   ; 9    602  G#3
+    !byte $80 +  568 % 16   ; 10   568  A3
+    !byte $80 +  536 % 16   ; 11   536  A#3
+    !byte $80 +  506 % 16   ; 12   506  B3
+    !byte $80 +  478 % 16   ; 13   478  C4
+    !byte $80 +  451 % 16   ; 14   451  C#4
+    !byte $80 +  426 % 16   ; 15   426  D4
+    !byte $80 +  402 % 16   ; 16   402  D#4
+    !byte $80 +  379 % 16   ; 17   379  E4
+    !byte $80 +  358 % 16   ; 18   358  F4
+    !byte $80 +  338 % 16   ; 19   338  F#4
+    !byte $80 +  319 % 16   ; 20   319  G4
+    !byte $80 +  301 % 16   ; 21   301  G#4
+    !byte $80 +  284 % 16   ; 22   284  A4
+    !byte $80 +  268 % 16   ; 23   268  A#4
+    !byte $80 +  253 % 16   ; 24   253  B4
+    !byte $80 +  239 % 16   ; 25   239  C5
+    !byte $80 +  225 % 16   ; 26   225  C#5
+    !byte $80 +  213 % 16   ; 27   213  D5
+    !byte $80 +  201 % 16   ; 28   201  D#5
+    !byte $80 +  190 % 16   ; 29   190  E5
+    !byte $80 +  179 % 16   ; 30   179  F5
+    !byte $80 +  169 % 16   ; 31   169  F#5
+    !byte $80 +  159 % 16   ; 32   159  G5
+    !byte $80 +  150 % 16   ; 33   150  G#5
+    !byte $80 +  142 % 16   ; 34   142  A5
+    !byte $80 +  134 % 16   ; 35   134  A#5
+    !byte $80 +  127 % 16   ; 36   127  B5
+    !byte $80 +  119 % 16   ; 37   119  C6
+    !byte $80 +  113 % 16   ; 38   113  C#6
+    !byte $80 +  106 % 16   ; 39   106  D6
+    !byte $80 +  100 % 16   ; 40   100  D#6
+    !byte $80 +   95 % 16   ; 41    95  E6
+    !byte $80 +   89 % 16   ; 42    89  F6
+    !byte $80 +   84 % 16   ; 43    84  F#6
+    !byte $80 +   80 % 16   ; 44    80  G6
+    !byte $80 +   75 % 16   ; 45    75  G#6
+    !byte $80 +   71 % 16   ; 46    71  A6
+    !byte $80 +   67 % 16   ; 47    67  A#6
+    !byte $80 +   63 % 16   ; 48    63  B6
+    !byte $80 +   60 % 16   ; 49    60  C7
+    !byte $80 +   56 % 16   ; 50    56  C#7
+
+soundFrequenciesSecond
+    !byte 1012 / 16         ; 0   1012  B2
+    !byte  956 / 16         ; 1    956  C3
+    !byte  902 / 16         ; 2    902  C#3
+    !byte  851 / 16         ; 3    851  D3
+    !byte  804 / 16         ; 4    804  D#3
+    !byte  758 / 16         ; 5    758  E3
+    !byte  716 / 16         ; 6    716  F3
+    !byte  676 / 16         ; 7    676  F#3
+    !byte  638 / 16         ; 8    638  G3
+    !byte  602 / 16         ; 9    602  G#3
+    !byte  568 / 16         ; 10   568  A3
+    !byte  536 / 16         ; 11   536  A#3
+    !byte  506 / 16         ; 12   506  B3
+    !byte  478 / 16         ; 13   478  C4
+    !byte  451 / 16         ; 14   451  C#4
+    !byte  426 / 16         ; 15   426  D4
+    !byte  402 / 16         ; 16   402  D#4
+    !byte  379 / 16         ; 17   379  E4
+    !byte  358 / 16         ; 18   358  F4
+    !byte  338 / 16         ; 19   338  F#4
+    !byte  319 / 16         ; 20   319  G4
+    !byte  301 / 16         ; 21   301  G#4
+    !byte  284 / 16         ; 22   284  A4
+    !byte  268 / 16         ; 23   268  A#4
+    !byte  253 / 16         ; 24   253  B4
+    !byte  239 / 16         ; 25   239  C5
+    !byte  225 / 16         ; 26   225  C#5
+    !byte  213 / 16         ; 27   213  D5
+    !byte  201 / 16         ; 28   201  D#5
+    !byte  190 / 16         ; 29   190  E5
+    !byte  179 / 16         ; 30   179  F5
+    !byte  169 / 16         ; 31   169  F#5
+    !byte  159 / 16         ; 32   159  G5
+    !byte  150 / 16         ; 33   150  G#5
+    !byte  142 / 16         ; 34   142  A5
+    !byte  134 / 16         ; 35   134  A#5
+    !byte  127 / 16         ; 36   127  B5
+    !byte  119 / 16         ; 37   119  C6
+    !byte  113 / 16         ; 38   113  C#6
+    !byte  106 / 16         ; 39   106  D6
+    !byte  100 / 16         ; 40   100  D#6
+    !byte   95 / 16         ; 41    95  E6
+    !byte   89 / 16         ; 42    89  F6
+    !byte   84 / 16         ; 43    84  F#6
+    !byte   80 / 16         ; 44    80  G6
+    !byte   75 / 16         ; 45    75  G#6
+    !byte   71 / 16         ; 46    71  A6
+    !byte   67 / 16         ; 47    67  A#6
+    !byte   63 / 16         ; 48    63  B6
+    !byte   60 / 16         ; 48    60  C7
+    !byte   56 / 16         ; 48    56  C#7
+
+spriteToDraw
+    !byte $e0, $e1, $e8, $e9
+    !byte $f1, $f0, $f9, $f8
+
+    ; A Penrose triangle as encoded PLOT statements
+    ;
+    ;                           L
+    ;                           ###  H
+    ;                        #######|
+    ;                     #######||||
+    ;                  #######|||||||
+    ;               #######||||||E|||
+    ;            #######||||||"""||||
+    ;         #######|||||| F""""||||
+    ;    B ######J||||||     """"||||
+    ;     """#######|I       """"||||
+    ;    A""""""#######      """"||||
+    ;       """""""#######   """"||||
+    ;          """""""######K""""||||
+    ;             """""""####""""||||
+    ;                """""""D""""||||
+    ;                   """""""""||||
+    ;                      """"""||||
+    ;                         """||| G
+    ;                            C
+
+penOffsetX = 0
+penOffsetY = 3
+
+penroseCoordinates
+    !byte $12 + penOffsetX, $ac + penOffsetY   ; A = 0
+    !byte $12 + penOffsetX, $b8 + penOffsetY   ; B = 1
+    !byte $78 + penOffsetX, $79 + penOffsetY   ; C = 2
+    !byte $6c + penOffsetX, $8b + penOffsetY   ; D = 3
+    !byte $78 + penOffsetX, $d3 + penOffsetY   ; E = 4
+    !byte $6c + penOffsetX, $cc + penOffsetY   ; F = 5
+    !byte $83 + penOffsetX, $7f + penOffsetY   ; G = 6
+    !byte $83 + penOffsetX, $e4 + penOffsetY   ; H = 7
+    !byte $37 + penOffsetX, $b3 + penOffsetY   ; I = 8
+    !byte $2c + penOffsetX, $b8 + penOffsetY   ; J = 9
+    !byte $6c + penOffsetX, $98 + penOffsetY   ; K = 10
+    !byte $77 + penOffsetX, $ea + penOffsetY   ; L = 11
+
+penroseTriangle
+    ; commands:
+    ; $0C = GCOL 0,C
+    ; $1P = move P
+    ; $2P = tri P
+    ; $3P = draw P
+    ; $ff = terminator
+    !byte $01                                       ; GCOL 0,1
+    !byte $10                                       ; MOVE A
+    !byte $11                                       ; MOVE B
+    !byte $22                                       ; TRI C
+    !byte $23                                       ; TRI D
+    !byte $24                                       ; TRI E
+    !byte $25                                       ; TRI F
+    !byte $02                                       ; GCOL 0,2
+    !byte $12                                       ; MOVE C
+    !byte $16                                       ; MOVE G
+    !byte $24                                       ; TRI E
+    !byte $27                                       ; TRI H
+    !byte $28                                       ; TRI I
+    !byte $29                                       ; TRI J
+    !byte $03                                       ; GCOL 0,3
+    !byte $15                                       ; MOVE F
+    !byte $3a                                       ; DRAW K
+    !byte $39                                       ; DRAW J
+    !byte $37                                       ; DRAW H
+    !byte $3b                                       ; DRAW L
+    !byte $31                                       ; DRAW B
+    !byte $30                                       ; DRAW A
+    !byte $32                                       ; DRAW C
+    !byte $36                                       ; DRAW G
+    !byte $37                                       ; DRAW H
+    !byte $12                                       ; MOVE C
+    !byte $34                                       ; DRAW E
+    !byte $38                                       ; DRAW I
+    !byte $1a                                       ; MOVE K
+    !byte $33                                       ; DRAW D
+    !byte $31                                       ; DRAW B
+    !byte $ff                                       ; terminator
 
 !if * > $7fa0 {
     !error "space is wrong, ", *

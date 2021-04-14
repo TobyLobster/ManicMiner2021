@@ -424,26 +424,25 @@ initialize
     sta 0,x                                 ;
     bne -                                   ;
 
+    jsr pauseMusic                          ;
+    jsr resetMusic                          ;
+
     ; initialize variables
     lda #$ff                                    ;
     sta horizontalGuardianPositionsTerminator   ;
-    sta musicCounterLow                         ;
-    sta musicCounterHigh                        ;
     sta rasterArea                          ;
-    sta channel2Frequency                   ;
-    sta previousNoteByte                    ;
-    sta musicEnabled                        ;
-    lda #200                                ;
-    sta currentNoteTimePlayed               ;
-    lda #0
 !ifdef optionMusicOff {
-    sta musicEnabled                        ;
+    lda #0                                  ;
+} else {
+    lda #255                                ;
 }
+    sta musicEnabled                        ;
 !ifdef optionCheatOn {
     lda #1                                  ;
+} else {
+    lda #0
 }
     sta cheatModeEnabled                    ;
-    jsr pauseMusic                          ;
 
     ; install irq code
     sei
@@ -2064,6 +2063,9 @@ spriteEnd
 
 ; ***************************************************************************************
 resetMusic
+    lda #10                     ;
+    sta musicTempo              ;
+resetMusicNotTempo
     lda #<music                 ;
     sta musicCounterLow         ;
     lda #>music                 ;
@@ -2072,7 +2074,6 @@ resetMusic
     lda #$ff                    ;
     sta channel2Frequency       ;
     sta previousNoteByte        ;
-    sta musicEnabled            ;
     sta volumeIndex             ;
 
     lda #200                    ;
@@ -3989,23 +3990,18 @@ finishedCrashingSkylab
 
 ; ***************************************************************************************
 getSkylabAnimationIndex
+    ldy #0                          ;
     lda currentGuardianY            ;
     cmp #$48                        ;
     beq setYZero                    ;
     cmp #$38                        ;
     beq setYOne                     ;
 
-    ldy #2                          ;
-    rts                             ;
-
-; ***************************************************************************************
-setYZero
-    ldy #0                          ;
-    rts                             ;
-
-; ***************************************************************************************
+    ; set Y = 2
+    iny                             ;
 setYOne
-    ldy #1                          ;
+    iny                             ;
+setYZero
     rts                             ;
 
 ; ***************************************************************************************
@@ -4020,40 +4016,27 @@ guardianXTooBig
 getSkylabSprite
     jsr getSkylabAnimationIndex     ;
     lda guardianSpriteOffsets,y     ;
+    sec                             ;
+    sbc #4                          ;
     cmp #4                          ;
-    beq setSkylabSprite4            ;
-    cmp #5                          ;
-    beq setSkylabSprite5            ;
-    cmp #6                          ;
-    beq setSkylabSprite6            ;
-    lda #>verticalGuardianMODE1Address  ;
-    sta plotSourceSpriteAddressHigh     ;
-    rts                                 ;
-
-; ***************************************************************************************
-setSkylabSprite4
-    lda #<skylab4Sprite             ;
+    bcc +                           ;
+    lda #3                          ;
++
+    tax                             ;
+    lda skylabSpriteArrayHigh, x    ;
+    sta plotSourceSpriteAddressHigh ; set sprite address
+    cpx #3                          ;
+    beq +                           ;
+    lda skylabSpriteArrayLow, x     ;
     sta plotSourceSpriteAddressLow  ; set sprite address
-    lda #>skylab4Sprite             ;
-    sta plotSourceSpriteAddressHigh ;
++
     rts                             ;
 
 ; ***************************************************************************************
-setSkylabSprite5
-    lda #<skylab5Sprite             ;
-    sta plotSourceSpriteAddressLow  ; set sprite address
-    lda #>skylab5Sprite             ;
-    sta plotSourceSpriteAddressHigh ;
-    rts                             ;
-
-; ***************************************************************************************
-setSkylabSprite6
-    lda #<blankAreaOfScreen         ;
-    sta plotSourceSpriteAddressLow  ; set sprite address (area to the right of screen that is blank)
-    lda #>blankAreaOfScreen         ;
-    sta plotSourceSpriteAddressHigh ;
-    rts                             ;
-
+skylabSpriteArrayLow
+    !byte <skylab4Sprite, <skylab5Sprite, <blankAreaOfScreen, <verticalGuardianMODE1Address
+skylabSpriteArrayHigh
+    !byte >skylab4Sprite, >skylab5Sprite, >blankAreaOfScreen, >verticalGuardianMODE1Address
 
 ; ***************************************************************************************
 copyVerticalGuardianIntoMODE1Format
@@ -4957,16 +4940,7 @@ deathJumper2
     jmp death                       ;
 
 ; ***************************************************************************************
-drawFooterText
-    lda #$60                        ;
-    sta drawFooterTextOrReturn      ; Store opcode for RTS
-    jsr drawRoomName                ;
-    jmp drawScoreLevelLives         ;
-
-; ***************************************************************************************
 resetLevel19Meteors
-    lda #$20                        ; }
-    sta drawFooterTextOrReturn      ; } store opcode for JSR
     lda #8                          ;
     sta meteorXCoordinate           ;
     lda #$ff                        ;
@@ -5025,10 +4999,8 @@ resetVerticalSprites
     jmp copyVerticalSprites         ;
 
 ; ***************************************************************************************
-drawFooterTextOrReturn
-    jsr drawFooterText              ;
-
-drawScoreLevelLives
+drawFooterText
+    jsr drawRoomName                ;
     lda currentLevel                ;
     cmp #10                         ; level 10 - The Endorian Forest
     bne nonLevel10                  ;
@@ -5047,29 +5019,6 @@ nonLevel10
     lda #255
     sta conveyorDirection           ; direction = $ff
 +
-    lda $71                         ;
-    clc                             ;
-    adc #5                          ;
-    sta conveyorX                   ;
-
-    lda $72                         ;
-    and #$1f                        ;
-    clc                             ;
-    adc #1                          ;
-    sta conveyorY                   ;
-
-    lda $73                         ;
-    and #$1f                        ;
-    sta conveyorLength              ;
-
-    lda $73                         ;
-    asl                             ;
-    rol                             ;
-    rol                             ;
-    and #3                          ;
-    tax                             ;
-    lda maskColourTable, x          ;
-    sta conveyorColour              ;
 
 drawFixedString
     ; draw fixed text below play area
@@ -5965,8 +5914,6 @@ commandDrawHorizontalStrip
     beq setColourAndDrawLevel14Platform ;
 
 setColourAndDrawPlatform
-drawPlatform
-
     lda $71                             ;
     clc                                 ;
     adc #5                              ; TAB($71 + 5, $72 + 1)
@@ -6002,25 +5949,50 @@ drawPlatform
     jsr OSWRCH                          ; [replace with cellPlot?]
     dey                                 ;
     bne -                               ;
+
+    ; check for conveyor feature
     lda currentLevelFeatureIndex        ;
     cmp #3                              ;
+    bne restoreBackgroundColour         ;
+
+    lda currentLevel                    ;
+    cmp #10                             ; level 10 specific, don't set ladder character
     beq +                               ;
+
+    ; non level 10
+    lda #$96                            ; Set to ladder sprite ('T')
+    sta levelFeatureConveyorOrLadder    ;
+
++
+    ; remember conveyor details
+    lda $71                             ;
+    clc                                 ;
+    adc #5                              ;
+    sta conveyorX                       ;
+
+    lda $72                             ;
+    and #$1f                            ;
+    clc                                 ;
+    adc #1                              ;
+    sta conveyorY                       ;
+
+    lda $73                             ;
+    and #$1f                            ;
+    sta conveyorLength                  ;
+
+    lda $73                             ;
+    asl                                 ;
+    rol                                 ;
+    rol                                 ;
+    and #3                              ;
+    tax                                 ;
+    lda maskColourTable, x              ;
+    sta conveyorColour                  ;
 
 restoreBackgroundColour
     lda #128                            ;
     jsr setTextColour                   ;
     rts                                 ;
-
-+
-    lda currentLevel                    ;
-    cmp #10                             ; level 10 specific feature
-    beq +                               ;
-    lda #$96                            ; Set to ladder sprite ('T')
-    sta levelFeatureConveyorOrLadder    ;
-
-+
-    jsr restoreBackgroundColour         ;
-    jmp drawFooterTextOrReturn          ;
 
 ; ***************************************************************************************
 drawSideWallsAndFloor
@@ -6251,6 +6223,8 @@ updateChannel3
     ; parse music byte
     cmp #$ff                        ;
     beq finishTune                  ; if (end of tune) then branch
+    cmp #$fe                        ;
+    beq upTempoAndRepeat            ;
     cmp previousNoteByte            ;
     beq updateMusicVolume           ; if (same as previous note) then branch
     sta previousNoteByte            ;
@@ -6282,21 +6256,26 @@ updateChannel3
     jmp updateMusicVolume           ;
 
 finishTune
-    jsr resetMusic                  ;
+    jsr resetMusicNotTempo          ;
     dec musicTempo                  ;
     lda musicTempo                  ;
     cmp #7                          ;
-    bne +                           ;
-    lda #10                         ;
+    bcs +                           ;
+    lda #8                          ;
     sta musicTempo                  ;
 +
     rts                             ;
 
+upTempoAndRepeat
+    lda musicTempo                  ;
+    cmp #10                         ;
+    beq finishTune                  ; repeat tune
+    dec musicTempo                  ; continue faster
+    jmp updateChannel3              ;
 
 quietChannel3
     lda #$9f                        ;
     jmp soundDirect                 ; set zero volume on channel 3
-
 
 ; ***************************************************************************************
 ; send a byte to the sound chip (as seen in the advanced user guide)
@@ -6729,24 +6708,15 @@ getLevelDataByte
     rts                                 ;
 
 ; ***************************************************************************************
-level18Thing
-    jsr drawFooterTextOrReturn          ;
-    jmp afterLevel18Thing               ;
-
-; ***************************************************************************************
 decodeSingleItemData
     lda #0                                  ;
     sta keyPositionCounter                  ;
-    lda #>(levelSingleItemDefinitions - 1)  ;
-    sta getLevelDataByte + 2                ;
-    lda currentLevel                        ;
-    cmp #18                                 ;
-    beq level18Thing                        ;
-afterLevel18Thing
-    lda #0                                  ;
     sta decodeLevelByte                     ;
+
     lda #<(levelSingleItemDefinitions - 1)  ;
     sta getLevelDataByte + 1                ;
+    lda #>(levelSingleItemDefinitions - 1)  ;
+    sta getLevelDataByte + 2                ;
 
 skipToTerminator
     jsr incrementLevelDataPointer       ;
@@ -7094,6 +7064,7 @@ scanForControl
     inc readRoomNameCharacterLow    ;
     bne +                           ;
     inc readRoomNameCharacterHigh   ;
++
     jmp scanForControl              ;
 
 foundControlCharacter
@@ -7343,7 +7314,7 @@ pauseMusic
     jmp soundDirect                         ; silence sound channel 3
 
 updateMusicState
-    jsr resetMusic                          ;
+    jsr resetMusicNotTempo                  ;
     lda musicEnabled                        ;
     beq pauseMusic                          ;
     jmp resumeMusic                         ;
@@ -7625,6 +7596,7 @@ reachedExit
     lda #$20                        ;
     sta opcodeForJsrPlot            ; set opcode 'JSR abs'
     jsr pauseMusic                  ;
+    jsr resetMusic                  ;
     lda #0                          ;
     sta keyCounter                  ;
 
@@ -7669,6 +7641,7 @@ drawInitialAirMeter
 
     jsr showScoreAndResetVerticalGuardians  ;
     jsr decodeSingleItemData                ;
+    jsr drawFooterText              ;
 
     ; show 'AIR' message
     ldx #0                          ; loop counter
@@ -8067,6 +8040,7 @@ delayOuterLoop
 ; ***************************************************************************************
 death
     jsr pauseMusic                  ;
+    jsr resetMusic                  ;
 
     lda #$01                        ; }
     ldx #$c8                        ; } Play death sound
@@ -8392,6 +8366,8 @@ music
     !byte  0,   2,  3,  5,  $80 +  7,  3,   7,7,   $80 +  6,   2,   6,6,  $80 +  5,   1,  5, 5
     ;     B2, C#3, D3, E3,       F#3, D3, F#3,           B3, F#3,  D3,         F#3,  B3, B2
     !byte  0,   2,  3,  5,         7,  3,   7,           12,   7,   3,           7,  12,  $80 + 0, $80 + 0, $80 + 0, $80 + 0
+
+    !byte $fe   ; up the tempo and repeat
 
     ;     B2,        G#6,       A6,      A#6,  B6,                     B2,        G#6,       A6,      A#6, B6
     !byte  0,0, $40 + 45, $40 + 46, $40 + 47,  $40 + 48, 48,48,48,      0,0, $40 + 45, $40 + 46, $40 + 47, $40 + 48,48,48,48

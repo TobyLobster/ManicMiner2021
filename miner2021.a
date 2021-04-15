@@ -348,7 +348,7 @@ currentVerticalGuardians1       = $139      ; } first guardian y
 currentVerticalGuardians2       = $13a      ; } first guardian y extent 1
 currentVerticalGuardians3       = $13b      ; } first guardian y extent 2
 
-verticalGuardian2
+verticalGuardian2               = $13c      ; start of second vertical guardian
 currentVerticalGuardians4       = $13c      ; } second guardian x
 currentVerticalGuardians5       = $13d      ; } second guardian y
 currentVerticalGuardians6       = $13e      ; } second guardian y extent 1
@@ -4975,6 +4975,27 @@ showTitleScreenMessageAndWaitForRETURN
     lda #0                          ;
     sta $71                         ;
 waitForKeyPressDelayLoop
+
+;    lda #19
+;    jsr OSBYTE
+;
+;    lda #2                          ;
+;    ldx #100                        ;
+;    ldy #80                         ;
+;    jsr plot                        ; erase a thing
+;
+;    lda #$f0                        ;
+;    sta plotColourMask              ; plot colour
+;    lda #<willyRight0               ;
+;    sta plotSourceSpriteAddressLow  ;
+;    lda #>willyRight0               ;
+;    sta plotSourceSpriteAddressHigh ;
+;    lda #6                          ;
+;    ldx #100                        ;
+;    ldy #80                         ;
+;    jsr plot                        ; plot a thing
+
+
     ldx #keyCodeRETURN              ; }
     jsr isKeyPressed                ; } is RETURN pressed
     beq startGameJumper             ; if (RETURN pressed) then branch
@@ -13985,6 +14006,7 @@ kongBeastSprite
     !byte %#.#.#.##
     !byte %########
 
+triangle0
     !byte %........            ;            ###
     !byte %........            ;          ##  ##
     !byte %........            ;        ##   # #

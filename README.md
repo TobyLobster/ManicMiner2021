@@ -8,16 +8,16 @@ Having recently completely disassembled Manic Miner [https://github.com/TobyLobs
 
 - Fast
 - Flicker free player movement
+- Fixes to cavern layouts, graphics, and colours
+- Better air bar and colours
 - Better collision detection
-- Better screen layout and colours
 - Better music
-- Fixes to cavern layouts and colours, and graphics.
--
-
+- 'GAME    OVER' added
+- Master compatible
 
 # What I did
 
-The first job was to gather the code into one source file as the original was split over multiple files that called each other back and forth. I also added a short loader program to load and copy memory around before running. (I wanted to keep the game running at all times because it's way too easy to introduce bugs in this process, so having a running game means I find and fix them faster).
+The first job was to gather the code into one source file as the original was split over multiple files that called each other back and forth. I also added a short loader program to load and copy memory around before execution. My goal throughout was to keep the game running at all times because it's way too easy to introduce bugs in this process, so having a running game means I find and fix them faster.
 
 I could see there wasn't much memory available so I started making various optimisations for space. I removed the latent copy protection code, removed the redundant delay loop, shortened the code that draw the title screen (adding a better Penrose triangle while I was there).
 
@@ -86,7 +86,7 @@ I set up a timer that interrupts as the electron beam reaches every third charac
 
 The original code used an Event (timed with the vertical sync) to update the music and some sound effects. I now use my new timer based interrupt to do these same jobs instead.
 
-I make more space by putting the Foot sprite into the (formerly unused) printer buffer. I also shorten code that copies sprites for the current level into the user defined characters at $0c00-$0cff.
+I make more space by putting the 'foot' sprite into the (formerly unused) printer buffer. I also shorten code that copies sprites for the current level into the user defined characters at $0c00-$0cff.
 
 Now some gameplay: Miner Willy falls much slower on the BBC version (2 pixels per frame) compared to the Spectrum original (4 pixels per frame), so I reinstated the correct falling speed. The air runs out much faster on the original BBC version, so I made the air depletion rate much closer to the Spectrum version.
 
@@ -124,7 +124,7 @@ I've moved the initialisation code to $0400. This code only ever executes once o
 
 The look of the title screen has been tidied up, and now also displays the high score.
 
-Somewhere around this point I did a pass looking through the levels comparing them to the original Spectrum version to make sure they had the right colours and graphics. This also involved adding the ability to set individual colours for strips and single items in a level. We are still constrained by the limit of only four colours in the play area, but we do pretty nicely within that. This would be the first of several passes where I would find more tweaks, such as The Sixteenth Carven's definition was wrong with the right hand side of the screen moved one cell too far right. This is now fixed. The player start positions are corrected (e.g. level 16 again), and the horizontal guardians now have the correct start positions and extents to match the Spectrum.
+Somewhere around this point I did a pass looking through the levels comparing them to the original Spectrum version to make sure they had the right colours and graphics. This also involved adding the ability to set individual colours for strips and single items in a level. We are still constrained by the limit of only four colours in the play area, but we do pretty nicely within that. This would be the first of several passes where I would find more tweaks, such as The Sixteenth Carven's layout was wrong with the right hand side of the screen moved one cell too far right. This is now fixed. The player start positions are corrected (e.g. level 16 again), and the horizontal guardians now have the correct start positions and extents to match the Spectrum.
 
 I had a go at adding true pixel based collision code, but it was too complex, large and slow. So I compromised. I now do collision with octagonal boxes - boxes with the corners chopped off to a greater or smaller extent for each guardian. This proved to be pretty good in practice, and certainly an improvement over the original BBC version (box collision).
 

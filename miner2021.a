@@ -10848,7 +10848,7 @@ levelSingleItemDefinitions
     +singleOffsetX15
     +singlePos 0, 13        ; key
     +singlePos 2, 8         ; key
-    +singlePos 4, 1         ; key
+    +singlePos 5, 1         ; key
     +singlePos 13, 11       ; key
 
     +singlePos 6, 6         ; thorn

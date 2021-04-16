@@ -111,7 +111,7 @@ By this time The Central Cavern (being a relatively simple level with only one g
 
 The walls are 'filled in' as per the Spectrum now (e.g. in Central Cavern they are yellow and red rather then yellow and black)
 
-More memory was recovered by moving lots of variables zero page. Each time any variable is accessed they use up one less byte now. Further variables moved to page one. I saved more memory by having a 'printFollowingMessage':
+More memory was recovered by moving lots of variables to zero page. Each time any variable is accessed they use up one less byte now. Further variables moved to page one. I saved more memory by having a 'printFollowingMessage':
 
     ... some code ...
     jsr printFollowingMessage

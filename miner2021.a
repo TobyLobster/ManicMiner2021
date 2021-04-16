@@ -10030,19 +10030,21 @@ checkCollisionForOneGuardian
     sbc #1                              ;
 +
     sta collisionGuardianX              ;
-    ; debug
+
+!ifdef debugPixelCollision {
 ;    jsr debugDrawVerticalLine           ;
 ;    clc                                 ;
 ;    adc #11                             ; average guardian width
 ;    jsr debugDrawVerticalLine           ;
 ;    sec                                 ;
 ;    sbc #11                             ;
+}
 
 collisionLimit2 = * + 1
     cmp #$ff                            ;
     bcs return8                         ;
     clc                                 ;
-    adc #11                             ; average guardian width
+    adc #10                             ; average guardian width
 collisionLimit1 = * + 1
     cmp #$ff                            ;
     bcc return8                         ;

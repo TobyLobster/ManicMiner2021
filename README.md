@@ -13,7 +13,7 @@ Having recently completely disassembled Manic Miner [https://github.com/TobyLobs
 - Fixed the shape of the jump to match the Spectrum
 - Better collision detection
 - Better music
-- Highscore is shown
+- High Score is shown
 - 'GAME    OVER' added
 - Master compatible
 

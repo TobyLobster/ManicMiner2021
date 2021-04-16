@@ -2699,17 +2699,17 @@ movingWithConveyor
 checkForJump
     ldx #keyCodeRETURN                      ; }
     jsr isKeyPressed                        ; } is RETURN pressed
-    bne cancelJump                          ; if (return not pressed) then branch (no jump)
+    bne cancelMove                          ; if (return not pressed) then branch (no jump)
 
     ; handle jump
     lda willyJustLandedOnConveyor           ;
-    bne cancelJump                          ;
+    bne cancelMove                          ;
     lda willyFalling                        ;
-    bne cancelJump                          ;
+    bne cancelMove                          ;
     jmp checkForWallOnJump                  ;
 
 ; ***************************************************************************************
-cancelJump
+cancelMove
     lda #0                                  ;
     sta willyDeltaX                         ;
     sta playerYNegativeOffsetWithinCell     ;
@@ -2721,9 +2721,7 @@ cancelJump
 
 ; ***************************************************************************************
 +
-;    jsr updateAirAndCheckExit       ;
-    jsr drawConveyor                    ;
-    jmp updatePlayerWithAnimation       ;
+    jmp updateConveyorAndPlayer         ;
 
 ; ***************************************************************************************
 checkForWallOnJump
@@ -2737,10 +2735,10 @@ checkForWallOnJump
     jsr readTwoCharactersFromScreen     ; read the two characters immediately higher on screen than the player
     lda screenCharacterA                ;
     cmp #$8f                            ;
-    beq foundWallSoCancelJump           ; if (wall) then branch
+    beq foundWallSoCancelMove           ; if (wall) then branch
     lda screenCharacterB                ;
     cmp #$8f                            ;
-    beq foundWallSoCancelJump           ; if (wall) then branch
+    beq foundWallSoCancelMove           ; if (wall) then branch
 
     ; start jump
     lda #1                              ;
@@ -2752,8 +2750,8 @@ checkForWallOnJump
     jmp handleJumping                   ;
 
 ; ***************************************************************************************
-foundWallSoCancelJump
-    jmp cancelJump                      ;
+foundWallSoCancelMove
+    jmp cancelMove                      ;
 
 ; ***************************************************************************************
 checkIfBlockedLeftOrRight
@@ -2788,10 +2786,7 @@ onCellFloor
 
     ; handle being blocked to the left
     ; add one back onto the new X position
-    lda newPlayerPixelX                 ;
-    clc                                 ;
-    adc #1                              ;
-    sta newPlayerPixelX                 ;
+    inc newPlayerPixelX                 ;
     lda #0                              ;
     sta willyDeltaX                     ;
     jmp updateNewPlayerY                ;
@@ -2811,10 +2806,7 @@ onCellFloor
 
     ; handle being blocked to the right
     ; subtract one for the new X position
-    lda newPlayerPixelX                 ;
-    sec                                 ;
-    sbc #1                              ;
-    sta newPlayerPixelX                 ;
+    dec newPlayerPixelX                 ;
     lda #0                              ;
     sta willyDeltaX                     ;
     jmp updateNewPlayerY                ;
@@ -2892,6 +2884,15 @@ isInDangerArea
     rts                                 ;
 
 ; ***************************************************************************************
+plotPlayerAtNewPosition
+    jsr getPlayerSourceSpriteAddress    ;
+
+    ldx newPlayerPixelX                 ;
+    ldy newPlayerPixelY                 ;
+    lda #1                              ;
+    jmp plot                            ; draw player (plot mode 1)
+
+; ***************************************************************************************
 updateConveyorAndPlayer
 
     ; if in danger area, wait
@@ -2914,20 +2915,11 @@ updateConveyorAndPlayer
     ldy newPlayerPixelY                 ; }
     lda #1                              ; }
     jsr readOrWriteCachedBackground     ; } cache new background
-    ; fall through...
 
-; ***************************************************************************************
-updatePlayerWithAnimation
 !ifdef debugPixelCollision {
 rts
 }
-    jsr getPlayerSourceSpriteAddress    ;
-
-    ldx newPlayerPixelX                 ;
-    ldy newPlayerPixelY                 ;
-    lda #1                              ;
-opcodeForJsrPlot
-    jsr plot                            ; draw player (plot mode 1)
+    jsr plotPlayerAtNewPosition         ;
 
 ;    lda #7
 ;    jsr debugChangePalette
@@ -2989,7 +2981,7 @@ checkSpikeKeySwitch
     dec cursorX                                     ;
     lda screenCharacterA                            ; first character
     jsr checkForSpikeKeySwitchCollisions            ;
-    inc cursorX
+    inc cursorX                                     ;
     lda screenCharacterB                            ; second character
     jmp checkForSpikeKeySwitchCollisions            ;
 
@@ -3086,6 +3078,7 @@ keyCollisionFound
 
     jmp keyTaken                ;
 
+; ***************************************************************************************
 switchCollisionFound
     ldx cursorX                     ; }
     stx textCursorX                 ; } record current position
@@ -3211,7 +3204,7 @@ foundConveyor
 ; ***************************************************************************************
 handleJumping
     lda jumpPhase                   ;
-    cmp #17                         ;
+    cmp #18                         ;
     bcc updatePlayerWhenJumping     ; if (jumping) then branch
     jmp updatePlayerWhenSupported   ; falling
 
@@ -3251,7 +3244,7 @@ hitWall
     lda jumpPhase                   ;
     cmp #9                          ;
     bcs updateInAir                 ;
-    lda #17                         ;
+    lda #18                         ;
     sec                             ;
     sbc jumpPhase                   ;
     sta jumpPhase                   ;
@@ -3262,7 +3255,7 @@ updateInAir
     and #7                          ;
     bne updateJump                  ;
     lda jumpPhase                   ;
-    cmp #8                          ;
+    cmp #9                          ;
     bcc updateJump                  ;
 
     lda playerPixelX                ;
@@ -7611,11 +7604,7 @@ drawExitCell
 
 ; ***************************************************************************************
 reachedExit
-    lda #$4c                        ;
-    sta opcodeForJsrPlot            ; set opcode 'JMP abs'
-    jsr updatePlayerWithAnimation   ;
-    lda #$20                        ;
-    sta opcodeForJsrPlot            ; set opcode 'JSR abs'
+    jsr plotPlayerAtNewPosition     ;
     jsr pauseMusic                  ;
     jsr resetMusic                  ;
     lda #0                          ;
@@ -8412,7 +8401,10 @@ music
     !byte $40 + 45, $40 + 46, $40 + 47,  48,48,48,48,48
 
     ;     B2, B3, B2, B3, B2,  B3
-    ;!byte  0, 12,  0, 12,  0,  12
+    !byte $40 +  0,  $40 + $80 + 0, $40 +  0,  $40 + $80 + 0, $40 +  0,  $40 +  $80 + 0
+    !byte $40 +  0,  $40 + $80 + 0, $40 +  0,  $40 + $80 + 0, $40 +  0,  $40 +  $80 + 0
+    !byte $40 +  0,  $40 + $80 + 0, $40 +  0,  $40 + $80 + 0, $40 +  0,  $40 +  $80 + 0
+    !byte $40 +  0,  $40 + $80 + 0, $40 +  0,  $40 + $80 + 0, $40 +  0,  $40 +  $80 + 0
 
     ;     B2,        G#6,       A6,      A#6,  B6
     !byte  0,0, $80 + $40 + 45, $80 + $40 + 46, $80 + $40 + 47,  $80 + 48,$80 + 48,$80 + 48,$80 + 48
@@ -9802,7 +9794,7 @@ meteorLandingYCell
 ; ***************************************************************************************
     ; vertical movements at each stage of a jump
 jumpMovementArray
-    !byte $04, $04, $03, $03, $02, $02, $01, $00, $00, $00, $ff, $fe, $fe, $fd, $fd, $fc, $fc
+    !byte $04, $04, $03, $03, $02, $02, $01, $01, $00, $00, $ff, $ff, $fe, $fe, $fd, $fd, $fc, $fc
 
 ; ***************************************************************************************
 yOffsetToTitle = 11 * 4

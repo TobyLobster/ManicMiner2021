@@ -10,6 +10,7 @@ Having recently completely disassembled Manic Miner [https://github.com/TobyLobs
 - Flicker free player movement
 - Fixes to cavern layouts, graphics, and colours
 - Better air bar and colours
+- Fixed the shape of the jump to match the Spectrum
 - Better collision detection
 - Better music
 - 'GAME    OVER' added
@@ -133,3 +134,7 @@ For Master compatibility the stumbling block was that the BBC Micro stores the u
 I reimplemented the Meteors and Energy Fields of levels 19 and 20 to use cellPlot not OSWRCH and made the code shorter too.
 
 The Game Over screen now says 'GAME OVER' and colour cycles it similarly to the Spectrum.
+
+At the last minute, I realised the shape of the jump was subtly different from the Spectrum, so I fixed this.
+
+Finally I tested each level in turn to make sure each was completable.

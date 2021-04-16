@@ -75,11 +75,11 @@ Which is clearly much smaller and faster.
 
 By the way, nothing written here is meant to denigrate the original work from 1984, which remains a remarkable achievement in the world before such things as the internet, source control, fast reliable storage media, extensive information and a community about the inner workings of the BBC Micro, etc. It all just highlights the benefits we have today.
 
-Now it was time to replace the routine that had the single largest impact on speed: OSBYTE 135. This reads a character at the current text cursor position and decodes the pixels to it's ASCII value. I replaced the calls to the OS routine with my own copy, but this new version was only interested in checking character 32 (space) and the user defined characters (128-160). By restricting the range of characters to test and also hardcoding to reading pixels in MODE 1, a significant speed up was made.
+Now it was time to replace the routine that had the single largest impact on speed: OSBYTE 135. This reads a character at the current text cursor position and decodes the pixels to its ASCII value. I replaced the calls to the OS routine with my own copy, but this new version was only interested in checking character 32 (space) and the user defined characters (128-160). By restricting the range of characters to test and also hardcoding to reading pixels in MODE 1, a significant speed up was made.
 
 This added more code to the program, so I found space by moving common code into subroutines, e.g. moving the text cursor, setting the text colour, checking if a key is pressed etc.
 
-Then back to optimisation for speed, this time animating the conveyors. The same sprite is copied multiple times along it's length, so this plotting is now basically a simple memory copy routine. Previously this was implemented with repeated OSWRCH calls.
+Then back to optimisation for speed, this time animating the conveyors. The same sprite is copied multiple times along its length, so this plotting is now basically a simple memory copy routine. Previously this was implemented with repeated OSWRCH calls.
 
 With these speed improvements, I wanted to make the player character flicker free. When updating the player on screen (having already calculated the new player position) the code first reinstates the screen background (6 character cells around the old player position) from cache, animates the conveyor by one step, records (copies) the new screen background around the new player position into cache, then draws the player at the new position. All this needs to happen in the time between the electron gun passing the current player position on screen and before it returns on the next frame to the new player position.
 

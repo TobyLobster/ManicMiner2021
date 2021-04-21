@@ -24,9 +24,9 @@ start
 moreMessageLoop
     ldy #1                                  ;
     lda mode1Message,x                      ;
-    cmp $ff                                 ;
+    cmp #$ff                                ;
     bne innerPrintLoop                      ;
-    ldy #8                                  ; print eight zeros
+    ldy #6                                  ; print six zeros
     lda #0                                  ;
 innerPrintLoop
     jsr OSWRCH                              ;
@@ -164,9 +164,9 @@ secondLoop
 ; ***************************************************************************************
 mode1Message
     !byte 22, 1                             ; MODE 1
-;    !byte 23, 0, 6, $ff                     ; hide display
+;    !byte 23, 0, 6, 0, $ff                  ; hide display
 ;    !byte 23, 0, 7, 30, $ff                 ; move display down
-    !byte 23, 1, 0, $ff                     ; cursor off
+    !byte 23, 1, 0, 0, $ff                  ; cursor off
 mode1MessageEnd
 
 loadMinerCommand

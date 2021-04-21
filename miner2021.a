@@ -496,9 +496,9 @@ initialize
     jsr printFollowingMessage               ;
     !byte crtcSetupEnd - crtcSetup
 crtcSetup
-    !byte 23, 0,  7,  30, 0,0,0,0,0,0,0,0   ; VDU 23,0,7,30,0;0;0;0;   vertical sync position = 30
-    !byte 23, 1,  0,   0, 0,0,0,0,0,0,0,0   ; VDU 23,0,1, 0,0;0;0;0;   horizontal displayed = 0
-    !byte 23, 0, 13, $50, 0,0,0,0,0,0,0,0   ; set display address (low)
+    !byte 23, 0,  7,  30, 0,0,0,0,0,0       ; VDU 23,0,7,30,0;0;0;0;   vertical sync position = 30
+    !byte 23, 1,  0,   0, 0,0,0,0,0,0       ; cursor off
+    !byte 23, 0, 13, $50, 0,0,0,0,0,0       ; set display address (low)
     !byte 26                                ; Reset text and graphics windows
 crtcSetupEnd
 
@@ -779,7 +779,7 @@ airMessage
     !text "AIR"                                 ;
 vdu4CursorOff
     !byte 4                         ; VDU 4
-    !byte 23, 1, 0, 0,0,0,0,0,0,0,0 ; cursor off
+    !byte 23, 1, 0, 0,0,0,0,0,0,0   ; cursor off
 vdu4CursorOffEnd
 airMessageEnd
 
@@ -6562,7 +6562,7 @@ creditsMessage
     !text "High Score "             ;
 
     !byte 4                         ; VDU 4
-    !byte 23, 1, 0, 0,0,0,0,0,0,0,0 ; cursor off
+    !byte 23, 1, 0, 0,0,0,0,0,0,0   ; cursor off
 
     !byte 17, 129                   ; COLOUR 129
     !byte 31, 20, 7                 ; TAB

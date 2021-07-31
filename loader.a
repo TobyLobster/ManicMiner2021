@@ -22,17 +22,8 @@ start
     ; Switch to MODE 1
     ldx #0                                  ;
 moreMessageLoop
-    ldy #1                                  ;
     lda mode1Message,x                      ;
-    cmp #$ff                                ;
-    bne innerPrintLoop                      ;
-    ldy #6                                  ; print six zeros
-    lda #0                                  ;
-innerPrintLoop
     jsr OSWRCH                              ;
-    dey                                     ;
-    bne innerPrintLoop                      ;
-outputMessageLoop
     inx                                     ;
     cpx #mode1MessageEnd - mode1Message     ;
     bne moreMessageLoop                     ;
@@ -42,14 +33,26 @@ outputMessageLoop
     ldy #>loadMinerCommand                  ;
     jsr OSCLI                               ;
 
+    ; *TAPE
+    lda #140                                ;
+    jsr OSBYTE                              ;
+
     ; relocate the 'lower than the screen' code down to $0500
     ldx #<copyDownBlock                     ;
     ldy #>copyDownBlock                     ;
     jsr copyDown                            ;
 
     ; relocate the 'higher than the screen' code up to $6200
-    ldx #<copyUpBlock                       ;
     ldy #>copyUpBlock                       ;
+
+    ; HACK for DISC DOCTOR compatibility
+    bne +                                   ; ALWAYS branch
+!if (* != $0130) {
+    !error "Disc Doctor ROM overwrites $0130, but code is not aligned correctly to work around this"
+}
+    !byte $0d
++
+    ldx #<copyUpBlock                       ;
     jsr copyUp                              ;
 
     ; run game
@@ -166,7 +169,7 @@ mode1Message
     !byte 22, 1                             ; MODE 1
 ;    !byte 23, 0, 6, 0, $ff                  ; hide display
 ;    !byte 23, 0, 7, 30, $ff                 ; move display down
-    !byte 23, 1, 0, 0, $ff                  ; cursor off
+    !byte 23, 1, 0, 0, 0, 0, 0, 0, 0, 0     ; cursor off
 mode1MessageEnd
 
 loadMinerCommand
